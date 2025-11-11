@@ -115,7 +115,7 @@ const RenusConfigPage: React.FC = () => {
 
                 {tabs.map(tab => (
                     <TabsContent key={tab.value} value={tab.value} className="mt-6">
-                        <tab.component />
+                        <tab.component key={tab.value} />
                     </TabsContent>
                 ))}
             </Tabs>
