@@ -17,6 +17,7 @@ import AppearanceTab from '@/components/settings/AppearanceTab';
 import BillingTab from '@/components/settings/BillingTab';
 import BackupExportTab from '@/components/settings/BackupExportTab';
 import AdvancedTab from '@/components/settings/AdvancedTab';
+import GlobalGuardrailsTab from '@/components/settings/GlobalGuardrailsTab'; // Importando o novo componente
 
 interface SettingCategory {
   id: string;
@@ -29,8 +30,8 @@ const categories: SettingCategory[] = [
   { id: 'profile', title: 'Perfil da Empresa', icon: Building, component: CompanyProfileTab },
   { id: 'users', title: 'Usuários e Permissões', icon: User, component: UserPermissionsTab },
   { id: 'notifications', title: 'Notificações', icon: Mail, component: NotificationsTab },
+  { id: 'guardrails-global', title: 'Guardrails (Global)', icon: Shield, component: GlobalGuardrailsTab }, // Nova Categoria
   { id: 'integrations', title: 'Integrações', icon: Zap, component: IntegrationsTab },
-  { id: 'guardrails', title: 'Guardrails (Renus)', icon: Shield, component: GuardrailsTab },
   { id: 'appearance', title: 'Aparência', icon: Palette, component: AppearanceTab },
   { id: 'billing', title: 'Faturamento', icon: DollarSign, component: BillingTab },
   { id: 'backup', title: 'Backup e Exportação', icon: Database, component: BackupExportTab },
