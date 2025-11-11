@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Lightbulb, Layout, Clock, Server, Rocket, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,12 +66,27 @@ const benefits = [
 ];
 
 const MethodologySection: React.FC = () => {
-  const [activeStep, setActiveStep] = useState(methodologySteps[2]); // Start with Design/Frontend highlighted
+  // Start with the first step, not the highlighted one
+  const [activeStep, setActiveStep] = useState(methodologySteps[0]); 
   
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  // Automatic Carousel Effect
+  useEffect(() => {
+    if (!inView) return;
+
+    const interval = setInterval(() => {
+      setActiveStep(prevStep => {
+        const nextIndex = (prevStep.id + 1) % methodologySteps.length;
+        return methodologySteps[nextIndex];
+      });
+    }, 5000); // Change every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [inView]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -128,12 +143,11 @@ const MethodologySection: React.FC = () => {
                         key={step.id} 
                         variants={itemVariants}
                         className="flex flex-col items-center w-1/6 cursor-pointer group"
-                        onMouseEnter={() => setActiveStep(step)}
-                        onMouseLeave={() => setActiveStep(methodologySteps[2])} // Default back to Design/Frontend
+                        // Removed onMouseEnter/onMouseLeave to enable automatic cycling
                     >
                         <div className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-4",
-                            step.highlight || activeStep.id === step.id 
+                            activeStep.id === step.id 
                                 ? "bg-white dark:bg-gray-900 border-[#FF6B35] shadow-lg scale-110" 
                                 : "bg-background border-border dark:border-gray-700 group-hover:border-[#FF6B35]"
                         )}>
@@ -159,7 +173,7 @@ const MethodologySection: React.FC = () => {
                 >
                     <div className={cn(
                         "absolute -left-5 top-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-4",
-                        step.highlight 
+                        activeStep.id === step.id 
                             ? "bg-white dark:bg-gray-900 border-[#FF6B35] shadow-lg" 
                             : "bg-background border-border dark:border-gray-700"
                     )}>
@@ -179,10 +193,11 @@ const MethodologySection: React.FC = () => {
         <div className="mt-16 grid md:grid-cols-3 gap-8">
             {/* Detail Card (Desktop) */}
             <motion.div 
+                key={activeStep.id} // Key change forces re-render and animation
                 className="md:col-span-2"
                 initial={{ opacity: 0, x: -50 }}
-                animate={inView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
             >
                 <Card className="p-6 h-full border-l-4 border-[#4e4ea8] dark:border-[#0ca7d2]">
                     <CardHeader className="p-0 mb-4">
