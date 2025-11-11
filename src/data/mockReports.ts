@@ -81,3 +81,38 @@ export const MOCK_BUDGET_COMPARISON = [
     { project: 'P2', budget: 45000, actual: 48000 },
     { project: 'P3', budget: 8000, actual: 7500 },
 ];
+
+// --- Guardrails Mocks ---
+export const MOCK_GUARDRAILS_METRICS = {
+    totalValidations: { value: 1250, change: 15, icon: 'Shield', color: 'text-[#4e4ea8]' },
+    interventionRate: { value: '2.5%', change: -0.5, icon: 'AlertTriangle', color: 'text-red-500' },
+    topViolation: { value: 'PII Detection', change: 0, icon: 'Lock', color: 'text-yellow-500' },
+    avgLatency: { value: '150 ms', change: -10, icon: 'Clock', color: 'text-green-500' },
+};
+
+export const MOCK_INTERVENTION_BREAKDOWN = [
+    { name: 'Bloqueado', value: 15, fill: '#ef4444' }, // Red
+    { name: 'Sanitizado', value: 10, fill: '#f59e0b' }, // Yellow
+    { name: 'Alertado', value: 5, fill: '#fb923c' }, // Orange
+];
+
+export const MOCK_VALIDATOR_BREAKDOWN = [
+    { name: 'PII', count: 12, fill: '#4e4ea8' },
+    { name: 'Jailbreak', count: 8, fill: '#FF6B35' },
+    { name: 'Keyword', count: 5, fill: '#0ca7d2' },
+    { name: 'Secret', count: 3, fill: '#10b981' },
+];
+
+export const MOCK_LATENCY_DATA = [
+    { hour: '09h', avg: 120, p95: 180 },
+    { hour: '10h', avg: 150, p95: 220 },
+    { hour: '11h', avg: 135, p95: 190 },
+    { hour: '12h', avg: 180, p95: 250 },
+    { hour: '13h', avg: 140, p95: 200 },
+];
+
+export const MOCK_TOP_BLOCKED_KEYWORDS = [
+    { keyword: 'preço', count: 15 },
+    { keyword: 'concorrente', count: 8 },
+    { keyword: 'senha', count: 5 },
+];

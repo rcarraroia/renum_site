@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Zap, Briefcase, Users, MessageSquare, Clock, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
-import { MOCK_KPI_DATA, MOCK_PROJECT_STATUS_DATA, MOCK_PROJECT_TYPE_DATA, MOCK_CONVERSATION_CHANNEL_DATA, MOCK_ACTIVITY_TIMELINE } from '@/data/mockReports';
+import { Zap, Briefcase, Users, MessageSquare, Clock, CheckCircle, TrendingUp, TrendingDown, Shield, AlertTriangle } from 'lucide-react';
+import { MOCK_KPI_DATA, MOCK_PROJECT_STATUS_DATA, MOCK_PROJECT_TYPE_DATA, MOCK_CONVERSATION_CHANNEL_DATA, MOCK_ACTIVITY_TIMELINE, MOCK_GUARDRAILS_METRICS } from '@/data/mockReports';
 import ReportChart from './ReportChart';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -41,7 +41,7 @@ const ReportsOverviewTab: React.FC = () => {
         { title: 'Clientes Ativos', value: MOCK_KPI_DATA.activeClients.value, change: MOCK_KPI_DATA.activeClients.change, icon: Users, color: 'text-[#0ca7d2]' },
         { title: 'Novos Leads', value: MOCK_KPI_DATA.newLeads.value, change: MOCK_KPI_DATA.newLeads.change, icon: Zap, color: 'text-[#FF6B35]' },
         { title: 'Vol. Conversas', value: MOCK_KPI_DATA.conversationVolume.value, change: MOCK_KPI_DATA.conversationVolume.change, icon: MessageSquare, color: 'text-purple-500' },
-        { title: 'Tempo Médio Resp.', value: MOCK_KPI_DATA.avgResponseTime.value, change: MOCK_KPI_DATA.avgResponseTime.change, icon: Clock, color: 'text-yellow-500' },
+        { title: 'Taxa Intervenção GR', value: MOCK_GUARDRAILS_METRICS.interventionRate.value, change: MOCK_GUARDRAILS_METRICS.interventionRate.change, icon: Shield, color: 'text-red-500' },
         { title: 'Taxa de Conclusão', value: MOCK_KPI_DATA.completionRate.value, change: MOCK_KPI_DATA.completionRate.change, icon: CheckCircle, color: 'text-green-500' },
     ];
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Zap, FileText, Calendar, Download, Printer, Settings, Wrench, Users, Clock, List, BarChart } from 'lucide-react';
+import { Zap, FileText, Calendar, Download, Printer, Settings, Wrench, Users, Clock, List, BarChart, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +19,7 @@ import RenusPerformanceTab from '@/components/reports/RenusPerformanceTab';
 import ClientProjectReportsTab from '@/components/reports/ClientProjectReportsTab';
 import CustomReportBuilderTab from '@/components/reports/CustomReportBuilderTab';
 import SavedReportsTab from '@/components/reports/SavedReportsTab';
+import GuardrailsReportsTab from '@/components/reports/GuardrailsReportsTab'; // Novo componente
 
 const AdminReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -30,6 +31,7 @@ const AdminReportsPage: React.FC = () => {
   const tabs = [
     { value: 'overview', label: 'Visão Geral', icon: BarChart, component: ReportsOverviewTab },
     { value: 'renus', label: 'Performance Renus', icon: Zap, component: RenusPerformanceTab },
+    { value: 'guardrails', label: 'Guardrails', icon: Shield, component: GuardrailsReportsTab }, // Nova aba
     { value: 'projects', label: 'Clientes & Projetos', icon: Users, component: ClientProjectReportsTab },
     { value: 'custom', label: 'Construtor', icon: Wrench, component: CustomReportBuilderTab },
     { value: 'saved', label: 'Salvos', icon: List, component: SavedReportsTab },
@@ -146,7 +148,7 @@ const AdminReportsPage: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-gray-100 dark:bg-gray-800">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-gray-100 dark:bg-gray-800">
           {tabs.map(tab => (
             <TabsTrigger 
               key={tab.value} 
