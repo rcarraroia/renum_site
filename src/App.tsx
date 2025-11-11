@@ -17,7 +17,8 @@ import RenusConfigPage from "./pages/dashboard/RenusConfigPage";
 import DebugPanel from "./components/DebugPanel";
 import AdminProjectsPage from "./pages/dashboard/AdminProjectsPage";
 import AdminClientsPage from "./pages/dashboard/AdminClientsPage";
-import AdminConversationsPage from "./pages/dashboard/AdminConversationsPage"; // Importando a nova página
+import AdminConversationsPage from "./pages/dashboard/AdminConversationsPage";
+import AdminReportsPage from "./pages/dashboard/AdminReportsPage"; // Importando a nova página de relatórios
 
 const queryClient = new QueryClient();
 
@@ -55,8 +56,8 @@ const App = () => (
                   {/* Admin Routes */}
                   <Route path="/dashboard/admin/projects" element={<AdminProjectsPage />} />
                   <Route path="/dashboard/admin/clients" element={<AdminClientsPage />} />
-                  <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} /> {/* Rota de Conversas */}
-                  <Route path="/dashboard/admin/reports" element={<AdminOverview />} />
+                  <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
+                  <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} /> {/* Rota de Relatórios */}
                   <Route path="/dashboard/admin/renus-config" element={<RenusConfigPage />} />
                 </Route>
 
