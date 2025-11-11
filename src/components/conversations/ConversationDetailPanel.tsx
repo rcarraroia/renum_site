@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Zap, User, Send, MessageSquare, Clock, FileText, Settings, MoreHorizontal, CheckCircle, XCircle, Tag, Briefcase, Mail, Phone, Clipboard, CornerDownLeft, Brain } from 'lucide-react';
+import { Zap, User, Send, MessageSquare, Clock, FileText, Settings, MoreHorizontal, CheckCircle, XCircle, Tag, Briefcase, Mail, Phone, Clipboard, CornerDownLeft, Brain, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
