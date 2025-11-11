@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, LogIn } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import RenumLogo from '@/components/RenumLogo';
 import { useRenusChat } from '@/context/RenusChatContext';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -50,6 +51,7 @@ const NavLink: React.FC<NavLinkProps> = ({ href, children, className, onClick })
 
 const Navbar: React.FC = () => {
   const { openChat } = useRenusChat();
+  const { isAuthenticated } = useAuth(); // Get authentication state
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -67,12 +69,23 @@ const Navbar: React.FC = () => {
 
         <div className="flex items-center space-x-2">
           <ThemeToggle />
+          
+          {/* Chat Button (Visible on Desktop) */}
           <Button 
             onClick={openChat} 
             className="bg-[#FF6B35] hover:bg-[#e55f30] text-white hidden md:inline-flex"
           >
             Chat with Renus
           </Button>
+          
+          {/* Login Button (Visible if not authenticated) */}
+          {!isAuthenticated && (
+            <Link to="/auth/login">
+              <Button variant="ghost" className="hidden md:inline-flex">
+                <LogIn className="h-4 w-4 mr-2" /> Login
+              </Button>
+            </Link>
+          )}
 
           {/* Mobile Navigation */}
           <Sheet>
@@ -88,6 +101,16 @@ const Navbar: React.FC = () => {
                     {item.name}
                   </NavLink>
                 ))}
+                
+                {/* Mobile Login Button */}
+                {!isAuthenticated && (
+                    <Link to="/auth/login" onClick={() => document.getElementById('sheet-close')?.click()}>
+                        <Button variant="outline" className="w-full">
+                            <LogIn className="h-4 w-4 mr-2" /> Login
+                        </Button>
+                    </Link>
+                )}
+
                 <Button 
                   onClick={() => { openChat(); document.getElementById('sheet-close')?.click(); }}
                   className="bg-[#FF6B35] hover:bg-[#e55f30] text-white w-full mt-4"
