@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -13,8 +13,23 @@ import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminOverview from "./pages/dashboard/AdminOverview";
 import ClientOverview from "./pages/dashboard/ClientOverview";
+import RenusConfigPage from "./pages/dashboard/RenusConfigPage";
+import DebugPanel from "./components/DebugPanel";
 
 const queryClient = new QueryClient();
+
+// Component to conditionally render the DebugPanel
+const DebugWrapper = () => {
+  const location = useLocation();
+  const isDashboard = location.pathname.startsWith('/dashboard');
+  const isAuthPage = location.pathname.startsWith('/auth');
+
+  if (isDashboard || isAuthPage) {
+    return <DebugPanel />;
+  }
+  return null;
+};
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,18 +49,18 @@ const App = () => (
                 {/* Protected Admin Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                   <Route path="/dashboard/admin" element={<AdminOverview />} />
-                  {/* Placeholder routes for Admin */}
+                  {/* Admin Routes */}
                   <Route path="/dashboard/admin/projects" element={<AdminOverview />} />
                   <Route path="/dashboard/admin/clients" element={<AdminOverview />} />
                   <Route path="/dashboard/admin/conversations" element={<AdminOverview />} />
                   <Route path="/dashboard/admin/reports" element={<AdminOverview />} />
-                  <Route path="/dashboard/admin/renus-config" element={<AdminOverview />} />
+                  <Route path="/dashboard/admin/renus-config" element={<RenusConfigPage />} />
                 </Route>
 
                 {/* Protected Client Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['client']} />}>
                   <Route path="/dashboard/client" element={<ClientOverview />} />
-                  {/* Placeholder routes for Client */}
+                  {/* Client Routes */}
                   <Route path="/dashboard/client/projects" element={<ClientOverview />} />
                   <Route path="/dashboard/client/conversations" element={<ClientOverview />} />
                   <Route path="/dashboard/client/documents" element={<ClientOverview />} />
@@ -61,6 +76,7 @@ const App = () => (
                 {/* Catch-all Route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <DebugWrapper />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
