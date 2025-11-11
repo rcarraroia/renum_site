@@ -15,6 +15,7 @@ import TypingIndicator from '@/components/TypingIndicator';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { ClientSegmentBadge } from '../clients/ClientBadges';
+import { Badge } from '@/components/ui/badge';
 
 interface ConversationDetailPanelProps {
   conversation: Conversation;
