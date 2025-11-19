@@ -24,7 +24,7 @@ import GuardrailMessage from './GuardrailMessage'; // Importando o novo componen
 interface ConversationDetailPanelProps {
   conversation: Conversation;
   onUpdateStatus: (id: string, status: ConversationStatus) => void;
-  onSendMessage: (id: string, content: string, isInternal: boolean) => void;
+  onSendMessage: (id: string, content: string, isInternal: boolean, sender?: MessageSender) => void;
 }
 
 // --- Guardrail Details Modal Component ---
@@ -122,7 +122,7 @@ const MessageBubble: React.FC<{ message: ConversationMessage, onGuardrailDetails
                 <GuardrailMessage 
                     message={message} 
                     intervention={intervention} 
-                    onGuardrailDetails={onGuardrailDetails}
+                    onGuardrailDetails={onGuardrailDetails} 
                     onRetry={onRetry}
                 />
             </div>

@@ -11,6 +11,7 @@ import ProjectCreationModal from '@/components/projects/ProjectCreationModal';
 import { toast } from 'sonner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { StatusBadge } from '@/components/projects/ProjectBadges';
+import { Progress } from '@/components/ui/progress';
 
 const AdminProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);

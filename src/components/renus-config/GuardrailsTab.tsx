@@ -1,3 +1,4 @@
+' por '&rarr;'.">
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -184,7 +185,7 @@ const GuardrailsTab: React.FC = () => {
                             <div className="flex items-center space-x-2"><Switch defaultChecked /><Label>CPF/CNPJ</Label></div>
                             <div className="flex items-center space-x-2"><Switch defaultChecked /><Label>Endereço</Label></div>
                         </div>
-                        <p className="text-xs text-muted-foreground italic">Exemplo: "Meu email é joao@exemplo.com" -> "Meu email é [REDACTED]"</p>
+                        <p className="text-xs text-muted-foreground italic">Exemplo: "Meu email é joao@exemplo.com" &rarr; "Meu email é [REDACTED]"</p>
                     </div>
                 </ValidatorCard>
 

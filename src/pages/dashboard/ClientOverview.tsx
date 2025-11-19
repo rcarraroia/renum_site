@@ -1,7 +1,7 @@
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Briefcase, Clock, CheckCircle, FileText } from 'lucide-react';
+import { Briefcase, Clock, CheckCircle, FileText, MessageSquare } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 

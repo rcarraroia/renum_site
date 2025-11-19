@@ -12,7 +12,6 @@ import CompanyProfileTab from '@/components/settings/CompanyProfileTab';
 import UserPermissionsTab from '@/components/settings/UserPermissionsTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import IntegrationsTab from '@/components/settings/IntegrationsTab';
-import GuardrailsTab from '@/components/settings/GuardrailsTab';
 import AppearanceTab from '@/components/settings/AppearanceTab';
 import BillingTab from '@/components/settings/BillingTab';
 import BackupExportTab from '@/components/settings/BackupExportTab';

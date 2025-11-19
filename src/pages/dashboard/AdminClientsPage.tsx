@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Building, Users, CheckCircle, Plus, Filter, Download, List, LayoutGrid, Search, Mail, Phone, Briefcase, Clock, Edit, Archive, MoreHorizontal, Copy } from 'lucide-react';
+import { Building, Users, CheckCircle, Plus, Filter, Download, List, LayoutGrid, Search, Mail, Phone, Briefcase, Clock, Edit, Archive, MoreHorizontal, Copy, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MOCK_CLIENTS_DATA } from '@/data/mockClients';

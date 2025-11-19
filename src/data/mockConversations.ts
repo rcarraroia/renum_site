@@ -1,8 +1,18 @@
 import { Conversation, ConversationMessage, ConversationStatus, ConversationChannel, MessageSender } from "@/types/conversation";
 import { MOCK_CLIENTS_DATA } from "./mockClients";
 import { getMockTeam } from "./mockProjects";
+import { User } from "@/types/auth";
 
-const MOCK_ADMIN = getMockTeam()[0];
+const MOCK_ADMIN_TEAM_MEMBER = getMockTeam()[0];
+
+// Create a proper User object for assignedAgent
+const MOCK_ADMIN_USER: User = {
+    id: MOCK_ADMIN_TEAM_MEMBER.id,
+    name: MOCK_ADMIN_TEAM_MEMBER.name,
+    email: 'admin@renum.tech', // Required by User interface
+    role: 'admin', // Required by User interface
+};
+
 const MOCK_CLIENT_ALPHA = MOCK_CLIENTS_DATA[0];
 const MOCK_CLIENT_HEALTH = MOCK_CLIENTS_DATA[1];
 
@@ -90,7 +100,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     },
     status: 'Em Andamento',
     channel: 'Web',
-    assignedAgent: MOCK_ADMIN,
+    assignedAgent: MOCK_ADMIN_USER,
     messages: generateMockMessages(MOCK_CLIENT_ALPHA.id),
     unreadCount: 3, // Aumentado para incluir as novas mensagens
     priority: 'High',
@@ -143,7 +153,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     },
     status: 'Resolvida',
     channel: 'Email',
-    assignedAgent: MOCK_ADMIN,
+    assignedAgent: MOCK_ADMIN_USER,
     messages: [
         { id: 'm1', sender: 'client', type: 'text', content: 'O workflow de faturamento está funcionando perfeitamente. Obrigado!', timestamp: new Date(new Date().getTime() - 86400000), read: true },
         { id: 'm2', sender: 'system', type: 'text', content: 'Conversa marcada como Resolvida.', timestamp: new Date(new Date().getTime() - 86300000), read: true },

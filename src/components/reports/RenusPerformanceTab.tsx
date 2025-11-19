@@ -35,10 +35,10 @@ const RenusPerformanceTab: React.FC = () => {
     ];
 
     const performanceOverTime = [
-        { month: 'Jul', resolution: 60, satisfaction: 3.8 },
-        { month: 'Ago', resolution: 70, satisfaction: 4.0 },
-        { month: 'Set', resolution: 75, satisfaction: 4.2 },
-        { month: 'Out', resolution: 80, satisfaction: 4.5 },
+        { name: 'Jul', resolution: 60, satisfaction: 3.8 },
+        { name: 'Ago', resolution: 70, satisfaction: 4.0 },
+        { name: 'Set', resolution: 75, satisfaction: 4.2 },
+        { name: 'Out', resolution: 80, satisfaction: 4.5 },
     ];
 
     return (

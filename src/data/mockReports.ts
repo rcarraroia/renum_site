@@ -37,13 +37,13 @@ export const MOCK_CONVERSATION_CHANNEL_DATA: { name: ConversationChannel; value:
 
 // Timeline of Activities (Line Chart - last 7 days)
 export const MOCK_ACTIVITY_TIMELINE = [
-    { date: 'Seg', projects: 1, conversations: 15 },
-    { date: 'Ter', projects: 0, conversations: 22 },
-    { date: 'Qua', projects: 2, conversations: 18 },
-    { date: 'Qui', projects: 1, conversations: 30 },
-    { date: 'Sex', projects: 0, conversations: 25 },
-    { date: 'Sáb', projects: 0, conversations: 10 },
-    { date: 'Dom', projects: 0, conversations: 5 },
+    { name: 'Seg', projects: 1, conversations: 15 },
+    { name: 'Ter', projects: 0, conversations: 22 },
+    { name: 'Qua', projects: 2, conversations: 18 },
+    { name: 'Qui', projects: 1, conversations: 30 },
+    { name: 'Sex', projects: 0, conversations: 25 },
+    { name: 'Sáb', projects: 0, conversations: 10 },
+    { name: 'Dom', projects: 0, conversations: 5 },
 ];
 
 // --- Renus Performance Mocks ---
@@ -70,10 +70,10 @@ export const MOCK_GUARDRAILS_STATS = [
 
 // --- Client & Project Mocks ---
 export const MOCK_CLIENT_ACQUISITION = [
-    { month: 'Jul', newClients: 2, projectsStarted: 3 },
-    { month: 'Ago', newClients: 1, projectsStarted: 2 },
-    { month: 'Set', newClients: 3, projectsStarted: 4 },
-    { month: 'Out', newClients: 2, projectsStarted: 3 },
+    { name: 'Jul', newClients: 2, projectsStarted: 3 },
+    { name: 'Ago', newClients: 1, projectsStarted: 2 },
+    { name: 'Set', newClients: 3, projectsStarted: 4 },
+    { name: 'Out', newClients: 2, projectsStarted: 3 },
 ];
 
 export const MOCK_BUDGET_COMPARISON = [
@@ -104,11 +104,11 @@ export const MOCK_VALIDATOR_BREAKDOWN = [
 ];
 
 export const MOCK_LATENCY_DATA = [
-    { hour: '09h', avg: 120, p95: 180 },
-    { hour: '10h', avg: 150, p95: 220 },
-    { hour: '11h', avg: 135, p95: 190 },
-    { hour: '12h', avg: 180, p95: 250 },
-    { hour: '13h', avg: 140, p95: 200 },
+    { name: '09h', avg: 120, p95: 180 },
+    { name: '10h', avg: 150, p95: 220 },
+    { name: '11h', avg: 135, p95: 190 },
+    { name: '12h', avg: 180, p95: 250 },
+    { name: '13h', avg: 140, p95: 200 },
 ];
 
 export const MOCK_TOP_BLOCKED_KEYWORDS = [
