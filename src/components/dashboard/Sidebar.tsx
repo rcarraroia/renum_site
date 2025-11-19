@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import RenumLogo from '@/components/RenumLogo';
@@ -19,6 +19,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Projetos', href: '/dashboard/admin/projects', icon: Briefcase, roles: ['admin'] },
   { title: 'Clientes', href: '/dashboard/admin/clients', icon: Users, roles: ['admin'] },
   { title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] },
+  { title: 'Pesquisas', href: '/dashboard/admin/pesquisas/entrevistas', icon: ClipboardList, roles: ['admin'] },
   { title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] },
   { title: 'Config. Renus', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] },
 ];

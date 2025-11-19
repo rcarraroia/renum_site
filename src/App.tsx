@@ -19,7 +19,10 @@ import AdminProjectsPage from "./pages/dashboard/AdminProjectsPage";
 import AdminClientsPage from "./pages/dashboard/AdminClientsPage";
 import AdminConversationsPage from "./pages/dashboard/AdminConversationsPage";
 import AdminReportsPage from "./pages/dashboard/AdminReportsPage";
-import AdminSettingsPage from "./pages/dashboard/AdminSettingsPage"; // Importando a nova página de configurações
+import AdminSettingsPage from "./pages/dashboard/AdminSettingsPage";
+import PesquisasEntrevistasPage from './pages/dashboard/PesquisasEntrevistasPage';
+import PesquisasResultadosPage from './pages/dashboard/PesquisasResultadosPage';
+import PesquisasAnalisePage from './pages/dashboard/PesquisasAnalisePage';
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,9 @@ const App = () => (
                   <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
                   <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
                   <Route path="/dashboard/admin/renus-config" element={<RenusConfigPage />} />
+                  <Route path="/dashboard/admin/pesquisas/entrevistas" element={<PesquisasEntrevistasPage />} />
+                  <Route path="/dashboard/admin/pesquisas/resultados" element={<PesquisasResultadosPage />} />
+                  <Route path="/dashboard/admin/pesquisas/analise" element={<PesquisasAnalisePage />} />
                 </Route>
 
                 {/* Protected Client Routes */}
