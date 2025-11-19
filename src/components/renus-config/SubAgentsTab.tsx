@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Edit, Trash2, MessageSquare, Globe, ChevronDown, ChevronUp, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, MessageSquare, Globe, ChevronDown, ChevronUp, Users, Zap, FileText, Upload, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,6 +20,11 @@ interface SubAgent {
   systemPrompt: string;
   topics: string[];
   isActive: boolean;
+  // 🆕 NOVOS CAMPOS
+  useFineTuning?: boolean;
+  fineTuneStatus?: 'none' | 'preparing' | 'training' | 'ready' | 'failed';
+  fineTuneModelId?: string;
+  trainingExamplesCount?: number;
 }
 
 export const SubAgentsTab = () => {
@@ -34,7 +39,9 @@ export const SubAgentsTab = () => {
       channel: 'whatsapp',
       systemPrompt: 'Você é um pesquisador especializado em Marketing Multinível. Conduza entrevistas para entender as dores e necessidades dos distribuidores.',
       topics: ['Prospecção', 'Atendimento', 'Treinamento', 'Automação', 'Investimento'],
-      isActive: true
+      isActive: true,
+      useFineTuning: false,
+      fineTuneStatus: 'none',
     },
     {
       id: '2',
@@ -43,7 +50,9 @@ export const SubAgentsTab = () => {
       channel: 'site',
       systemPrompt: 'Você é um assistente virtual de clínica médica. Ajude pacientes com agendamentos, dúvidas sobre procedimentos e informações gerais.',
       topics: ['Agendamentos', 'Procedimentos', 'Convênios', 'Localização'],
-      isActive: false
+      isActive: false,
+      useFineTuning: false,
+      fineTuneStatus: 'none',
     },
     {
       id: '3',
@@ -52,7 +61,9 @@ export const SubAgentsTab = () => {
       channel: 'whatsapp',
       systemPrompt: 'Você é um consultor de vendas especializado em moda. Ajude clientes a encontrar produtos, tire dúvidas e finalize vendas.',
       topics: ['Produtos', 'Tamanhos', 'Pagamento', 'Entrega'],
-      isActive: true
+      isActive: true,
+      useFineTuning: false,
+      fineTuneStatus: 'none',
     }
   ]);
 
@@ -68,7 +79,9 @@ export const SubAgentsTab = () => {
     channel: 'whatsapp',
     systemPrompt: '',
     topics: [],
-    isActive: true
+    isActive: true,
+    useFineTuning: false,
+    fineTuneStatus: 'none',
   });
 
   const handleOpenModal = (agent?: SubAgent) => {
@@ -83,7 +96,9 @@ export const SubAgentsTab = () => {
         channel: 'whatsapp',
         systemPrompt: '',
         topics: [],
-        isActive: true
+        isActive: true,
+        useFineTuning: false,
+        fineTuneStatus: 'none',
       });
     }
     setIsModalOpen(true);
@@ -437,6 +452,89 @@ export const SubAgentsTab = () => {
                     </Badge>
                   ))
                 )}
+              </div>
+            </div>
+            
+            {/* Seção Fine-tuning */}
+            <div className="space-y-4 p-4 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-blue-600" />
+                    <Label className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                      ⚡ Fine-tuning (Otimização Avançada)
+                    </Label>
+                    <Badge variant="secondary" className="text-xs">
+                      Em Breve
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1 ml-7">
+                    Economize até 90% em tokens e melhore a qualidade das respostas
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.useFineTuning || false}
+                  onCheckedChange={(checked) => setFormData(prev => ({...prev, useFineTuning: checked}))}
+                  disabled={true}
+                  className="opacity-50"
+                />
+              </div>
+
+              {/* Área expansível (sempre visível para preview) */}
+              <div className="space-y-3 pt-3 border-t border-blue-200 dark:border-blue-800 opacity-60">
+                {/* Info cards */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="p-2 rounded bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800">
+                    <div className="text-xs text-muted-foreground">Economia</div>
+                    <div className="text-lg font-bold text-blue-600">~90%</div>
+                  </div>
+                  <div className="p-2 rounded bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800">
+                    <div className="text-xs text-muted-foreground">Tokens/msg</div>
+                    <div className="text-lg font-bold text-green-600">50</div>
+                    <div className="text-xs line-through text-gray-400">800</div>
+                  </div>
+                  <div className="p-2 rounded bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800">
+                    <div className="text-xs text-muted-foreground">Exemplos</div>
+                    <div className="text-lg font-bold text-purple-600">50+</div>
+                  </div>
+                </div>
+
+                {/* Upload placeholder */}
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-2 opacity-50">
+                    <FileText className="h-4 w-4" />
+                    Dataset de Treinamento (JSONL)
+                  </Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center bg-white dark:bg-gray-900 opacity-50">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Arraste o arquivo .jsonl aqui ou clique para selecionar
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Mínimo 50 exemplos de conversas
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status placeholder */}
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 opacity-50">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-gray-400"></div>
+                    <span className="text-sm text-muted-foreground">
+                      Aguardando ativação do fine-tuning...
+                    </span>
+                  </div>
+                </div>
+
+                {/* Info footer */}
+                <div className="flex items-start gap-2 p-2 rounded bg-blue-100 dark:bg-blue-900">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <strong>Como funciona:</strong> Você treina o modelo uma vez com exemplos reais de conversas. 
+                    Depois, ele já sabe como responder naturalmente, sem precisar de prompts gigantes toda vez.
+                    Isso reduz drasticamente o consumo de tokens e melhora a qualidade das respostas.
+                  </p>
+                </div>
               </div>
             </div>
 
