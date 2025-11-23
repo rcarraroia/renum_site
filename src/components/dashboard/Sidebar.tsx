@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import RenumLogo from '@/components/RenumLogo';
@@ -23,6 +23,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Pesquisas', href: '/dashboard/admin/pesquisas/entrevistas', icon: ClipboardList, roles: ['admin'] },
   { title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] },
   { title: 'Config. Renus', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] },
+  { title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] },
 ];
 
 const clientNavItems: NavItem[] = [
