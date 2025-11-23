@@ -23,6 +23,7 @@ import AdminSettingsPage from "./pages/dashboard/AdminSettingsPage";
 import PesquisasEntrevistasPage from './pages/dashboard/PesquisasEntrevistasPage';
 import PesquisasResultadosPage from './pages/dashboard/PesquisasResultadosPage';
 import PesquisasAnalisePage from './pages/dashboard/PesquisasAnalisePage';
+import AdminLeadsPage from './pages/dashboard/AdminLeadsPage';
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
                   <Route path="/dashboard/admin" element={<AdminOverview />} />
                   {/* Admin Routes */}
                   <Route path="/dashboard/admin/projects" element={<AdminProjectsPage />} />
+                  <Route path="/dashboard/admin/leads" element={<AdminLeadsPage />} />
                   <Route path="/dashboard/admin/clients" element={<AdminClientsPage />} />
                   <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
                   <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />

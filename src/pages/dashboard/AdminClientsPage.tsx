@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Building, Users, CheckCircle, Plus, Filter, Download, List, LayoutGrid, Search, Mail, Phone, Briefcase, Clock, Edit, Archive, MoreHorizontal, Copy, User } from 'lucide-react';
+import { Building, Users, CheckCircle, Plus, Filter, Download, List, LayoutGrid, Search, Mail, Phone, Briefcase, Clock, Edit, Archive, MoreHorizontal, Copy, User, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MOCK_CLIENTS_DATA } from '@/data/mockClients';
@@ -16,9 +16,12 @@ import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminClientsPage: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS_DATA);
+  // Filtra os clientes mockados para remover 'Prospecto' da lista principal de Clientes
+  const initialClients = MOCK_CLIENTS_DATA.filter(c => c.status !== 'Prospecto');
+  const [clients, setClients] = useState<Client[]>(initialClients);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | undefined>(undefined);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -37,7 +40,8 @@ const AdminClientsPage: React.FC = () => {
   const metrics = useMemo(() => ({
     total: clients.length,
     active: clients.filter(c => c.status === 'Ativo').length,
-    prospects: clients.filter(c => c.status === 'Prospecto').length,
+    // Prospectos agora estão em Leads, então removemos a métrica daqui
+    inativos: clients.filter(c => c.status === 'Inativo').length,
   }), [clients]);
 
   const handleCreateClient = (newClientData: Omit<Client, 'id' | 'projectsCount' | 'lastInteraction'>) => {
@@ -192,6 +196,14 @@ const AdminClientsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
+      <Alert className="mb-4">
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Esta página exibe apenas <strong>Clientes</strong> (quem contratou ou está em negociação). 
+          Contatos que ainda não contrataram estão em <Link to="/dashboard/admin/leads" className="text-[#0ca7d2] hover:underline">Leads</Link>.
+        </AlertDescription>
+      </Alert>
+      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold flex items-center">
           <Users className="h-7 w-7 mr-3 text-[#0ca7d2]" />
@@ -226,11 +238,11 @@ const AdminClientsPage: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Prospectos</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
+            <CardTitle className="text-sm font-medium">Clientes Inativos</CardTitle>
+            <Clock className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-500">{metrics.prospects}</div>
+            <div className="text-2xl font-bold text-red-500">{metrics.inativos}</div>
           </CardContent>
         </Card>
       </div>
