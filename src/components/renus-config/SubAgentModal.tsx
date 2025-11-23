@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Zap, MessageSquare, Globe, FileText, Upload, Info, Tag, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { SubAgent } from './types'; // Importando o tipo SubAgent
@@ -105,6 +106,54 @@ export const SubAgentModal: React.FC<SubAgentModalProps> = ({
                 </Label>
               </div>
             </RadioGroup>
+          </div>
+          
+          {/* Modelo de IA */}
+          <div className="space-y-2">
+            <Label>Modelo de IA</Label>
+            <Select 
+              value={formData.model || 'default'} 
+              onValueChange={(value) => setFormData(prev => ({...prev, model: value}))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">
+                  <div className="flex items-center gap-2">
+                    <span>Padrão do Agente Principal</span>
+                    <Badge variant="secondary" className="text-xs">Recomendado</Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="anthropic/claude-sonnet-4">
+                  <div className="flex items-center justify-between w-full">
+                    <span>Claude Sonnet 4</span>
+                    <Badge variant="outline" className="border-purple-500 text-purple-700 text-xs ml-2">
+                      Premium
+                    </Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="openai/gpt-4o-mini">
+                  <div className="flex items-center justify-between w-full">
+                    <span>GPT-4o Mini</span>
+                    <Badge variant="outline" className="border-blue-500 text-blue-700 text-xs ml-2">
+                      Econômico
+                    </Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="meta-llama/llama-3.1-8b-instruct:free">
+                  <div className="flex items-center justify-between w-full">
+                    <span>Llama 3.1 8B</span>
+                    <Badge variant="outline" className="border-green-500 text-green-700 text-xs ml-2">
+                      FREE
+                    </Badge>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              💡 Use modelos mais baratos para testes ou tarefas simples
+            </p>
           </div>
 
           {/* System Prompt */}

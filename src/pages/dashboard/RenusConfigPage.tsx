@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Zap, Save, Settings, Wrench, BookOpen, Clock, RefreshCw, Shield, Users } from 'lucide-react';
+import { Zap, Save, Settings, Wrench, BookOpen, Clock, RefreshCw, Shield, Users, Sliders } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import InstructionsTab from '@/components/renus-config/InstructionsTab';
@@ -12,6 +12,7 @@ import KnowledgeTab from '@/components/renus-config/KnowledgeTab';
 import TriggersTab from '@/components/renus-config/TriggersTab';
 import GuardrailsTab from '@/components/renus-config/GuardrailsTab';
 import { SubAgentsTab } from '@/components/renus-config/SubAgentsTab';
+import { AdvancedTab } from '@/components/renus-config/AdvancedTab';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -38,7 +39,8 @@ const RenusConfigPage: React.FC = () => {
     { value: 'knowledge', label: 'Conhecimento', icon: BookOpen, component: KnowledgeTab },
     { value: 'triggers', label: 'Gatilhos', icon: Clock, component: TriggersTab },
     { value: 'guardrails', label: 'Guardrails', icon: Shield, component: GuardrailsTab },
-    { value: 'subagents', label: 'Sub-Agentes', icon: Users, component: SubAgentsTab }, // NOVO
+    { value: 'subagents', label: 'Sub-Agentes', icon: Users, component: SubAgentsTab },
+    { value: 'advanced', label: 'Avançado', icon: Sliders, component: AdvancedTab },
   ];
 
   return (
@@ -105,7 +107,7 @@ const RenusConfigPage: React.FC = () => {
         {/* Main Configuration Tabs */}
         <div className="lg:col-span-9">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-7 h-auto p-1 bg-gray-100 dark:bg-gray-800">
+                <TabsList className="grid w-full grid-cols-8 h-auto p-1 bg-gray-100 dark:bg-gray-800">
                     {tabs.map(tab => (
                         <TabsTrigger 
                             key={tab.value} 

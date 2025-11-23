@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ const initialMockAgents: SubAgent[] = [
     isActive: true,
     useFineTuning: false,
     fineTuneStatus: 'none',
+    model: 'openai/gpt-4o-mini',
   },
   {
     id: '2',
@@ -30,6 +31,7 @@ const initialMockAgents: SubAgent[] = [
     isActive: false,
     useFineTuning: false,
     fineTuneStatus: 'none',
+    model: 'default',
   },
   {
     id: '3',
@@ -41,6 +43,7 @@ const initialMockAgents: SubAgent[] = [
     isActive: true,
     useFineTuning: false,
     fineTuneStatus: 'none',
+    model: 'anthropic/claude-sonnet-4',
   }
 ];
 
@@ -61,6 +64,7 @@ export const SubAgentsTab = () => {
     isActive: true,
     useFineTuning: false,
     fineTuneStatus: 'none',
+    model: 'default', // Inicializa com 'default'
   });
 
   const handleOpenModal = (agent?: SubAgent) => {
@@ -78,6 +82,7 @@ export const SubAgentsTab = () => {
         isActive: true,
         useFineTuning: false,
         fineTuneStatus: 'none',
+        model: 'default',
       });
     }
     setIsModalOpen(true);

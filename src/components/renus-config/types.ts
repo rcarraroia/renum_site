@@ -10,4 +10,5 @@ export interface SubAgent {
   fineTuneStatus?: 'none' | 'preparing' | 'training' | 'ready' | 'failed';
   fineTuneModelId?: string;
   trainingExamplesCount?: number;
+  model?: string; // NOVO - modelo de IA específico
 }
