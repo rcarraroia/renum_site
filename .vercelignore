@@ -1,0 +1,9 @@
+backend/
+.gitignore
+README.md
+.claude/
+.kiro/
+.vscode/
+docs/
+AI_RULES.md
+check_users.sql
