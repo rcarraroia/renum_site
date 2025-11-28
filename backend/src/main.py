@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.config.settings import settings
-from src.api.routes import health, auth
+from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages
 from src.utils.logger import logger
 
 
@@ -55,6 +55,12 @@ app.add_middleware(
 # Registrar routers
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(clients.router, prefix="/api")
+app.include_router(leads.router, prefix="/api")
+app.include_router(projects.router, prefix="/api")
+app.include_router(conversations.router, prefix="/api")
+app.include_router(messages.router, prefix="/api")
+app.include_router(websocket.router)  # WebSocket endpoint
 
 
 @app.get("/", tags=["Root"])
