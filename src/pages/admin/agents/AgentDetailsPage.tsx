@@ -2,23 +2,24 @@ import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Zap, Settings, MessageSquare, LayoutDashboard, Terminal, Save, ArrowLeft, Server, BarChart, RefreshCw } from 'lucide-react';
+import { Zap, Settings, MessageSquare, LayoutDashboard, Terminal, Save, ArrowLeft, Server, BarChart, RefreshCw, Edit, Pause, Play, Download, MoreVertical, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link, useParams } from 'react-router-dom';
 import { mockAgents } from '@/mocks/agents.mock';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Configuration Panel
 import ConfigRenusPanel from '@/components/agents/config/ConfigRenusPanel';
 
 // Agent Specific Tabs
 import AgentOverviewTab from '@/components/agents/AgentOverviewTab';
-import AgentInstancesTab from '@/components/agents/InstanceList'; // Using the new InstanceList
+import AgentUsersTab from '@/components/agents/AgentUsersTab'; // Novo componente
 import AgentMetricsTab from '@/components/agents/AgentMetricsTab';
 import AgentLogsTab from '@/components/agents/AgentLogsTab';
-import ApiWebhooksTab from '@/components/agents/ApiWebhooksTab'; // Still needed for the main tabs
+import ApiWebhooksTab from '@/components/agents/ApiWebhooksTab';
 
 const AgentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,16 +30,26 @@ const AgentDetailsPage: React.FC = () => {
   const agent = mockAgents.find(a => a.id === id) || {
     id: 'mock-100',
     name: 'Novo Agente (Mock)',
+    description: 'Agente de fallback para testes.', // Adicionado para satisfazer a interface Agent
     status: 'inativo',
-    version: 'V1.0', // Added version to mock fallback
-    lastPublished: 'N/A'
+    version: 'V1.0',
+    type: 'b2c_individual', // Default mock type
+    created_at: 'N/A',
+    client_id: '1',
+    project_id: '1',
+    category: 'custom',
+    slug: 'mock-agent',
+    domain: 'mock-agent.renum.com.br',
+    channel: ['web'],
+    model: 'gpt-4o-mini',
+    instances_count: 0,
+    conversations_today: 0,
   };
 
   const mainTabs = [
     { value: 'overview', label: 'Visão Geral', icon: LayoutDashboard, component: AgentOverviewTab },
-    { value: 'config', label: 'Configuração', icon: Settings, component: null }, // Special tab for sub-tabs
-    { value: 'api-webhooks', label: 'API & Webhooks', icon: RefreshCw, component: ApiWebhooksTab },
-    { value: 'instances', label: 'Instâncias', icon: Server, component: AgentInstancesTab },
+    { value: 'config', label: 'Configuração', icon: Settings, component: ConfigRenusPanel },
+    { value: 'instances', label: 'Instâncias/Usuários', icon: Users, component: AgentUsersTab },
     { value: 'metrics', label: 'Métricas', icon: BarChart, component: AgentMetricsTab },
     { value: 'logs', label: 'Logs', icon: Terminal, component: AgentLogsTab },
   ];
@@ -51,11 +62,21 @@ const AgentDetailsPage: React.FC = () => {
       toast.success(`Configuração do agente ${agent.name} publicada com sucesso!`);
     }, 1500);
   };
+  
+  const handleToggleStatus = () => {
+    const newStatus = agent.status === 'ativo' ? 'pausado' : 'ativo';
+    toast.info(`Agente ${agent.name} ${newStatus === 'ativo' ? 'ativado' : 'pausado'}. (Mock)`);
+  };
 
-  const ActiveMainComponent = useMemo(() => {
-    const tab = mainTabs.find(t => t.value === activeMainTab);
-    return tab?.component;
-  }, [activeMainTab]);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'ativo': return 'bg-green-500';
+        case 'pausado': return 'bg-yellow-500';
+        case 'inativo': return 'bg-gray-500';
+        case 'erro': return 'bg-red-500';
+        default: return 'bg-gray-500';
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -71,12 +92,45 @@ const AgentDetailsPage: React.FC = () => {
           {agent.name}
         </h2>
         <div className="flex items-center space-x-4">
-            <Badge variant="secondary" className={cn(
-                "transition-colors",
-                agent.status === 'ativo' ? "bg-green-500 text-white" : "bg-red-500 text-white"
+            <Badge className={cn(
+                "transition-colors text-white",
+                getStatusColor(agent.status)
             )}>
                 {agent.status.toUpperCase()} | {agent.version}
             </Badge>
+            
+            {/* Ações Rápidas */}
+            <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleToggleStatus}
+                className={cn(agent.status === 'ativo' ? 'text-red-500 border-red-500 hover:bg-red-50' : 'text-green-500 border-green-500 hover:bg-green-50')}
+            >
+                {agent.status === 'ativo' ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+                {agent.status === 'ativo' ? 'Pausar' : 'Ativar'}
+            </Button>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Ações do Agente</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => toast.info("Abrindo modal de edição...")}>
+                        <Edit className="h-4 w-4 mr-2" /> Editar Detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toast.info("Exportando dados...")}>
+                        <Download className="h-4 w-4 mr-2" /> Exportar Dados
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => toast.warning("Excluindo agente...")} className="text-red-500">
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir Agente
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            
             {activeMainTab === 'config' && (
                 <Button 
                     onClick={handleSaveAndPublish} 
@@ -91,7 +145,7 @@ const AgentDetailsPage: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-gray-100 dark:bg-gray-800">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-gray-100 dark:bg-gray-800">
           {mainTabs.map(tab => (
             <TabsTrigger 
               key={tab.value} 
@@ -107,6 +161,11 @@ const AgentDetailsPage: React.FC = () => {
           ))}
         </TabsList>
 
+        {/* Tab Content: Overview */}
+        <TabsContent value="overview" className="mt-6">
+            <AgentOverviewTab agent={agent} />
+        </TabsContent>
+
         {/* Tab Content: Configuration (Nested Tabs) */}
         <TabsContent value="config" className="mt-6">
             <Card>
@@ -120,12 +179,20 @@ const AgentDetailsPage: React.FC = () => {
             </Card>
         </TabsContent>
 
-        {/* Other Main Tab Contents */}
-        {mainTabs.filter(t => t.value !== 'config').map(tab => (
-            <TabsContent key={tab.value} value={tab.value} className="mt-6">
-                {tab.component && <tab.component />}
-            </TabsContent>
-        ))}
+        {/* Tab Content: Instances/Users */}
+        <TabsContent value="instances" className="mt-6">
+            <AgentUsersTab agentType={agent.type} />
+        </TabsContent>
+
+        {/* Tab Content: Metrics */}
+        <TabsContent value="metrics" className="mt-6">
+            <AgentMetricsTab />
+        </TabsContent>
+
+        {/* Tab Content: Logs */}
+        <TabsContent value="logs" className="mt-6">
+            <AgentLogsTab />
+        </TabsContent>
       </Tabs>
     </DashboardLayout>
   );

@@ -12,7 +12,7 @@ const MOCK_LOGS = `[2025-01-20 14:30:01] INFO: Conversation conv-123 started via
 const AgentLogsTab: React.FC = () => {
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center"><Terminal className="h-5 w-5 mr-2" /> Logs de Execução</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="flex items-center text-[#4e4ea8]"><Terminal className="h-5 w-5 mr-2" /> Logs de Execução</CardTitle></CardHeader>
       <CardContent>
         <Textarea 
           readOnly 
