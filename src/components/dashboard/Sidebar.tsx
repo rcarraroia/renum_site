@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import RenumLogo from '@/components/RenumLogo';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge'; // Importando Badge
 
 interface NavItem {
   title: string;
@@ -19,14 +20,12 @@ const adminNavItems: NavItem[] = [
   { title: 'Projetos', href: '/dashboard/admin/projects', icon: Briefcase, roles: ['admin'] },
   { title: 'Leads', href: '/dashboard/admin/leads', icon: UserPlus, roles: ['admin'] },
   { title: 'Clientes', href: '/dashboard/admin/clients', icon: Users, roles: ['admin'] },
-  { title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] },
-  { title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] },
 ];
 
 const adminAgentItems: NavItem[] = [
   { title: 'Todos os Agentes', href: '/dashboard/admin/agents', icon: Zap, roles: ['admin'] },
   { title: 'Criar Novo', href: '/dashboard/admin/agents/create', icon: Plus, roles: ['admin'] },
-  { title: 'Config. Global', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] },
+  { title: 'Templates (Mock)', href: '/dashboard/admin/agents/templates', icon: FileText, roles: ['admin'] },
 ];
 
 const adminPesquisaItems: NavItem[] = [
@@ -51,6 +50,9 @@ const commonNavItems: NavItem[] = [
 const Sidebar: React.FC = () => {
   const { role } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // Mock data for active agents count
+  const activeAgentsCount = 3; 
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
@@ -64,8 +66,39 @@ const Sidebar: React.FC = () => {
           className={cn(
             "flex items-center rounded-md p-3 text-sm font-medium transition-colors",
             "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-gray-800",
-            isCollapsed ? "justify-center" : "justify-start"
+            isCollapsed ? "justify-center" : "justify-start",
+            item.title.includes('(Mock)') && 'opacity-60 cursor-not-allowed'
           )}
+          onClick={(e) => item.title.includes('(Mock)') && e.preventDefault()}
+        >
+          <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+          {!isCollapsed && item.title}
+        </Link>
+      ))}
+    </div>
+  );
+  
+  const renderAgentGroup = () => (
+    <div className="space-y-1">
+      {!isCollapsed && (
+        <h3 className="text-xs font-semibold uppercase text-sidebar-foreground/70 px-3 pt-2 pb-1 flex items-center justify-between">
+          Agentes
+          <Badge variant="secondary" className="bg-[#FF6B35] text-white text-xs h-4">
+            {activeAgentsCount}
+          </Badge>
+        </h3>
+      )}
+      {adminAgentItems.map((item) => (
+        <Link
+          key={item.title}
+          to={item.href}
+          className={cn(
+            "flex items-center rounded-md p-3 text-sm font-medium transition-colors",
+            "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-gray-800",
+            isCollapsed ? "justify-center" : "justify-start",
+            item.title.includes('(Mock)') && 'opacity-60 cursor-not-allowed'
+          )}
+          onClick={(e) => item.title.includes('(Mock)') && e.preventDefault()}
         >
           <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
           {!isCollapsed && item.title}
@@ -99,9 +132,16 @@ const Sidebar: React.FC = () => {
         {role === 'admin' ? (
           <>
             {renderNavGroup(adminNavItems, 'Geral')}
-            {renderNavGroup(adminAgentItems, 'Agentes de IA')}
+            
+            {/* Novo Grupo de Agentes */}
+            {renderAgentGroup()}
+            
+            {renderNavGroup([{ title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] }], 'Comunicação')}
+            
             {renderNavGroup(adminPesquisaItems, 'Pesquisas')}
+            {renderNavGroup([{ title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] }], 'Análise')}
             {renderNavGroup([{ title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] }], 'Ferramentas')}
+            {renderNavGroup([{ title: 'Config. Global', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] }], 'Sistema')}
           </>
         ) : (
           renderNavGroup(clientNavItems, 'Geral')

@@ -66,15 +66,17 @@ const App = () => (
                   <Route path="/dashboard/admin/projects" element={<AdminProjectsPage />} />
                   <Route path="/dashboard/admin/leads" element={<AdminLeadsPage />} />
                   <Route path="/dashboard/admin/clients" element={<AdminClientsPage />} />
-                  <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
-                  <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
                   
-                  {/* New Agent Routes */}
+                  {/* Agent Routes */}
                   <Route path="/dashboard/admin/agents" element={<AgentsListPage />} />
                   <Route path="/dashboard/admin/agents/create" element={<AgentCreatePage />} />
                   <Route path="/dashboard/admin/agents/:id" element={<AgentDetailsPage />} />
+                  <Route path="/dashboard/admin/agents/templates" element={<AdminOverview />} /> {/* Mock route for templates */}
                   
-                  {/* Global Config (Moved from /agents/:id) */}
+                  <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
+                  <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
+                  
+                  {/* Global Config */}
                   <Route path="/dashboard/admin/renus-config" element={<RenusConfigPage />} />
                   
                   <Route path="/dashboard/admin/pesquisas/entrevistas" element={<PesquisasEntrevistasPage />} />
