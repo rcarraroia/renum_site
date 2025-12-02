@@ -41,6 +41,10 @@ const AgentWizard: React.FC = () => {
   const [isDeploying, setIsDeploying] = useState(false);
   const navigate = useNavigate();
 
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
   const CurrentStepComponent = useMemo(() => {
     switch (currentStep) {
       case 1:
@@ -52,7 +56,7 @@ const AgentWizard: React.FC = () => {
       case 4:
         return <Step4ConfigRenus formData={formData} setFormData={setFormData} onValidate={() => true} />;
       case 5:
-        return <Step5Review formData={formData} onDeploy={handleDeploy} />;
+        return <Step5Review formData={formData} onDeploy={handleDeploy} onBack={handleBack} />;
       default:
         return null;
     }
@@ -101,9 +105,6 @@ const AgentWizard: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
 
   const handleDeploy = () => {
     setIsDeploying(true);
