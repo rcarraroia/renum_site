@@ -1,7 +1,9 @@
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Zap, Users, Briefcase, MessageSquare } from 'lucide-react';
+import { Zap, Users, Briefcase, MessageSquare, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const AdminOverview: React.FC = () => {
   const metrics = [
@@ -43,7 +45,14 @@ const AdminOverview: React.FC = () => {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Atividades Recentes</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+                Atividades Recentes
+                <Link to="/dashboard/admin/agents/a1">
+                    <Button variant="outline" size="sm" className="text-xs">
+                        <Settings className="h-3 w-3 mr-1" /> Configurar Agente
+                    </Button>
+                </Link>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-sm">
