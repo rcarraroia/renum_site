@@ -19,6 +19,7 @@ export interface Agent {
   instances_count: number;
   conversations_today: number;
   created_at: string; // Date string
+  version: string; // Added version property
 }
 
 export interface ProjectMock {
@@ -50,7 +51,7 @@ export interface ModelMock {
 }
 
 export interface CategoryMock {
-  id: AgentCategory;
+  id: AgentCategory; // Changed type to AgentCategory
   name: string;
   icon: string;
 }

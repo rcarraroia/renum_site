@@ -30,7 +30,7 @@ const AgentDetailsPage: React.FC = () => {
     id: 'mock-100',
     name: 'Novo Agente (Mock)',
     status: 'inativo',
-    version: 'V1.0',
+    version: 'V1.0', // Added version to mock fallback
     lastPublished: 'N/A'
   };
 

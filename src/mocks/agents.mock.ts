@@ -1,3 +1,5 @@
+import { Agent, CategoryMock } from "@/types/agent";
+
 export const mockProjects = [
   { id: "1", name: "Pacote Enterprise Slim", client_id: "1", agents_limit: 10 },
   { id: "2", name: "Pacote MMN Discovery", client_id: "2", agents_limit: 5 },
@@ -10,7 +12,7 @@ export const mockClients = [
   { id: "3", name: "COMADEMIG", type: "b2b_empresa", slug: "comademig" }
 ]
 
-export const mockAgents = [
+export const mockAgents: Agent[] = [
   {
     id: "1",
     name: "Agente de Vendas Slim",
@@ -26,7 +28,8 @@ export const mockAgents = [
     status: "ativo",
     instances_count: 47,
     conversations_today: 123,
-    created_at: "2025-11-15"
+    created_at: "2025-11-15",
+    version: "V1.2"
   },
   {
     id: "2",
@@ -43,7 +46,8 @@ export const mockAgents = [
     status: "ativo",
     instances_count: 0,
     conversations_today: 8,
-    created_at: "2025-11-20"
+    created_at: "2025-11-20",
+    version: "V1.0"
   }
 ]
 
@@ -61,7 +65,7 @@ export const mockModels = [
   { id: "claude-3-haiku", name: "Claude 3 Haiku", provider: "Anthropic", cost: "$$", description: "Rápido e econômico" }
 ]
 
-export const mockCategories = [
+export const mockCategories: CategoryMock[] = [
   { id: "discovery", name: "Discovery (Entrevistas)", icon: "🔍" },
   { id: "vendas", name: "Vendas", icon: "💼" },
   { id: "suporte", name: "Suporte", icon: "🎧" },
