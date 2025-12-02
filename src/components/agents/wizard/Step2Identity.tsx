@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Zap, User, Globe, MessageSquare } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Zap, User, Globe, MessageSquare, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { mockCategories, mockAgents } from '@/mocks/agents.mock';
+import { AgentCategory } from '@/types/agent';
+import { toast } from 'sonner';
 
 interface Step2IdentityProps {
   formData: any;
@@ -13,9 +17,34 @@ interface Step2IdentityProps {
 }
 
 const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData, onValidate }) => {
+  const MAX_DESCRIPTION_LENGTH = 500;
+  const [slugStatus, setSlugStatus] = useState<'checking' | 'available' | 'unavailable' | 'initial'>('initial');
+
+  // Mock function to check slug availability
+  const checkSlugAvailability = (slug: string) => {
+    if (slug.length < 3) return 'initial';
+    // Check against mock agents (excluding the current agent if editing, though we don't have edit context here)
+    const isDuplicate = mockAgents.some(agent => agent.slug === slug);
+    return isDuplicate ? 'unavailable' : 'available';
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const status = checkSlugAvailability(formData.slug);
+      setSlugStatus(status);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [formData.slug]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData({ ...formData, [id]: value });
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    setFormData({ ...formData, name: name, slug: slug });
   };
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,8 +53,30 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData, on
     setFormData({ ...formData, slug: slug });
   };
 
-  const domainPrefix = formData.slug || 'novo-agente';
-  const fullDomain = `${domainPrefix}.renum.com.br`;
+  const getSlugIcon = () => {
+    switch (slugStatus) {
+      case 'available':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'unavailable':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getSlugMessage = () => {
+    if (formData.slug.length < 3) return "Mínimo de 3 caracteres.";
+    switch (slugStatus) {
+      case 'available':
+        return <span className="text-green-500 flex items-center"><CheckCircle className="h-4 w-4 mr-1" /> Disponível</span>;
+      case 'unavailable':
+        return <span className="text-red-500 flex items-center"><XCircle className="h-4 w-4 mr-1" /> Já existe</span>;
+      default:
+        return "Este será o endereço de acesso do cliente.";
+    }
+  };
+
+  const fullDomain = `${formData.slug || 'novo-agente'}.renum.com.br`;
 
   return (
     <div className="space-y-6">
@@ -44,71 +95,83 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData, on
             <Label htmlFor="name">Nome do Agente *</Label>
             <Input
               id="name"
-              placeholder="Ex: Agente de Vendas Slim"
+              placeholder="Ex: Agente de Vendas Slim Quality"
               value={formData.name || ''}
-              onChange={handleInputChange}
+              onChange={handleNameChange}
             />
+            <p className="text-xs text-muted-foreground">
+              Escolha um nome descritivo que identifique o nicho e tipo.
+            </p>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description" className="flex justify-between">
+                <span>Descrição (interna):</span>
+                <span className="text-xs text-muted-foreground">{formData.description?.length || 0}/{MAX_DESCRIPTION_LENGTH}</span>
+            </Label>
             <Textarea
               id="description"
-              placeholder="Breve resumo das capacidades e objetivo principal do agente."
+              placeholder="Breve descrição do objetivo e público-alvo deste agente..."
               rows={3}
               value={formData.description || ''}
               onChange={handleInputChange}
+              maxLength={MAX_DESCRIPTION_LENGTH}
             />
+          </div>
+
+          {/* Category (Reusing from Step 1, but placing here as requested) */}
+          <div className="space-y-2">
+            <Label htmlFor="category" className="flex items-center"><Tag className="h-4 w-4 mr-2" /> Categoria/Nicho *</Label>
+            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v as AgentCategory })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {mockCategories.map(c => (
+                  <SelectItem key={c.id} value={c.id}>
+                      <div className="flex items-center">
+                          <span className="mr-2">{c.icon}</span> {c.name}
+                      </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Slug */}
           <div className="space-y-2">
-            <Label htmlFor="slug">Identificador Único (Slug) *</Label>
-            <Input
-              id="slug"
-              placeholder="ex: slim-vendas"
-              value={formData.slug || ''}
-              onChange={handleSlugChange}
-            />
-            <p className="text-xs text-muted-foreground">
-              Usado para URLs e APIs. Deve ser único e em minúsculas.
-            </p>
+            <Label htmlFor="slug">Slug (subdomínio): *</Label>
+            <div className="flex items-center space-x-2">
+                <Input
+                    id="slug"
+                    placeholder="slim-vendas"
+                    value={formData.slug || ''}
+                    onChange={handleSlugChange}
+                    className="flex-grow"
+                />
+                <span className="text-sm text-muted-foreground flex-shrink-0">.renum.com.br</span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <p>{getSlugMessage()}</p>
+                {getSlugIcon()}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center text-[#FF6B35]">
-            <Globe className="h-5 w-5 mr-2" /> Domínio e Endpoint
+      {/* Preview Box */}
+      <Card className="bg-gray-50 dark:bg-gray-800 border-l-4 border-[#FF6B35]">
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base flex items-center text-[#FF6B35]">
+            <Globe className="h-4 w-4 mr-2" /> Preview de Acesso
           </CardTitle>
-          <CardDescription>
-            Onde o agente será acessível (URL de teste e API).
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="domain">Domínio de Teste</Label>
-            <Input
-              id="domain"
-              readOnly
-              value={fullDomain}
-              className="font-mono bg-gray-100 dark:bg-gray-700"
-            />
-            <p className="text-xs text-muted-foreground">
-              Este é o link para o ambiente de teste do seu agente.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="api_endpoint">Endpoint da API (Mock)</Label>
-            <Input
-              id="api_endpoint"
-              readOnly
-              value={`/api/v1/agents/${domainPrefix}`}
-              className="font-mono bg-gray-100 dark:bg-gray-700"
-            />
-          </div>
+        <CardContent className="p-4 pt-0">
+          <p className="text-sm text-muted-foreground">Seu agente será acessível em:</p>
+          <p className="font-mono text-sm text-primary dark:text-white break-all mt-1">
+            https://{fullDomain}
+          </p>
         </CardContent>
       </Card>
     </div>

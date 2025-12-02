@@ -10,7 +10,7 @@ import Step4ConfigRenus from './Step4ConfigRenus';
 import Step5Review from './Step5Review';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { mockProjects, mockClients } from '@/mocks/agents.mock';
+import { mockProjects, mockClients, mockAgents } from '@/mocks/agents.mock';
 
 const steps = [
   'Projeto & Cliente',
@@ -23,7 +23,8 @@ const steps = [
 const initialFormData = {
     project_id: mockProjects[0].id,
     client_id: mockProjects[0].client_id,
-    type: mockClients.find(c => c.id === mockProjects[0].client_id)?.type || 'b2b_empresa',
+    // Novo campo para o tipo de contrato
+    contract_type: mockClients.find(c => c.id === mockProjects[0].client_id)?.type || 'b2b_empresa', 
     category: 'discovery',
     name: '',
     description: '',
@@ -60,15 +61,24 @@ const AgentWizard: React.FC = () => {
   const validateStep = () => {
     switch (currentStep) {
       case 1:
-        if (!formData.project_id || !formData.client_id || !formData.category) {
-          toast.error("Selecione o projeto, cliente e categoria.");
+        if (!formData.project_id || !formData.client_id || !formData.category || !formData.contract_type) {
+          toast.error("Selecione o projeto, cliente, tipo de contrato e categoria.");
           return false;
         }
         return true;
       case 2:
-        if (!formData.name || !formData.slug) {
-          toast.error("Nome e Slug do agente são obrigatórios.");
+        if (!formData.name || formData.name.length < 3) {
+          toast.error("Nome do agente deve ter no mínimo 3 caracteres.");
           return false;
+        }
+        if (!formData.slug || formData.slug.length < 3) {
+          toast.error("Slug é obrigatório e deve ter no mínimo 3 caracteres.");
+          return false;
+        }
+        // Mock slug check (assuming Step2Identity handles real-time feedback)
+        if (mockAgents.some(agent => agent.slug === formData.slug)) {
+            toast.error("O Slug escolhido já está em uso.");
+            return false;
         }
         return true;
       case 3:
