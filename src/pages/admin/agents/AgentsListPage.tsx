@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Zap, Plus, Users, Briefcase, MessageSquare, Server, TrendingUp } from 'lucide-react';
+import { Zap, Plus, Users, Briefcase, MessageSquare, Server, TrendingUp, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { mockAgents, mockProjects } from '@/mocks/agents.mock';
@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 const AgentsListPage: React.FC = () => {
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
   const [filters, setFilters] = useState({ search: '', status: 'all', client: 'all', category: 'all' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const filteredAgents = useMemo(() => {
     return agents.filter(agent => {
@@ -28,6 +30,13 @@ const AgentsListPage: React.FC = () => {
       return matchesSearch && matchesStatus && matchesClient && matchesCategory;
     });
   }, [agents, filters]);
+
+  const paginatedAgents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAgents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAgents, currentPage]);
+
+  const totalPages = Math.ceil(filteredAgents.length / itemsPerPage);
 
   const metrics = useMemo(() => ({
     total: agents.length,
@@ -117,7 +126,7 @@ const AgentsListPage: React.FC = () => {
         Lista de Agentes ({filteredAgents.length})
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAgents.map(agent => (
+        {paginatedAgents.map(agent => (
           <AgentCard 
             key={agent.id} 
             agent={agent} 
@@ -132,6 +141,31 @@ const AgentsListPage: React.FC = () => {
             </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-end items-center space-x-4 mt-6">
+            <span className="text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+            </span>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+            >
+                <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+            >
+                <ArrowRight className="h-4 w-4" />
+            </Button>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

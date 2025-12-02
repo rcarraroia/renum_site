@@ -2,11 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, MessageSquare, Globe, ChevronDown, ChevronUp, Users, Zap, Server, TrendingUp, Clock, ArrowRight, Settings } from 'lucide-react';
+import { Edit, Trash2, MessageSquare, Globe, ChevronDown, ChevronUp, Users, Zap, Server, TrendingUp, Clock, ArrowRight, Settings, MoreVertical, Copy, Pause, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Agent, AgentStatus, AgentCategory, AgentChannel, CategoryMock } from '@/types/agent';
-import { mockCategories } from '@/mocks/agents.mock';
+import { mockCategories, mockClients, mockProjects } from '@/mocks/agents.mock';
 import { Link } from 'react-router-dom';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 interface AgentCardProps {
   agent: Agent;
@@ -16,7 +18,7 @@ interface AgentCardProps {
 
 const getStatusBadge = (status: AgentStatus) => {
     switch (status) {
-        case 'ativo': return <Badge className="bg-green-500 text-white">Ativo</Badge>;
+        case 'ativo': return <Badge className="bg-green-600 text-white">Ativo</Badge>;
         case 'inativo': return <Badge variant="secondary">Inativo</Badge>;
         case 'pausado': return <Badge className="bg-yellow-500 text-gray-900">Pausado</Badge>;
         case 'erro': return <Badge className="bg-red-500 text-white">Erro</Badge>;
@@ -27,15 +29,32 @@ const getCategoryInfo = (category: AgentCategory): CategoryMock | undefined => {
     return mockCategories.find(c => c.id === category);
 };
 
+const getAgentTypeLabel = (type: string) => {
+    switch (type) {
+        case 'b2b_empresa': return 'B2B';
+        case 'b2c_marketplace': return 'B2C';
+        case 'b2c_individual': return 'B2C';
+        default: return 'Custom';
+    }
+};
+
 const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
   const categoryInfo = getCategoryInfo(agent.category);
+  const client = mockClients.find(c => c.id === agent.client_id);
+  const project = mockProjects.find(p => p.id === agent.project_id);
+
+  const handleToggleStatus = () => {
+    // Mock action
+    const newStatus = agent.status === 'ativo' ? 'pausado' : 'ativo';
+    toast.info(`Agente ${agent.name} ${newStatus === 'ativo' ? 'ativado' : 'pausado'}.`);
+  };
 
   return (
     <Card 
       className={cn(
-        "transition-all hover:shadow-lg h-full flex flex-col",
+        "transition-all hover:shadow-xl hover:scale-[1.01] h-full flex flex-col",
         agent.status === 'ativo' 
-          ? "border-[#0ca7d2]" 
+          ? "border-2 border-[#0ca7d2]" 
           : "border-dashed opacity-80"
       )}
     >
@@ -46,23 +65,31 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
               {agent.name}
             </CardTitle>
             <CardDescription className="text-sm line-clamp-2">
-              {agent.description}
+              {client?.name} / {project?.name}
             </CardDescription>
           </div>
-          {getStatusBadge(agent.status)}
+          <div className="flex flex-col items-end space-y-1">
+            {getStatusBadge(agent.status)}
+            <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-700">
+                {getAgentTypeLabel(agent.type)}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-3 flex-grow">
-        {/* Category and Model */}
+        {/* Category and Domain */}
         <div className="flex items-center gap-2 text-sm">
           <Zap className="h-4 w-4 text-[#FF6B35]" />
           <span className="font-medium">{categoryInfo?.name || 'Custom'}</span>
-          <Badge variant="outline" className="text-xs">{agent.model}</Badge>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Globe className="h-4 w-4" />
+            <span className="font-mono text-xs truncate">{agent.domain}</span>
         </div>
 
         {/* Channels */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm pt-2 border-t dark:border-gray-800">
           <MessageSquare className="h-4 w-4 text-[#4e4ea8]" />
           <span className="text-muted-foreground">Canais:</span>
           {agent.channel.map(c => (
@@ -71,7 +98,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t dark:border-gray-800">
+        <div className="grid grid-cols-2 gap-2 text-sm pt-2">
             <div className="flex items-center gap-1">
                 <Server className="h-4 w-4 text-green-500" />
                 <span className="text-muted-foreground">Instâncias:</span>
@@ -95,20 +122,35 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
                 Configurar
             </Button>
         </Link>
+        
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onEdit(agent)}
+          onClick={handleToggleStatus}
         >
-          <Edit className="h-3 w-3" />
+          {agent.status === 'ativo' ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
         </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => onDelete(agent.id)}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
+
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <MoreVertical className="h-3 w-3" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onEdit(agent)}>
+                    <Edit className="h-4 w-4 mr-2" /> Editar Detalhes
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info(`Clonando agente ${agent.name}...`)}>
+                    <Copy className="h-4 w-4 mr-2" /> Clonar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onDelete(agent.id)} className="text-red-500">
+                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </CardFooter>
     </Card>
   );
