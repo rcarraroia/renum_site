@@ -1,0 +1,143 @@
+"""
+ISA (Intelligent System Assistant) Routes
+Rotas para interação com o assistente administrativo
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from typing import List, Dict, Any
+from datetime import datetime
+
+from src.api.middleware.auth_middleware import get_current_user
+from src.utils.logger import logger
+from src.agents.isa import IsaAgent
+from src.services.isa_command_service import IsaCommandService
+
+
+router = APIRouter(prefix="/isa", tags=["ISA"])
+
+# Inicializar ISA Agent (singleton)
+isa_agent = None
+
+def get_isa_agent() -> IsaAgent:
+    """Get or create ISA Agent instance"""
+    global isa_agent
+    if isa_agent is None:
+        isa_agent = IsaAgent()
+    return isa_agent
+
+
+class IsaChatRequest(BaseModel):
+    """Request para chat com ISA"""
+    message: str
+
+
+class IsaChatResponse(BaseModel):
+    """Response do chat com ISA"""
+    message: str
+    command_executed: bool = False
+    result: Dict[str, Any] = {}
+
+
+@router.post("/chat", response_model=IsaChatResponse)
+async def chat_with_isa(
+    request: IsaChatRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Envia mensagem para ISA e recebe resposta.
+    
+    Apenas admins podem usar ISA.
+    """
+    # Verificar se é admin
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can use ISA"
+        )
+    
+    try:
+        logger.info(f"ISA chat request from admin {current_user.get('id')}: {request.message}")
+        
+        # Processar com ISA Agent real
+        agent = get_isa_agent()
+        command_service = IsaCommandService()
+        
+        # Invocar agente com mensagem
+        result = await agent.invoke({
+            "messages": [{"role": "user", "content": request.message}],
+            "user_id": current_user.get("id")
+        })
+        
+        # Extrair resposta e dados
+        response_text = result.get("response", "Desculpe, não consegui processar sua solicitação.")
+        command_executed = result.get("executed", False)
+        command_data = result.get("data", {})
+        
+        # Salvar comando para auditoria
+        try:
+            await command_service.create({
+                "admin_id": current_user.get("id"),
+                "user_message": request.message,
+                "assistant_response": response_text,
+                "command_executed": command_executed,
+                "result": command_data
+            })
+        except Exception as audit_error:
+            logger.warning(f"Failed to save ISA command audit: {audit_error}")
+        
+        return IsaChatResponse(
+            message=response_text,
+            command_executed=command_executed,
+            result=command_data
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in ISA chat: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"ISA error: {str(e)}"
+        )
+
+
+@router.get("/history")
+async def get_isa_history(
+    current_user: dict = Depends(get_current_user),
+    limit: int = 50
+):
+    """
+    Retorna histórico de comandos ISA executados.
+    
+    Apenas admins podem acessar.
+    """
+    # Verificar se é admin
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can access ISA history"
+        )
+    
+    try:
+        from src.config.supabase import supabase_admin
+        
+        logger.info(f"ISA history request from admin {current_user.get('id')}")
+        
+        # Buscar comandos do admin atual
+        response = supabase_admin.table('isa_commands')\
+            .select('*')\
+            .eq('admin_id', current_user.get('id'))\
+            .order('created_at', desc=True)\
+            .limit(limit)\
+            .execute()
+        
+        return {
+            "commands": response.data or [],
+            "total": len(response.data) if response.data else 0
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching ISA history: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching ISA history: {str(e)}"
+        )
