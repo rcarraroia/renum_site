@@ -1,159 +1,284 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea'; // Adicionando Textarea
-import { Zap, Mail, Calendar, MessageSquare, Database, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { Zap, Mail, Calendar, MessageSquare, Database, CheckCircle, XCircle, RefreshCw, Settings, Edit, Globe, ArrowUpCircle, Clock, Link, Phone, Wrench } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import WhatsappConfigModal from './modals/WhatsappConfigModal.tsx';
+import GmailConfigModal from './modals/GmailConfigModal.tsx';
+import WorkspaceConfigModal from './modals/WorkspaceConfigModal.tsx';
+import ComposioConfigModal from './modals/ComposioConfigModal.tsx';
+import SmtpCustomConfigModal from './modals/SmtpCustomConfigModal.tsx';
 
-interface Integration {
+interface IntegrationConfig {
   name: string;
   icon: React.ElementType;
   status: 'connected' | 'disconnected' | 'pending';
   color: string;
-  configFields: { label: string; key: string; type: string; placeholder: string }[];
+  provider: string;
+  details: string[];
+  modalType: 'whatsapp' | 'gmail' | 'workspace' | 'composio' | 'smtp' | 'none';
+  configData: any;
 }
 
-const MOCK_INTEGRATIONS: Integration[] = [
+const MOCK_INTEGRATIONS: IntegrationConfig[] = [
   {
-    name: 'WhatsApp Business API',
+    name: 'WhatsApp Business',
     icon: MessageSquare,
     status: 'connected',
-    color: 'text-green-500',
-    configFields: [
-      { label: 'Token de Acesso', key: 'wa_token', type: 'password', placeholder: 'WA-XXXXX' },
-      { label: 'ID do Número', key: 'wa_id', type: 'text', placeholder: '123456789' },
-    ],
+    color: 'text-green-600',
+    provider: 'Uazapi',
+    details: ['Configurado em: 14/11/2025', 'Phone: +55 11 99999-9999', 'Permite: Envio/Recebimento'],
+    modalType: 'whatsapp',
+    configData: { token: 'WA-XXXXX', url: 'https://api.uazapi.com', phoneId: '5511999999999', isConnected: true },
   },
   {
-    name: 'Email SMTP',
+    name: 'Gmail / Email',
+    icon: Mail,
+    status: 'connected',
+    color: 'text-red-600',
+    provider: 'Composio / Gmail API',
+    details: ['Email conectado: vendas@slim.com', 'Permite: Enviar emails automáticos'],
+    modalType: 'gmail',
+    configData: { method: 'oauth', email: 'vendas@slim.com', host: '', port: '', password: '', isConnected: true },
+  },
+  {
+    name: 'Google Workspace',
+    icon: Globe,
+    status: 'pending',
+    color: 'text-yellow-600',
+    provider: 'Composio',
+    details: ['Apps conectados: Docs, Sheets, Calendar'],
+    modalType: 'workspace',
+    configData: { apps: ['docs', 'sheets', 'calendar'], isConnected: false },
+  },
+  {
+    name: 'Composio Platform',
+    icon: Zap,
+    status: 'disconnected',
+    color: 'text-purple-600',
+    provider: '500+ apps disponíveis',
+    details: ['Slack, GitHub, Notion, Airtable, Salesforce, HubSpot, Linear e +'],
+    modalType: 'composio',
+    configData: { apiKey: '', entityId: '', isConnected: false },
+  },
+  {
+    name: 'Servidor SMTP Custom',
     icon: Mail,
     status: 'disconnected',
-    color: 'text-red-500',
-    configFields: [
-      { label: 'Servidor SMTP', key: 'smtp_server', type: 'text', placeholder: 'smtp.renum.tech' },
-      { label: 'Porta', key: 'smtp_port', type: 'number', placeholder: '587' },
-      { label: 'Senha', key: 'smtp_password', type: 'password', placeholder: '••••••••' },
-    ],
+    color: 'text-gray-600',
+    provider: 'SendGrid, Mailgun, custom',
+    details: ['Envio de emails transacionais e notificações do sistema'],
+    modalType: 'smtp',
+    configData: { host: '', port: '', email: '', password: '', useTls: true, isConnected: false },
   },
-  {
-    name: 'Google Calendar',
-    icon: Calendar,
-    status: 'pending',
-    color: 'text-yellow-500',
-    configFields: [
-      { label: 'Chave API', key: 'cal_api', type: 'password', placeholder: 'G-XXXXX' },
-      { label: 'ID do Calendário', key: 'cal_id', type: 'text', placeholder: 'consultoria@renum.tech' },
-    ],
-  },
-  {
-    name: 'CRM (Mock DB)',
-    icon: Database,
-    status: 'connected',
-    color: 'text-green-500',
-    configFields: [
-      { label: 'Endpoint', key: 'crm_endpoint', type: 'text', placeholder: 'https://api.crm.com/v1' },
-      { label: 'Chave Secreta', key: 'crm_secret', type: 'password', placeholder: 'S-XXXXX' },
-    ],
-  },
+];
+
+const FUTURE_INTEGRATIONS = [
+    { name: 'Telegram', icon: MessageSquare, color: 'text-blue-400' },
+    { name: 'SMS (Twilio)', icon: MessageSquare, color: 'text-orange-400' },
+    { name: 'Voice (Chamadas)', icon: Phone, color: 'text-green-400' },
+    { name: 'Zapier', icon: Zap, color: 'text-red-400' },
+    { name: 'Make.com', icon: Wrench, color: 'text-yellow-400' },
 ];
 
 const IntegrationsTab: React.FC = () => {
   const [integrations, setIntegrations] = useState(MOCK_INTEGRATIONS);
-  const [configData, setConfigData] = useState<Record<string, string>>({});
-  const [isTesting, setIsTesting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationConfig | null>(null);
+  
+  // Mock agent slug for webhook URL generation
+  const agentSlug = 'slim-vendas'; 
 
-  const handleTestConnection = (name: string, status: Integration['status']) => {
-    setIsTesting(true);
-    toast.info(`Testando conexão com ${name}...`);
-    setTimeout(() => {
-      setIsTesting(false);
-      const newStatus = status === 'connected' ? 'disconnected' : 'connected';
-      setIntegrations(integrations.map(i => (i.name === name ? { ...i, status: newStatus } : i)));
-      toast.success(`Conexão com ${name} ${newStatus === 'connected' ? 'restabelecida!' : 'falhou.'}`);
-    }, 1500);
+  const handleOpenModal = (integration: IntegrationConfig) => {
+    setSelectedIntegration(integration);
+    setIsModalOpen(true);
   };
 
-  const getStatusIcon = (status: Integration['status']) => {
+  const handleSaveConfig = (updatedConfig: any) => {
+    if (!selectedIntegration) return;
+
+    const newStatus = updatedConfig.isConnected || updatedConfig.email || updatedConfig.apiKey ? 'connected' : 'disconnected';
+    
+    setIntegrations(prev => prev.map(i => 
+      i.name === selectedIntegration.name 
+        ? { 
+            ...i, 
+            status: newStatus, 
+            configData: updatedConfig,
+            details: i.modalType === 'gmail' && updatedConfig.email ? [`Email conectado: ${updatedConfig.email}`, ...i.details.slice(1)] : i.details,
+        } 
+        : i
+    ));
+    setIsModalOpen(false);
+  };
+
+  const getStatusIcon = (status: IntegrationConfig['status']) => {
     switch (status) {
       case 'connected':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'disconnected':
         return <XCircle className="h-5 w-5 text-red-500" />;
       case 'pending':
-        return <RefreshCw className="h-5 w-5 text-yellow-500 animate-spin" />;
+        return <Clock className="h-5 w-5 text-yellow-500" />;
+    }
+  };
+
+  const getStatusLabel = (status: IntegrationConfig['status']) => {
+    switch (status) {
+      case 'connected': return 'Configurado';
+      case 'disconnected': return 'Não Configurado';
+      case 'pending': return 'Parcialmente Configurado';
+    }
+  };
+  
+  const renderModal = () => {
+    if (!selectedIntegration) return null;
+
+    switch (selectedIntegration.modalType) {
+      case 'whatsapp':
+        return (
+          <WhatsappConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialConfig={selectedIntegration.configData}
+            onSave={handleSaveConfig}
+            agentSlug={agentSlug}
+          />
+        );
+      case 'gmail':
+        return (
+          <GmailConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialConfig={selectedIntegration.configData}
+            onSave={handleSaveConfig}
+          />
+        );
+      case 'workspace':
+        return (
+          <WorkspaceConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialApps={selectedIntegration.configData.apps}
+            onSave={(apps) => handleSaveConfig({ ...selectedIntegration.configData, apps, isConnected: apps.length > 0 })}
+          />
+        );
+      case 'composio':
+        return (
+          <ComposioConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialConfig={selectedIntegration.configData}
+            onSave={handleSaveConfig}
+          />
+        );
+      case 'smtp':
+        return (
+          <SmtpCustomConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialConfig={selectedIntegration.configData}
+            onSave={handleSaveConfig}
+          />
+        );
+      default:
+        return null;
     }
   };
 
   return (
     <div className="space-y-8">
-      <div className="grid md:grid-cols-2 gap-6">
-        {integrations.map((integration, index) => (
-          <Card key={index} className={cn(
-            "border-l-4",
-            integration.status === 'connected' && 'border-green-500',
-            integration.status === 'disconnected' && 'border-red-500',
-            integration.status === 'pending' && 'border-yellow-500',
-          )}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <integration.icon className={cn("h-5 w-5 mr-2", integration.color)} />
-                {integration.name}
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                {getStatusIcon(integration.status)}
-                <span className="text-sm font-medium capitalize">
-                  {integration.status === 'connected' ? 'Conectado' : integration.status === 'disconnected' ? 'Desconectado' : 'Pendente'}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              {integration.configFields.map(field => (
-                <div key={field.key}>
-                  <Label htmlFor={field.key}>{field.label}</Label>
-                  <Input
-                    id={field.key}
-                    type={field.type}
-                    placeholder={field.placeholder}
-                    value={configData[field.key] || ''}
-                    onChange={(e) => setConfigData({ ...configData, [field.key]: e.target.value })}
-                  />
-                </div>
-              ))}
-              <Button 
-                className="w-full bg-[#FF6B35] hover:bg-[#e55f30]"
-                onClick={() => handleTestConnection(integration.name, integration.status)}
-                disabled={isTesting}
-              >
-                {isTesting ? 'Testando...' : 'Salvar e Testar Conexão'}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle className="text-[#0ca7d2]">Configuração de Templates (Mock)</CardTitle>
-          <CardDescription>Gerencie os templates de mensagens para WhatsApp e Email.</CardDescription>
+          <CardTitle className="flex items-center text-[#4e4ea8]">
+            <RefreshCw className="h-5 w-5 mr-2" /> Integrações do Agente
+          </CardTitle>
+          <CardDescription>
+            Conecte serviços externos para permitir que o agente execute ações e acesse dados.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                    <Label>Template de Boas-Vindas (WhatsApp)</Label>
-                    <Textarea rows={3} defaultValue="Olá {{client_name}}, sou Renus. Seu projeto {{project_name}} está na fase {{status}}." />
+        <CardContent className="grid md:grid-cols-2 gap-6">
+          {integrations.map((integration, index) => (
+            <div key={index} className={cn(
+              "p-4 border rounded-lg space-y-3",
+              integration.status === 'connected' && 'border-l-4 border-green-500',
+              integration.status === 'disconnected' && 'border-l-4 border-red-500',
+              integration.status === 'pending' && 'border-l-4 border-yellow-500',
+            )}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <integration.icon className={cn("h-5 w-5", integration.color)} />
+                  <h4 className="font-semibold">{integration.name}</h4>
                 </div>
-                <div>
-                    <Label>Template de Follow-up (Email)</Label>
-                    <Textarea rows={3} defaultValue="Prezado(a) {{client_name}}, gostaríamos de agendar uma call para discutir o próximo marco." />
+                <div className="flex items-center space-x-2">
+                  {getStatusIcon(integration.status)}
+                  <span className="text-sm font-medium capitalize">
+                    {getStatusLabel(integration.status)}
+                  </span>
                 </div>
+              </div>
+              
+              <Separator />
+
+              <div className="space-y-1 text-sm text-muted-foreground">
+                {integration.details.map((detail, i) => (
+                    <p key={i}>{detail}</p>
+                ))}
+              </div>
+              
+              <div className="flex space-x-2 pt-2">
+                <Button 
+                    variant={integration.status === 'connected' ? 'outline' : 'default'} 
+                    size="sm"
+                    onClick={() => handleOpenModal(integration)}
+                    className={cn(integration.status === 'connected' ? '' : 'bg-[#FF6B35] hover:bg-[#e55f30]')}
+                >
+                    <Settings className="h-4 w-4 mr-2" /> 
+                    {integration.status === 'connected' ? 'Editar Configuração' : 'Configurar'}
+                </Button>
+                {integration.status === 'connected' && (
+                    <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => toast.warning(`Desconectando ${integration.name}...`)}
+                    >
+                        <XCircle className="h-4 w-4 mr-2" /> Desconectar
+                    </Button>
+                )}
+              </div>
             </div>
-            <Button variant="outline">Salvar Templates</Button>
+          ))}
         </CardContent>
       </Card>
+      
+      {/* Seção Em Breve */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-[#FF6B35]">
+            <Clock className="h-5 w-5 mr-2" /> 🔜 Em Breve
+          </CardTitle>
+          <CardDescription>
+            Integrações que estão no nosso roadmap e serão lançadas em breve.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-3 gap-4">
+            {FUTURE_INTEGRATIONS.map((integration, index) => (
+                <Card key={index} className="p-4 opacity-50 border-dashed">
+                    <div className="flex items-center space-x-2 mb-2">
+                        <integration.icon className={cn("h-5 w-5", integration.color)} />
+                        <h4 className="font-semibold">{integration.name}</h4>
+                    </div>
+                    <Badge className="bg-gray-200 text-gray-700">Em Breve</Badge>
+                </Card>
+            ))}
+        </CardContent>
+      </Card>
+
+      {/* Render Modal */}
+      {renderModal()}
     </div>
   );
 };
