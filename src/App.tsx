@@ -25,7 +25,6 @@ import PesquisasResultadosPage from './pages/dashboard/PesquisasResultadosPage';
 import PesquisasAnalisePage from './pages/dashboard/PesquisasAnalisePage';
 import AdminLeadsPage from './pages/dashboard/AdminLeadsPage';
 import AssistenteIsaPage from './pages/dashboard/AssistenteIsaPage';
-import AgentDetailsPage from './pages/dashboard/AgentDetailsPage'; // Import new page
 
 const queryClient = new QueryClient();
 
@@ -71,7 +70,6 @@ const App = () => (
                   <Route path="/dashboard/admin/pesquisas/resultados" element={<PesquisasResultadosPage />} />
                   <Route path="/dashboard/admin/pesquisas/analise" element={<PesquisasAnalisePage />} />
                   <Route path="/dashboard/admin/assistente-isa" element={<AssistenteIsaPage />} />
-                  <Route path="/dashboard/admin/agents/:agentId" element={<AgentDetailsPage />} /> {/* New Agent Details Route */}
                 </Route>
 
                 {/* Protected Client Routes */}
