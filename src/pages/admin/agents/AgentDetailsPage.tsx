@@ -16,10 +16,9 @@ import ConfigRenusPanel from '@/components/agents/config/ConfigRenusPanel';
 
 // Agent Specific Tabs
 import AgentOverviewTab from '@/components/agents/AgentOverviewTab';
-import AgentUsersTab from '@/components/agents/AgentUsersTab'; // Novo componente
+import AgentUsersTab from '@/components/agents/AgentUsersTab';
 import AgentMetricsTab from '@/components/agents/AgentMetricsTab';
 import AgentLogsTab from '@/components/agents/AgentLogsTab';
-import ApiWebhooksTab from '@/components/agents/ApiWebhooksTab';
 
 const AgentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,13 +26,14 @@ const AgentDetailsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // Mock state
 
+  // Mock agent retrieval (using mock ID 100 for newly created agents from wizard)
   const agent = mockAgents.find(a => a.id === id) || {
     id: 'mock-100',
     name: 'Novo Agente (Mock)',
-    description: 'Agente de fallback para testes.', // Adicionado para satisfazer a interface Agent
+    description: 'Agente de fallback para testes.',
     status: 'inativo',
     version: 'V1.0',
-    type: 'b2c_individual', // Default mock type
+    type: 'b2c_individual',
     created_at: 'N/A',
     client_id: '1',
     project_id: '1',
@@ -49,7 +49,7 @@ const AgentDetailsPage: React.FC = () => {
   const mainTabs = [
     { value: 'overview', label: 'Visão Geral', icon: LayoutDashboard, component: AgentOverviewTab },
     { value: 'config', label: 'Configuração', icon: Settings, component: ConfigRenusPanel },
-    { value: 'instances', label: 'Instâncias/Usuários', icon: Users, component: AgentUsersTab },
+    { value: 'users', label: 'Usuários/Instâncias', icon: Users, component: AgentUsersTab },
     { value: 'metrics', label: 'Métricas', icon: BarChart, component: AgentMetricsTab },
     { value: 'logs', label: 'Logs', icon: Terminal, component: AgentLogsTab },
   ];
@@ -70,10 +70,10 @@ const AgentDetailsPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-        case 'ativo': return 'bg-green-500';
-        case 'pausado': return 'bg-yellow-500';
+        case 'ativo': return 'bg-green-600';
+        case 'pausado': return 'bg-yellow-600';
         case 'inativo': return 'bg-gray-500';
-        case 'erro': return 'bg-red-500';
+        case 'erro': return 'bg-red-600';
         default: return 'bg-gray-500';
     }
   };
@@ -179,8 +179,8 @@ const AgentDetailsPage: React.FC = () => {
             </Card>
         </TabsContent>
 
-        {/* Tab Content: Instances/Users */}
-        <TabsContent value="instances" className="mt-6">
+        {/* Tab Content: Users/Instances */}
+        <TabsContent value="users" className="mt-6">
             <AgentUsersTab agentType={agent.type} />
         </TabsContent>
 
