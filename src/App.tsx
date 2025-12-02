@@ -25,6 +25,7 @@ import PesquisasResultadosPage from './pages/dashboard/PesquisasResultadosPage';
 import PesquisasAnalisePage from './pages/dashboard/PesquisasAnalisePage';
 import AdminLeadsPage from './pages/dashboard/AdminLeadsPage';
 import AssistenteIsaPage from './pages/dashboard/AssistenteIsaPage';
+import AgentDetailsPage from './pages/dashboard/AgentDetailsPage'; // Import new page
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
                   <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
                   <Route path="/dashboard/admin/renus-config" element={<RenusConfigPage />} />
+                  <Route path="/dashboard/admin/agents/:id" element={<AgentDetailsPage />} /> {/* NEW ROUTE */}
                   <Route path="/dashboard/admin/pesquisas/entrevistas" element={<PesquisasEntrevistasPage />} />
                   <Route path="/dashboard/admin/pesquisas/resultados" element={<PesquisasResultadosPage />} />
                   <Route path="/dashboard/admin/pesquisas/analise" element={<PesquisasAnalisePage />} />
