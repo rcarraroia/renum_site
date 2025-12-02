@@ -20,7 +20,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep }) => {
             <div className="flex flex-col items-center flex-1">
               <div
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300",
+                  "w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0",
                   isCompleted
                     ? "bg-green-500 text-white"
                     : isCurrent
@@ -32,7 +32,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep }) => {
               </div>
               <p
                 className={cn(
-                  "mt-2 text-xs text-center transition-colors duration-300",
+                  "mt-2 text-xs text-center transition-colors duration-300 hidden md:block", // Hidden on mobile, visible on md+
                   isCurrent ? "text-primary dark:text-white font-semibold" : "text-muted-foreground"
                 )}
               >

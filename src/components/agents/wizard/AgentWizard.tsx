@@ -13,11 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import { mockProjects, mockClients } from '@/mocks/agents.mock';
 
 const steps = [
-  'Projeto',
+  'Projeto & Cliente',
   'Identidade',
-  'Canais',
-  'Configuração',
-  'Revisão',
+  'Canal & Modelo',
+  'Configuração RENUS',
+  'Revisão & Teste',
 ];
 
 const initialFormData = {
