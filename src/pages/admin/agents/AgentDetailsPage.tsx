@@ -2,65 +2,45 @@ import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Zap, Settings, Wrench, BookOpen, Clock, RefreshCw, Shield, Users, Sliders, FileText, MessageSquare, LayoutDashboard, Terminal, Save, ArrowLeft, Server, BarChart } from 'lucide-react';
+import { Zap, Settings, MessageSquare, LayoutDashboard, Terminal, Save, ArrowLeft, Server, BarChart, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link, useParams } from 'react-router-dom';
+import { mockAgents } from '@/mocks/agents.mock';
 
-// Configuration Sub-Tabs (Reused from RenusConfigPage)
-import InstructionsTab from '@/components/renus-config/InstructionsTab';
-import ToolsTab from '@/components/renus-config/ToolsTab';
-import KnowledgeTab from '@/components/renus-config/KnowledgeTab';
-import TriggersTab from '@/components/renus-config/TriggersTab';
-import GuardrailsTab from '@/components/renus-config/GuardrailsTab';
-import { SubAgentsTab } from '@/components/renus-config/SubAgentsTab';
-import { AdvancedTab } from '@/components/renus-config/AdvancedTab';
+// Configuration Panel
+import ConfigRenusPanel from '@/components/agents/config/ConfigRenusPanel';
 
 // Agent Specific Tabs
-import AgentIntegrationsTab from '@/components/agents/AgentIntegrationsTab';
-import ApiWebhooksTab from '@/components/agents/ApiWebhooksTab';
 import AgentOverviewTab from '@/components/agents/AgentOverviewTab';
-import AgentInstancesTab from '@/components/agents/AgentInstancesTab';
+import AgentInstancesTab from '@/components/agents/InstanceList'; // Using the new InstanceList
 import AgentMetricsTab from '@/components/agents/AgentMetricsTab';
 import AgentLogsTab from '@/components/agents/AgentLogsTab';
-
-const MOCK_AGENT_DATA = {
-    id: 'slim-vendas',
-    name: 'Agente de Vendas Slim',
-    status: 'Ativo',
-    lastPublished: '2025-01-20 14:35',
-    version: 'V1.3',
-};
+import ApiWebhooksTab from '@/components/agents/ApiWebhooksTab'; // Still needed for the main tabs
 
 const AgentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeMainTab, setActiveMainTab] = useState('overview');
-  const [activeConfigTab, setActiveConfigTab] = useState('instructions');
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // Mock state
 
-  const agent = MOCK_AGENT_DATA; // Use mock data for now
+  const agent = mockAgents.find(a => a.id === id) || {
+    id: 'mock-100',
+    name: 'Novo Agente (Mock)',
+    status: 'inativo',
+    version: 'V1.0',
+    lastPublished: 'N/A'
+  };
 
   const mainTabs = [
     { value: 'overview', label: 'Visão Geral', icon: LayoutDashboard, component: AgentOverviewTab },
     { value: 'config', label: 'Configuração', icon: Settings, component: null }, // Special tab for sub-tabs
+    { value: 'api-webhooks', label: 'API & Webhooks', icon: RefreshCw, component: ApiWebhooksTab },
     { value: 'instances', label: 'Instâncias', icon: Server, component: AgentInstancesTab },
     { value: 'metrics', label: 'Métricas', icon: BarChart, component: AgentMetricsTab },
     { value: 'logs', label: 'Logs', icon: Terminal, component: AgentLogsTab },
-  ];
-
-  const configSubTabs = [
-    { value: 'instructions', label: 'Instruções', icon: Settings, component: InstructionsTab },
-    { value: 'tools', label: 'Ferramentas', icon: Wrench, component: ToolsTab },
-    { value: 'integrations', label: 'Integrações', icon: RefreshCw, component: AgentIntegrationsTab },
-    { value: 'knowledge', label: 'Conhecimento', icon: BookOpen, component: KnowledgeTab },
-    { value: 'triggers', label: 'Gatilhos', icon: Clock, component: TriggersTab },
-    { value: 'guardrails', label: 'Guardrails', icon: Shield, component: GuardrailsTab },
-    { value: 'subagents', label: 'Sub-Agentes', icon: Users, component: SubAgentsTab },
-    { value: 'advanced', label: 'Avançado', icon: Sliders, component: AdvancedTab },
-    { value: 'api-webhooks', label: 'API & Webhooks', icon: FileText, component: ApiWebhooksTab },
   ];
 
   const handleSaveAndPublish = () => {
@@ -77,16 +57,11 @@ const AgentDetailsPage: React.FC = () => {
     return tab?.component;
   }, [activeMainTab]);
 
-  const ActiveConfigComponent = useMemo(() => {
-    const tab = configSubTabs.find(t => t.value === activeConfigTab);
-    return tab?.component;
-  }, [activeConfigTab]);
-
   return (
     <DashboardLayout>
       <div className="flex items-center mb-4">
-        <Link to="/dashboard/admin/renus-config" className="text-muted-foreground hover:text-primary flex items-center text-sm">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar aos Agentes
+        <Link to="/dashboard/admin/agents" className="text-muted-foreground hover:text-primary flex items-center text-sm">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar à Lista de Agentes
         </Link>
       </div>
       
@@ -98,9 +73,9 @@ const AgentDetailsPage: React.FC = () => {
         <div className="flex items-center space-x-4">
             <Badge variant="secondary" className={cn(
                 "transition-colors",
-                agent.status === 'Ativo' ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                agent.status === 'ativo' ? "bg-green-500 text-white" : "bg-red-500 text-white"
             )}>
-                {agent.status} | {agent.version}
+                {agent.status.toUpperCase()} | {agent.version}
             </Badge>
             {activeMainTab === 'config' && (
                 <Button 
@@ -116,7 +91,7 @@ const AgentDetailsPage: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-gray-100 dark:bg-gray-800">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-gray-100 dark:bg-gray-800">
           {mainTabs.map(tab => (
             <TabsTrigger 
               key={tab.value} 
@@ -140,28 +115,7 @@ const AgentDetailsPage: React.FC = () => {
                     <p className="text-sm text-muted-foreground">Ajuste as instruções, ferramentas e políticas de segurança específicas para este agente.</p>
                 </CardHeader>
                 <CardContent>
-                    <Tabs value={activeConfigTab} onValueChange={setActiveConfigTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 md:grid-cols-9 h-auto p-1 bg-gray-100 dark:bg-gray-800">
-                            {configSubTabs.map(tab => (
-                                <TabsTrigger 
-                                    key={tab.value} 
-                                    value={tab.value} 
-                                    className={cn(
-                                        "flex items-center space-x-1 text-xs md:text-sm data-[state=active]:bg-[#0ca7d2] data-[state=active]:text-white transition-all"
-                                    )}
-                                >
-                                    <tab.icon className="h-4 w-4" />
-                                    <span className="hidden lg:inline">{tab.label}</span>
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-
-                        {configSubTabs.map(tab => (
-                            <TabsContent key={tab.value} value={tab.value} className="mt-6">
-                                <tab.component />
-                            </TabsContent>
-                        ))}
-                    </Tabs>
+                    <ConfigRenusPanel isGlobalConfig={false} />
                 </CardContent>
             </Card>
         </TabsContent>

@@ -25,7 +25,9 @@ import PesquisasResultadosPage from './pages/dashboard/PesquisasResultadosPage';
 import PesquisasAnalisePage from './pages/dashboard/PesquisasAnalisePage';
 import AdminLeadsPage from './pages/dashboard/AdminLeadsPage';
 import AssistenteIsaPage from './pages/dashboard/AssistenteIsaPage';
-import AgentDetailsPage from './pages/dashboard/AgentDetailsPage'; // Import new page
+import AgentsListPage from './pages/admin/agents/AgentsListPage'; // Import new page
+import AgentCreatePage from './pages/admin/agents/AgentCreatePage'; // Import new page
+import AgentDetailsPage from './pages/admin/agents/AgentDetailsPage'; // Import updated page
 
 const queryClient = new QueryClient();
 
@@ -66,8 +68,15 @@ const App = () => (
                   <Route path="/dashboard/admin/clients" element={<AdminClientsPage />} />
                   <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
                   <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
+                  
+                  {/* New Agent Routes */}
+                  <Route path="/dashboard/admin/agents" element={<AgentsListPage />} />
+                  <Route path="/dashboard/admin/agents/create" element={<AgentCreatePage />} />
+                  <Route path="/dashboard/admin/agents/:id" element={<AgentDetailsPage />} />
+                  
+                  {/* Global Config (Moved from /agents/:id) */}
                   <Route path="/dashboard/admin/renus-config" element={<RenusConfigPage />} />
-                  <Route path="/dashboard/admin/agents/:id" element={<AgentDetailsPage />} /> {/* NEW ROUTE */}
+                  
                   <Route path="/dashboard/admin/pesquisas/entrevistas" element={<PesquisasEntrevistasPage />} />
                   <Route path="/dashboard/admin/pesquisas/resultados" element={<PesquisasResultadosPage />} />
                   <Route path="/dashboard/admin/pesquisas/analise" element={<PesquisasAnalisePage />} />

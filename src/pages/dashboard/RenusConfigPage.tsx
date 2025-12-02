@@ -5,20 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Zap, Save, Settings, Wrench, BookOpen, Clock, RefreshCw, Shield, Users, Sliders } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import InstructionsTab from '@/components/renus-config/InstructionsTab';
-import ToolsTab from '@/components/renus-config/ToolsTab';
-import IntegrationsTab from '@/components/renus-config/IntegrationsTab';
-import KnowledgeTab from '@/components/renus-config/KnowledgeTab';
-import TriggersTab from '@/components/renus-config/TriggersTab';
-import GuardrailsTab from '@/components/renus-config/GuardrailsTab';
-import { SubAgentsTab } from '@/components/renus-config/SubAgentsTab';
-import { AdvancedTab } from '@/components/renus-config/AdvancedTab';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import ConfigRenusPanel from '@/components/agents/config/ConfigRenusPanel'; // Using the new consolidated panel
 
 const RenusConfigPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('instructions');
   const [isSaving, setIsSaving] = useState(false);
   const [isUnsaved, setIsUnsaved] = useState(false); // Mock state for unsaved changes
 
@@ -32,23 +24,12 @@ const RenusConfigPage: React.FC = () => {
     }, 1500);
   };
 
-  const tabs = [
-    { value: 'instructions', label: 'Instruções', icon: Settings, component: InstructionsTab },
-    { value: 'tools', label: 'Ferramentas', icon: Wrench, component: ToolsTab },
-    { value: 'integrations', label: 'Integrações', icon: RefreshCw, component: IntegrationsTab },
-    { value: 'knowledge', label: 'Conhecimento', icon: BookOpen, component: KnowledgeTab },
-    { value: 'triggers', label: 'Gatilhos', icon: Clock, component: TriggersTab },
-    { value: 'guardrails', label: 'Guardrails', icon: Shield, component: GuardrailsTab },
-    { value: 'subagents', label: 'Sub-Agentes', icon: Users, component: SubAgentsTab },
-    { value: 'advanced', label: 'Avançado', icon: Sliders, component: AdvancedTab },
-  ];
-
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold flex items-center">
           <Zap className="h-7 w-7 mr-3 text-[#FF6B35]" />
-          Configuração do Renus
+          Configuração Global do Renus
         </h2>
         <div className="flex items-center space-x-4">
             <Badge variant="secondary" className={cn(
@@ -106,29 +87,7 @@ const RenusConfigPage: React.FC = () => {
 
         {/* Main Configuration Tabs */}
         <div className="lg:col-span-9">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-8 h-auto p-1 bg-gray-100 dark:bg-gray-800">
-                    {tabs.map(tab => (
-                        <TabsTrigger 
-                            key={tab.value} 
-                            value={tab.value} 
-                            className={cn(
-                                "flex items-center space-x-2 data-[state=active]:bg-[#0ca7d2] data-[state=active]:text-white data-[state=active]:shadow-md transition-all",
-                                activeTab === tab.value && 'bg-[#0ca7d2] text-white'
-                            )}
-                        >
-                            <tab.icon className="h-4 w-4" />
-                            <span className="hidden sm:inline">{tab.label}</span>
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-
-                {tabs.map(tab => (
-                    <TabsContent key={tab.value} value={tab.value} className="mt-6">
-                        <tab.component />
-                    </TabsContent>
-                ))}
-            </Tabs>
+            <ConfigRenusPanel isGlobalConfig={true} />
         </div>
       </div>
     </DashboardLayout>

@@ -1,16 +1,193 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+import { Users, Plus, Zap, Edit, Trash2, MessageSquare, Globe, ChevronDown, ChevronUp, FileText, Upload, Info, Tag, Sliders } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Zap, MessageSquare, Globe, FileText, Upload, Info, Tag, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { SubAgent } from './types'; // Importando o tipo SubAgent
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 
+// Reusing types and components from the old structure, adapted for the new location
+interface SubAgent {
+  id: string;
+  name: string;
+  description: string;
+  channel: 'site' | 'whatsapp';
+  systemPrompt: string;
+  topics: string[];
+  isActive: boolean;
+  useFineTuning?: boolean;
+  fineTuneStatus?: 'none' | 'preparing' | 'training' | 'ready' | 'failed';
+  model?: string;
+}
+
+const initialMockAgents: SubAgent[] = [
+  {
+    id: '1',
+    name: 'Pesquisa MMN',
+    description: 'Agente especializado em entrevistar distribuidores de Marketing Multinível',
+    channel: 'whatsapp',
+    systemPrompt: 'Você é um pesquisador especializado em Marketing Multinível. Conduza entrevistas para entender as dores e necessidades dos distribuidores.',
+    topics: ['Prospecção', 'Atendimento', 'Treinamento', 'Automação', 'Investimento'],
+    isActive: true,
+    useFineTuning: false,
+    fineTuneStatus: 'none',
+    model: 'openai/gpt-4o-mini',
+  },
+  {
+    id: '2',
+    name: 'Atendimento Clínicas',
+    description: 'Agente para atendimento 24/7 de pacientes de clínicas médicas',
+    channel: 'site',
+    systemPrompt: 'Você é um assistente virtual de clínica médica. Ajude pacientes com agendamentos, dúvidas sobre procedimentos e informações gerais.',
+    topics: ['Agendamentos', 'Procedimentos', 'Convênios', 'Localização'],
+    isActive: false,
+    useFineTuning: false,
+    fineTuneStatus: 'none',
+    model: 'default',
+  },
+];
+
+// --- SubAgentCard Component (Inline for simplicity) ---
+interface SubAgentCardProps {
+  agent: SubAgent;
+  onEdit: (agent: SubAgent) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (id: string) => void;
+  isExpanded: boolean;
+  onToggleExpand: (id: string) => void;
+}
+
+const SubAgentCard: React.FC<SubAgentCardProps> = ({ agent, onEdit, onDelete, onToggleActive, isExpanded, onToggleExpand }) => {
+  
+  const getModelLabel = (model?: string) => {
+    switch (model) {
+      case 'default': return 'Modelo Padrão';
+      case 'anthropic/claude-sonnet-4': return 'Claude Sonnet 4';
+      case 'openai/gpt-4o-mini': return 'GPT-4o Mini';
+      case 'meta-llama/llama-3.1-8b-instruct:free': return 'Llama 3.1 (FREE)';
+      default: return 'Personalizado';
+    }
+  };
+
+  return (
+    <Card 
+      className={cn(
+        "transition-all hover:shadow-lg",
+        agent.isActive 
+          ? "border-[#0ca7d2]" 
+          : "border-dashed opacity-60"
+      )}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1 flex-1">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              {agent.name}
+              {agent.isActive ? (
+                <Badge className="bg-green-500 text-xs">Ativo</Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs">Inativo</Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-sm">
+              {agent.description}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {/* Canal */}
+        <div className="flex items-center gap-2 text-sm">
+          {agent.channel === 'whatsapp' ? (
+            <>
+              <MessageSquare className="h-4 w-4 text-green-600" />
+              <span className="text-muted-foreground">WhatsApp</span>
+            </>
+          ) : (
+            <>
+              <Globe className="h-4 w-4 text-blue-600" />
+              <span className="text-muted-foreground">Site</span>
+            </>
+          )}
+        </div>
+
+        {/* Modelo */}
+        <div className="flex items-center gap-2 text-sm">
+          <Zap className="h-4 w-4 text-purple-600" />
+          <span className="text-muted-foreground">
+            {getModelLabel(agent.model)}
+          </span>
+        </div>
+
+        {/* Tópicos (expansível) */}
+        <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-between p-0 h-auto hover:bg-transparent"
+            onClick={() => onToggleExpand(agent.id)}
+          >
+            <span className="text-sm text-muted-foreground">
+              🔖 {agent.topics.length} tópicos configurados
+            </span>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+          
+          {isExpanded && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {agent.topics.map((topic, i) => (
+                <Badge key={i} variant="outline" className="text-xs">
+                  {topic}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+
+      <CardFooter className="flex gap-2 pt-3 border-t">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(agent)}
+          className="flex-1"
+        >
+          <Edit className="h-3 w-3 mr-1" />
+          Editar
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onToggleActive(agent.id)}
+          className="flex-1"
+        >
+          {agent.isActive ? 'Pausar' : 'Ativar'}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDelete(agent.id)}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+// --- SubAgentModal Component (Inline for simplicity) ---
 interface SubAgentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,7 +199,7 @@ interface SubAgentModalProps {
   removeTopic: (index: number) => void;
 }
 
-export const SubAgentModal: React.FC<SubAgentModalProps> = ({
+const SubAgentModal: React.FC<SubAgentModalProps> = ({
   isOpen,
   onClose,
   formData,
@@ -331,5 +508,180 @@ export const SubAgentModal: React.FC<SubAgentModalProps> = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+};
+
+// --- Main Component ---
+export const SubAgentsTab = () => {
+  const [subAgents, setSubAgents] = useState<SubAgent[]>(initialMockAgents);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<SubAgent | null>(null);
+  const [isExpanded, setIsExpanded] = useState<{[key: string]: boolean}>({});
+
+  const [formData, setFormData] = useState<Partial<SubAgent>>({
+    name: '',
+    description: '',
+    channel: 'whatsapp',
+    systemPrompt: '',
+    topics: [],
+    isActive: true,
+    useFineTuning: false,
+    fineTuneStatus: 'none',
+    model: 'default',
+  });
+
+  const handleOpenModal = (agent?: SubAgent) => {
+    if (agent) {
+      setEditingAgent(agent);
+      setFormData(agent);
+    } else {
+      setEditingAgent(null);
+      setFormData({
+        name: '',
+        description: '',
+        channel: 'whatsapp',
+        systemPrompt: '',
+        topics: [],
+        isActive: true,
+        useFineTuning: false,
+        fineTuneStatus: 'none',
+        model: 'default',
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.systemPrompt) {
+      toast.error("Nome e Prompt são obrigatórios");
+      return;
+    }
+
+    if (editingAgent) {
+      setSubAgents(prev => 
+        prev.map(agent => 
+          agent.id === editingAgent.id 
+            ? { ...agent, ...formData } as SubAgent
+            : agent
+        )
+      );
+      toast.success(`${formData.name} atualizado com sucesso.`);
+    } else {
+      const newAgent: SubAgent = {
+        id: Date.now().toString(),
+        ...formData as SubAgent
+      };
+      setSubAgents(prev => [...prev, newAgent]);
+      toast.success(`${formData.name} criado com sucesso.`);
+    }
+
+    setIsModalOpen(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setSubAgents(prev => prev.filter(agent => agent.id !== id));
+    toast.warning("O sub-agente foi removido.");
+  };
+
+  const handleToggleActive = (id: string) => {
+    setSubAgents(prev =>
+      prev.map(agent =>
+        agent.id === id
+          ? { ...agent, isActive: !agent.isActive }
+          : agent
+      )
+    );
+  };
+
+  const addTopic = () => {
+    const topicInput = prompt('Digite o nome do tópico:');
+    if (topicInput) {
+      setFormData(prev => ({
+        ...prev,
+        topics: [...(prev.topics || []), topicInput]
+      }));
+    }
+  };
+
+  const removeTopic = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      topics: (prev.topics || []).filter((_, i) => i !== index)
+    }));
+  };
+  
+  const handleToggleExpand = (id: string) => {
+    setIsExpanded(prev => ({
+        ...prev,
+        [id]: !prev[id]
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-[#4e4ea8]">Sub-Agentes Especializados</h2>
+          <p className="text-muted-foreground mt-1">
+            Crie agentes especializados para diferentes nichos, tipos e canais de atendimento
+          </p>
+        </div>
+        <Button 
+          onClick={() => handleOpenModal()}
+          className="bg-[#FF6B35] hover:bg-[#e55f30]"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Sub-Agente
+        </Button>
+      </div>
+
+      {/* Lista de Sub-Agentes */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {subAgents.map(agent => (
+          <SubAgentCard
+            key={agent.id}
+            agent={agent}
+            onEdit={handleOpenModal}
+            onDelete={handleDelete}
+            onToggleActive={handleToggleActive}
+            isExpanded={!!isExpanded[agent.id]}
+            onToggleExpand={handleToggleExpand}
+          />
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {subAgents.length === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum sub-agente criado</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              Crie seu primeiro sub-agente especializado para começar
+            </p>
+            <Button 
+              onClick={() => handleOpenModal()}
+              className="bg-[#FF6B35] hover:bg-[#e55f30]"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Primeiro Sub-Agente
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal de Criação/Edição */}
+      <SubAgentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        formData={formData}
+        setFormData={setFormData}
+        onSave={handleSave}
+        editingAgent={editingAgent}
+        addTopic={addTopic}
+        removeTopic={removeTopic}
+      />
+    </div>
   );
 };

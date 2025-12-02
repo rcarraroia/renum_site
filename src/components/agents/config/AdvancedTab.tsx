@@ -26,7 +26,7 @@ export const AdvancedTab = () => {
     },
     { 
       value: 'openai/gpt-4o', 
-      label: 'GPT-4 Turbo',
+      label: 'GPT-4o',
       tier: 'premium',
       cost: '$10/1M tokens'
     },

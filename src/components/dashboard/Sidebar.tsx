@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import RenumLogo from '@/components/RenumLogo';
@@ -20,10 +20,19 @@ const adminNavItems: NavItem[] = [
   { title: 'Leads', href: '/dashboard/admin/leads', icon: UserPlus, roles: ['admin'] },
   { title: 'Clientes', href: '/dashboard/admin/clients', icon: Users, roles: ['admin'] },
   { title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] },
-  { title: 'Pesquisas', href: '/dashboard/admin/pesquisas/entrevistas', icon: ClipboardList, roles: ['admin'] },
   { title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] },
-  { title: 'Config. Renus', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] },
-  { title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] },
+];
+
+const adminAgentItems: NavItem[] = [
+  { title: 'Todos os Agentes', href: '/dashboard/admin/agents', icon: Zap, roles: ['admin'] },
+  { title: 'Criar Novo', href: '/dashboard/admin/agents/create', icon: Plus, roles: ['admin'] },
+  { title: 'Config. Global', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] },
+];
+
+const adminPesquisaItems: NavItem[] = [
+  { title: 'Entrevistas', href: '/dashboard/admin/pesquisas/entrevistas', icon: ClipboardList, roles: ['admin'] },
+  { title: 'Resultados', href: '/dashboard/admin/pesquisas/resultados', icon: BarChart, roles: ['admin'] },
+  { title: 'Análise IA', href: '/dashboard/admin/pesquisas/analise', icon: Sparkles, roles: ['admin'] },
 ];
 
 const clientNavItems: NavItem[] = [
@@ -43,13 +52,27 @@ const Sidebar: React.FC = () => {
   const { role } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const navItems = [
-    ...(role === 'admin' ? adminNavItems : []),
-    ...(role === 'client' ? clientNavItems : []),
-    ...commonNavItems,
-  ];
-
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+
+  const renderNavGroup = (items: NavItem[], title: string) => (
+    <div className="space-y-1">
+      {!isCollapsed && <h3 className="text-xs font-semibold uppercase text-sidebar-foreground/70 px-3 pt-2 pb-1">{title}</h3>}
+      {items.map((item) => (
+        <Link
+          key={item.title}
+          to={item.href}
+          className={cn(
+            "flex items-center rounded-md p-3 text-sm font-medium transition-colors",
+            "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-gray-800",
+            isCollapsed ? "justify-center" : "justify-start"
+          )}
+        >
+          <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+          {!isCollapsed && item.title}
+        </Link>
+      ))}
+    </div>
+  );
 
   return (
     <div 
@@ -72,21 +95,21 @@ const Sidebar: React.FC = () => {
 
       <Separator className="bg-sidebar-border dark:bg-gray-800" />
 
-      <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
-        {navItems.map((item) => (
-          <Link
-            key={item.title}
-            to={item.href}
-            className={cn(
-              "flex items-center rounded-md p-3 text-sm font-medium transition-colors",
-              "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-gray-800",
-              isCollapsed ? "justify-center" : "justify-start"
-            )}
-          >
-            <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-            {!isCollapsed && item.title}
-          </Link>
-        ))}
+      <nav className="flex-grow p-4 space-y-4 overflow-y-auto">
+        {role === 'admin' ? (
+          <>
+            {renderNavGroup(adminNavItems, 'Geral')}
+            {renderNavGroup(adminAgentItems, 'Agentes de IA')}
+            {renderNavGroup(adminPesquisaItems, 'Pesquisas')}
+            {renderNavGroup([{ title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] }], 'Ferramentas')}
+          </>
+        ) : (
+          renderNavGroup(clientNavItems, 'Geral')
+        )}
+        
+        <Separator className="bg-sidebar-border dark:bg-gray-800" />
+        
+        {renderNavGroup(commonNavItems, 'Conta')}
       </nav>
 
       <div className="p-4 mt-auto">

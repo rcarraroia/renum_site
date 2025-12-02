@@ -87,7 +87,7 @@ const GuardrailsTab: React.FC = () => {
     };
 
     const handlePublish = () => {
-        toast.success("Configuração de Guardrails publicada com sucesso!");
+        toast.success("Configuração de Guardrails publicada com sucesso.");
     };
 
     const handleTest = () => {
