@@ -17,6 +17,55 @@ class InterviewService:
     def __init__(self):
         self.supabase = supabase_admin
     
+    async def list_interviews(self, page: int = 1, limit: int = 10, offset: int = 0, status: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Lista entrevistas com paginação
+        
+        Args:
+            page: Número da página (usado se offset não for fornecido)
+            limit: Itens por página
+            offset: Offset direto (sobrescreve page se fornecido)
+            status: Filtrar por status (opcional)
+        
+        Returns:
+            Dict com interviews, total, page, page_size, total_pages
+        """
+        try:
+            # Se offset não foi fornecido, calcular a partir de page
+            if offset == 0 and page > 1:
+                offset = (page - 1) * limit
+            
+            # Query base
+            query = self.supabase.table('interviews').select('*', count='exact')
+            
+            # Filtrar por status se fornecido
+            if status:
+                query = query.eq('status', status)
+            
+            # Ordenar e paginar
+            query = query.order('created_at', desc=True).range(offset, offset + limit - 1)
+            
+            response = query.execute()
+            
+            total = response.count or 0
+            items = response.data or []
+            
+            # Calcular total de páginas
+            import math
+            total_pages = math.ceil(total / limit) if limit > 0 else 0
+            
+            return {
+                "interviews": items,
+                "total": total,
+                "page": page,
+                "page_size": limit,
+                "total_pages": total_pages
+            }
+            
+        except Exception as e:
+            logger.error(f"Error listing interviews: {e}")
+            raise
+    
     def create_interview(self, subagent_id: str, lead_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Cria nova entrevista.

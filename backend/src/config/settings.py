@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     
     # Security
     SECRET_KEY: str
+    SUPABASE_JWT_SECRET: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     

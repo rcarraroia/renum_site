@@ -43,6 +43,11 @@ class AuthService:
             
             logger.info(f"User logged in: {credentials.email}")
             
+            # Construir nome completo
+            first_name = profile.get("first_name", "")
+            last_name = profile.get("last_name", "")
+            full_name = f"{first_name} {last_name}".strip() or "User"
+            
             return {
                 "access_token": response.session.access_token,
                 "token_type": "bearer",
@@ -50,8 +55,9 @@ class AuthService:
                 "user": UserProfile(
                     id=response.user.id,
                     email=response.user.email,
-                    first_name=profile.get("first_name"),
-                    last_name=profile.get("last_name"),
+                    first_name=first_name,
+                    last_name=last_name,
+                    name=full_name,  # Campo para frontend
                     role=profile.get("role", "guest"),
                     avatar_url=profile.get("avatar_url"),
                     updated_at=profile.get("updated_at")
@@ -101,6 +107,11 @@ class AuthService:
             
             profile = profile_response.data
             
+            # Construir nome completo
+            first_name = profile.get("first_name", "")
+            last_name = profile.get("last_name", "")
+            full_name = f"{first_name} {last_name}".strip() or "User"
+            
             return {
                 "access_token": response.session.access_token if response.session else None,
                 "token_type": "bearer",
@@ -108,8 +119,9 @@ class AuthService:
                 "user": UserProfile(
                     id=response.user.id,
                     email=response.user.email,
-                    first_name=profile.get("first_name"),
-                    last_name=profile.get("last_name"),
+                    first_name=first_name,
+                    last_name=last_name,
+                    name=full_name,
                     role=profile.get("role", "guest"),
                     avatar_url=profile.get("avatar_url"),
                     updated_at=profile.get("updated_at")
@@ -162,11 +174,17 @@ class AuthService:
             
             profile = profile_response.data
             
+            # Construir nome completo
+            first_name = profile.get("first_name", "")
+            last_name = profile.get("last_name", "")
+            full_name = f"{first_name} {last_name}".strip() or "User"
+            
             return UserProfile(
                 id=user_response.user.id,
                 email=user_response.user.email,
-                first_name=profile.get("first_name"),
-                last_name=profile.get("last_name"),
+                first_name=first_name,
+                last_name=last_name,
+                name=full_name,
                 role=profile.get("role", "guest"),
                 avatar_url=profile.get("avatar_url"),
                 updated_at=profile.get("updated_at")

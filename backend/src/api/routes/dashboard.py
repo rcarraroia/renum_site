@@ -33,8 +33,8 @@ async def get_dashboard_stats(
         
         # Get client_id if user is not admin
         client_id = None
-        if current_user.get("role") != "admin":
-            client_id = current_user.get("client_id")
+        if current_user.role != "admin":
+            client_id = getattr(current_user, "client_id", None)
         
         stats = service.get_stats(client_id=client_id)
         

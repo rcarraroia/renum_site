@@ -1,14 +1,58 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Zap, Users, Briefcase, MessageSquare } from 'lucide-react';
+import { dashboardService, DashboardStats } from '@/services/dashboardService';
+import { Loader2 } from 'lucide-react';
 
 const AdminOverview: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const data = await dashboardService.getStats();
+        setStats(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        setError('Erro ao carregar estatísticas');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <DashboardLayout>
+        <div className="text-center text-red-500 p-4">
+          {error || 'Erro ao carregar dados'}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const metrics = [
-    { title: 'Projetos Ativos', value: '12', icon: Briefcase, color: 'text-[#4e4ea8]' },
-    { title: 'Novos Leads', value: '4', icon: Users, color: 'text-[#FF6B35]' },
-    { title: 'Conversas Ativas', value: '35', icon: MessageSquare, color: 'text-[#0ca7d2]' },
-    { title: 'ROI Médio', value: '+30%', icon: Zap, color: 'text-green-500' },
+    { title: 'Projetos Ativos', value: stats.total_clients.toString(), icon: Briefcase, color: 'text-[#4e4ea8]' },
+    { title: 'Novos Leads', value: stats.total_leads.toString(), icon: Users, color: 'text-[#FF6B35]' },
+    { title: 'Conversas Ativas', value: stats.total_conversations.toString(), icon: MessageSquare, color: 'text-[#0ca7d2]' },
+    { title: 'ROI Médio', value: `${stats.completion_rate.toFixed(0)}%`, icon: Zap, color: 'text-green-500' },
   ];
 
   return (
@@ -47,9 +91,15 @@ const AdminOverview: React.FC = () => {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-sm">
-              <li>[10:30] Novo cliente 'Alpha' adicionado.</li>
-              <li>[09:45] Projeto 'MMN Flow' atualizado para 'Design'.</li>
-              <li>[Ontem] Renus Config: Nova ferramenta 'CRM Sync' criada.</li>
+              {stats.recent_activities.length > 0 ? (
+                stats.recent_activities.slice(0, 5).map((activity, index) => (
+                  <li key={index}>
+                    [{new Date(activity.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}] {activity.details}
+                  </li>
+                ))
+              ) : (
+                <li className="text-muted-foreground">Nenhuma atividade recente</li>
+              )}
             </ul>
           </CardContent>
         </Card>

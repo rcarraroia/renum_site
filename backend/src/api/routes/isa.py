@@ -50,14 +50,14 @@ async def chat_with_isa(
     Apenas admins podem usar ISA.
     """
     # Verificar se é admin
-    if current_user.get("role") != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can use ISA"
         )
     
     try:
-        logger.info(f"ISA chat request from admin {current_user.get('id')}: {request.message}")
+        logger.info(f"ISA chat request from admin {current_user.id}: {request.message}")
         
         # Processar com ISA Agent real
         agent = get_isa_agent()
@@ -66,7 +66,7 @@ async def chat_with_isa(
         # Invocar agente com mensagem
         result = await agent.invoke({
             "messages": [{"role": "user", "content": request.message}],
-            "user_id": current_user.get("id")
+            "user_id": current_user.id
         })
         
         # Extrair resposta e dados
@@ -77,7 +77,7 @@ async def chat_with_isa(
         # Salvar comando para auditoria
         try:
             await command_service.create({
-                "admin_id": current_user.get("id"),
+                "admin_id": current_user.id,
                 "user_message": request.message,
                 "assistant_response": response_text,
                 "command_executed": command_executed,

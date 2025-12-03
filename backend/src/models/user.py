@@ -29,6 +29,7 @@ class UserProfile(BaseModel):
     email: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    name: Optional[str] = None  # Campo para compatibilidade com frontend
     role: str = "guest"
     avatar_url: Optional[str] = None
     updated_at: Optional[datetime] = None

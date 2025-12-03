@@ -42,7 +42,7 @@ async def list_enabled_tools(
     current client's agent configuration.
     """
     service = ToolService()
-    client_id = current_user.get("client_id")
+    client_id = getattr(current_user, "client_id", None)
     
     if not client_id:
         raise HTTPException(

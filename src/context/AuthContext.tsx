@@ -56,28 +56,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     console.log(`[Auth] Attempting login for: ${email}`);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Chamar API real do backend
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    let loggedInUser: User | null = null;
+      if (!response.ok) {
+        const error = await response.json();
+        toast.error(error.detail || 'Credenciais inválidas');
+        setIsLoading(false);
+        return;
+      }
 
-    if (email === MOCK_ADMIN.email && password === 'password') {
-      loggedInUser = MOCK_ADMIN;
-    } else if (email === MOCK_CLIENT.email && password === 'password') {
-      loggedInUser = MOCK_CLIENT;
-    } else {
-      toast.error('Credenciais inválidas. Tente admin@renum.tech ou client@alpha.com com senha: password');
+      const data = await response.json();
+      
+      // Mapear resposta do backend para formato do frontend
+      const loggedInUser: User = {
+        id: data.user.id,
+        name: data.user.name || `${data.user.first_name || ''} ${data.user.last_name || ''}`.trim() || data.user.email,
+        email: data.user.email,
+        role: data.user.role as UserRole,
+      };
+
+      // Salvar token
+      localStorage.setItem('renum_token', data.access_token);
+      
+      setUser(loggedInUser);
+      toast.success(`Bem-vindo, ${loggedInUser.name}!`);
+    } catch (error) {
+      console.error('[Auth] Login error:', error);
+      toast.error('Erro ao conectar com o servidor');
     }
     
-    if (loggedInUser) {
-        setUser(loggedInUser);
-        toast.success(`Bem-vindo, ${loggedInUser.name}!`);
-    }
     setIsLoading(false);
   };
 
   const logout = () => {
     console.log("[Auth] Logging out.");
+    localStorage.removeItem('renum_token');
     setUser(null);
     toast.info('Sessão encerrada.');
   };

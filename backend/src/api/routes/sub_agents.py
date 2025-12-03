@@ -45,7 +45,7 @@ async def create_sub_agent(
 ):
     """Create new sub-agent."""
     # Only admins can create sub-agents
-    if current_user.get("role") != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can create sub-agents"
@@ -63,7 +63,7 @@ async def update_sub_agent(
 ):
     """Update sub-agent."""
     # Only admins can update sub-agents
-    if current_user.get("role") != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can update sub-agents"
@@ -86,7 +86,7 @@ async def delete_sub_agent(
 ):
     """Delete sub-agent."""
     # Only admins can delete sub-agents
-    if current_user.get("role") != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can delete sub-agents"
@@ -109,7 +109,7 @@ async def toggle_sub_agent(
 ):
     """Toggle sub-agent active status."""
     # Only admins can toggle sub-agents
-    if current_user.get("role") != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can toggle sub-agents"

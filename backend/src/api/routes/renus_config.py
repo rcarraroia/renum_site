@@ -22,7 +22,7 @@ async def get_config(
         Configuração completa do RENUS
     """
     service = RenusConfigService()
-    client_id = current_user.get("client_id")
+    client_id = getattr(current_user, "client_id", None)
     
     if not client_id:
         raise HTTPException(
@@ -54,7 +54,7 @@ async def update_config(
         Configuração atualizada
     """
     service = RenusConfigService()
-    client_id = current_user.get("client_id")
+    client_id = getattr(current_user, "client_id", None)
     
     if not client_id:
         raise HTTPException(
@@ -88,7 +88,7 @@ async def update_instructions(
         Configuração atualizada
     """
     service = RenusConfigService()
-    client_id = current_user.get("client_id")
+    client_id = getattr(current_user, "client_id", None)
     
     if not client_id:
         raise HTTPException(
@@ -128,7 +128,7 @@ async def update_guardrails(
         Configuração atualizada
     """
     service = RenusConfigService()
-    client_id = current_user.get("client_id")
+    client_id = getattr(current_user, "client_id", None)
     
     if not client_id:
         raise HTTPException(
@@ -168,7 +168,7 @@ async def update_advanced(
         Configuração atualizada
     """
     service = RenusConfigService()
-    client_id = current_user.get("client_id")
+    client_id = getattr(current_user, "client_id", None)
     
     if not client_id:
         raise HTTPException(
