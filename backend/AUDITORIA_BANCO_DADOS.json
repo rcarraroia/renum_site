@@ -1,0 +1,85 @@
+{
+  "timestamp": "2025-12-03T13:07:55.613710",
+  "database": {
+    "connection": "SUCCESS",
+    "tables": {
+      "profiles": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "clients": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "leads": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "projects": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "conversations": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "messages": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "interviews": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "interview_messages": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "renus_config": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "tools": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "sub_agents": {
+        "exists": false,
+        "error": "403 Forbidden"
+      },
+      "isa_commands": {
+        "exists": false,
+        "error": "403 Forbidden"
+      }
+    },
+    "auth": {
+      "error": "403 Forbidden"
+    },
+    "clients": {
+      "error": "403 Forbidden"
+    },
+    "leads": {
+      "error": "403 Forbidden"
+    },
+    "projects": {
+      "error": "403 Forbidden"
+    },
+    "conversations": {
+      "error": "403 Forbidden"
+    },
+    "interviews": {
+      "error": "403 Forbidden"
+    },
+    "sub_agents": {
+      "error": "403 Forbidden"
+    }
+  },
+  "backend": {
+    "status": "NOT_RUNNING",
+    "reason": "Cryptography dependency conflict"
+  },
+  "summary": {
+    "database_status": "⚠️ Banco conectado mas com POUCOS dados",
+    "tables_with_data": "0/0"
+  }
+}

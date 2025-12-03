@@ -1,0 +1,257 @@
+{
+  "timestamp": "2025-12-03T13:10:21.790297",
+  "backend": {
+    "routes": {
+      "Autenticação": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 4,
+          "POST": 6,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 10
+      },
+      "Clientes": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 4,
+          "POST": 2,
+          "PUT": 2,
+          "DELETE": 2,
+          "PATCH": 0
+        },
+        "total": 10
+      },
+      "Leads": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 4,
+          "POST": 2,
+          "PUT": 2,
+          "DELETE": 2,
+          "PATCH": 0
+        },
+        "total": 10
+      },
+      "Projetos": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 4,
+          "POST": 2,
+          "PUT": 2,
+          "DELETE": 2,
+          "PATCH": 0
+        },
+        "total": 10
+      },
+      "Conversas": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 4,
+          "POST": 4,
+          "PUT": 2,
+          "DELETE": 2,
+          "PATCH": 2
+        },
+        "total": 14
+      },
+      "Mensagens": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 2,
+          "POST": 2,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 2
+        },
+        "total": 6
+      },
+      "Entrevistas": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 6,
+          "POST": 6,
+          "PUT": 2,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 14
+      },
+      "Sub-Agentes": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 6,
+          "POST": 2,
+          "PUT": 2,
+          "DELETE": 2,
+          "PATCH": 2
+        },
+        "total": 14
+      },
+      "Dashboard": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 2,
+          "POST": 0,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 2
+      },
+      "ISA Agent": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 2,
+          "POST": 2,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 4
+      },
+      "RENUS Config": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 2,
+          "POST": 0,
+          "PUT": 2,
+          "DELETE": 0,
+          "PATCH": 6
+        },
+        "total": 10
+      },
+      "Tools": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 6,
+          "POST": 4,
+          "PUT": 2,
+          "DELETE": 2,
+          "PATCH": 2
+        },
+        "total": 16
+      },
+      "WebSocket": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 0,
+          "POST": 0,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 0
+      },
+      "Public Chat": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 6,
+          "POST": 2,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 8
+      },
+      "Health Check": {
+        "implemented": true,
+        "endpoints": {
+          "GET": 4,
+          "POST": 0,
+          "PUT": 0,
+          "DELETE": 0,
+          "PATCH": 0
+        },
+        "total": 4
+      }
+    },
+    "models": {
+      "status": {
+        "user": true,
+        "client": true,
+        "lead": true,
+        "project": true,
+        "conversation": true,
+        "message": true,
+        "interview": true,
+        "sub_agent": true,
+        "tool": true,
+        "renus_config": true,
+        "isa_command": true
+      },
+      "implemented": 11,
+      "total": 11,
+      "percentage": 100.0
+    },
+    "services": {
+      "status": {
+        "auth": true,
+        "client": true,
+        "lead": true,
+        "project": true,
+        "conversation": true,
+        "message": true,
+        "interview": true,
+        "subagent": true,
+        "dashboard": true,
+        "isa_command": true,
+        "renus_config": true,
+        "tool": true
+      },
+      "implemented": 12,
+      "total": 12,
+      "percentage": 100.0
+    }
+  },
+  "frontend": {
+    "status": "NOT_FOUND"
+  },
+  "agents": {
+    "RENUS Agent": {
+      "implemented": true,
+      "has_class": true,
+      "has_langgraph": true,
+      "has_langchain": true,
+      "completeness": 100.0
+    },
+    "ISA Agent": {
+      "implemented": true,
+      "has_class": true,
+      "has_langgraph": true,
+      "has_langchain": true,
+      "completeness": 100.0
+    },
+    "Discovery Agent": {
+      "implemented": true,
+      "has_class": true,
+      "has_langgraph": true,
+      "has_langchain": true,
+      "completeness": 100.0
+    }
+  },
+  "integrations": {
+    "websocket": true,
+    "supabase": true,
+    "langsmith": true,
+    "tools": [
+      "email_tool",
+      "supabase_tool",
+      "whatsapp_tool"
+    ]
+  },
+  "summary": {
+    "overall_completeness": 75.0,
+    "backend_completeness": 100.0,
+    "frontend_completeness": 0,
+    "agents_completeness": 100.0,
+    "integrations_completeness": 100.0,
+    "critical_issues": [
+      "Backend não está rodando (dependências)",
+      "Banco de dados não acessível (rede)",
+      "Testes funcionais não executados"
+    ]
+  }
+}
