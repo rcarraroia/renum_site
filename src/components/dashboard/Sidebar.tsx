@@ -25,7 +25,7 @@ const adminNavItems: NavItem[] = [
 const adminAgentItems: NavItem[] = [
   { title: 'Todos os Agentes', href: '/dashboard/admin/agents', icon: Zap, roles: ['admin'] },
   { title: 'Criar Novo', href: '/dashboard/admin/agents/create', icon: Plus, roles: ['admin'] },
-  { title: 'Templates (Mock)', href: '/dashboard/admin/agents/templates', icon: FileText, roles: ['admin'] },
+  { title: 'Templates', href: '/dashboard/admin/agents/templates', icon: FileText, roles: ['admin'] },
 ];
 
 const adminPesquisaItems: NavItem[] = [
@@ -36,9 +36,9 @@ const adminPesquisaItems: NavItem[] = [
 
 const adminSiccItems: NavItem[] = [
   { title: 'Evolução do Agente', href: '/dashboard/admin/sicc/evolution', icon: TrendingUp, roles: ['admin'] },
-  { title: 'Memórias (Mock)', href: '/dashboard/admin/sicc/memories', icon: Brain, roles: ['admin'] },
-  { title: 'Fila de Aprendizados (Mock)', href: '/dashboard/admin/sicc/queue', icon: Clock, roles: ['admin'] },
-  { title: 'Configurações IA (Mock)', href: '/dashboard/admin/sicc/settings', icon: Settings, roles: ['admin'] },
+  { title: 'Memórias', href: '/dashboard/admin/sicc/memories', icon: Brain, roles: ['admin'] },
+  { title: 'Fila de Aprendizados', href: '/dashboard/admin/sicc/queue', icon: Clock, roles: ['admin'] },
+  { title: 'Configurações IA', href: '/dashboard/admin/sicc/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const clientNavItems: NavItem[] = [
@@ -73,10 +73,8 @@ const Sidebar: React.FC = () => {
           className={cn(
             "flex items-center rounded-md p-3 text-sm font-medium transition-colors",
             "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-gray-800",
-            isCollapsed ? "justify-center" : "justify-start",
-            item.title.includes('(Mock)') && 'opacity-60 cursor-not-allowed'
+            isCollapsed ? "justify-center" : "justify-start"
           )}
-          onClick={(e) => item.title.includes('(Mock)') && e.preventDefault()}
         >
           <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
           {!isCollapsed && item.title}
@@ -102,10 +100,8 @@ const Sidebar: React.FC = () => {
           className={cn(
             "flex items-center rounded-md p-3 text-sm font-medium transition-colors",
             "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-gray-800",
-            isCollapsed ? "justify-center" : "justify-start",
-            item.title.includes('(Mock)') && 'opacity-60 cursor-not-allowed'
+            isCollapsed ? "justify-center" : "justify-start"
           )}
-          onClick={(e) => item.title.includes('(Mock)') && e.preventDefault()}
         >
           <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
           {!isCollapsed && item.title}
