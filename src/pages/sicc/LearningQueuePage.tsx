@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Clock, CheckCircle, XCircle, Eye, AlertTriangle, Users, Loader2, Brain, ArrowRight } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Eye, AlertTriangle, Users, Loader2, Brain, ArrowRight, MessageSquare } from 'lucide-react';
 import { siccService } from '@/services/siccService';
 import { Learning, LearningQueueResponse, LearningStatus, LearningType } from '@/types/sicc';
 import { toast } from 'sonner';

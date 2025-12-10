@@ -88,3 +88,36 @@ export interface LearningQueueResponse {
     approval_rate: number;
   };
 }
+
+// --- Tipos para Configurações IA ---
+
+export type LearningMode = 'disabled' | 'active' | 'observe_only';
+export type AnalysisFrequency = 'realtime' | 'hourly' | 'daily' | 'weekly';
+
+export interface AgentSettings {
+  agent_id: string;
+  learning_mode: LearningMode;
+  analysis_frequency: AnalysisFrequency;
+  auto_approve_threshold: number; // 0-1
+  manual_review_threshold: number; // 0-1
+  auto_reject_threshold: number; // 0-1
+  max_memories: number;
+  max_pending_learnings: number;
+  snapshot_retention_days: number;
+  auto_archive_days: number;
+  layer_base_enabled: boolean;
+  layer_company_enabled: boolean;
+  layer_individual_enabled: boolean;
+  audio_retention_days: number;
+  anonymization_enabled: boolean;
+  multi_tenant_isolation: boolean; // always true
+  updated_at: string;
+  updated_by: string;
+}
+
+export interface Snapshot {
+    id: string;
+    name: string;
+    created_at: string;
+    size_mb: number;
+}

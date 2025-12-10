@@ -1,4 +1,4 @@
-import { EvolutionStats, RecentActivity, Memory, MemoryListResponse, Learning, LearningQueueResponse, LearningStatus } from "@/types/sicc";
+import { EvolutionStats, RecentActivity, Memory, MemoryListResponse, Learning, LearningQueueResponse, LearningStatus, AgentSettings, Snapshot } from "@/types/sicc";
 import { mockAgents } from "@/mocks/agents.mock";
 
 // Mock data generation utility
@@ -168,6 +168,39 @@ const MOCK_LEARNINGS: Learning[] = [
     },
 ];
 
+const MOCK_SETTINGS: AgentSettings = {
+    agent_id: '1',
+    learning_mode: 'active',
+    analysis_frequency: 'hourly',
+    auto_approve_threshold: 0.80,
+    manual_review_threshold: 0.50,
+    auto_reject_threshold: 0.30,
+    max_memories: 10000,
+    max_pending_learnings: 500,
+    snapshot_retention_days: 90,
+    auto_archive_days: 365,
+    layer_base_enabled: true,
+    layer_company_enabled: true,
+    layer_individual_enabled: true,
+    audio_retention_days: 30,
+    anonymization_enabled: true,
+    multi_tenant_isolation: true,
+    updated_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+    updated_by: 'admin@renum.ai',
+};
+
+const MOCK_SNAPSHOTS: Snapshot[] = [
+    { id: 'snap1', name: 'Configuração Inicial', created_at: new Date(Date.now() - 86400000 * 30).toISOString(), size_mb: 120 },
+    { id: 'snap2', name: 'Após Treinamento Q1', created_at: new Date(Date.now() - 86400000 * 10).toISOString(), size_mb: 155 },
+];
+
+// Mock current usage stats (for display purposes)
+const CURRENT_USAGE = {
+    memories: 1234,
+    pending_learnings: 15,
+};
+
+
 export const siccService = {
     getEvolutionStats: async (agentId: string, periodDays: number): Promise<EvolutionStats> => {
         console.log(`[SICC Service] Fetching evolution stats for agent ${agentId} over ${periodDays} days.`);
@@ -311,5 +344,86 @@ export const siccService = {
                 learning.rejection_reason = reason;
             }
         });
+    },
+
+    // --- Settings Mocks ---
+    getSettings: async (agentId: string): Promise<AgentSettings> => {
+        console.log(`[SICC Service] Fetching settings for agent ${agentId}`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { ...MOCK_SETTINGS, agent_id: agentId };
+    },
+
+    saveSettings: async (agentId: string, settings: Partial<AgentSettings>): Promise<AgentSettings> => {
+        console.log(`[SICC Service] Saving settings for agent ${agentId}`, settings);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Update mock settings globally (simple state management)
+        Object.assign(MOCK_SETTINGS, settings, {
+            updated_at: new Date().toISOString(),
+            updated_by: 'Current User',
+        });
+        return MOCK_SETTINGS;
+    },
+
+    resetSettings: async (agentId: string): Promise<void> => {
+        console.log(`[SICC Service] Resetting settings for agent ${agentId}`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Simulate reset logic (e.g., reverting to default values)
+        Object.assign(MOCK_SETTINGS, {
+            auto_approve_threshold: 0.80,
+            manual_review_threshold: 0.50,
+            auto_reject_threshold: 0.30,
+            max_memories: 10000,
+            max_pending_learnings: 500,
+            snapshot_retention_days: 90,
+            auto_archive_days: 365,
+            layer_base_enabled: true,
+            layer_company_enabled: true,
+            layer_individual_enabled: true,
+            audio_retention_days: 30,
+            anonymization_enabled: true,
+            multi_tenant_isolation: true,
+            updated_at: new Date().toISOString(),
+            updated_by: 'System Reset',
+        });
+    },
+
+    createSnapshot: async (agentId: string, name: string): Promise<Snapshot> => {
+        console.log(`[SICC Service] Creating snapshot for agent ${agentId} with name: ${name}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const newSnapshot: Snapshot = {
+            id: `snap${MOCK_SNAPSHOTS.length + 1}`,
+            name: name || `Snapshot Manual ${new Date().toLocaleDateString()}`,
+            created_at: new Date().toISOString(),
+            size_mb: Math.floor(Math.random() * 50) + 100,
+        };
+        MOCK_SNAPSHOTS.push(newSnapshot);
+        return newSnapshot;
+    },
+
+    listSnapshots: async (agentId: string): Promise<Snapshot[]> => {
+        console.log(`[SICC Service] Listing snapshots for agent ${agentId}`);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return MOCK_SNAPSHOTS;
+    },
+
+    restoreSnapshot: async (snapshotId: string): Promise<void> => {
+        console.log(`[SICC Service] Restoring snapshot ${snapshotId}`);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Simulate restoration affecting settings
+        MOCK_SETTINGS.updated_by = `Restored from ${snapshotId}`;
+    },
+
+    purgeMemories: async (agentId: string): Promise<void> => {
+        console.log(`[SICC Service] Purging all memories for agent ${agentId}`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Simulate memory purge
+        CURRENT_USAGE.memories = 0;
+    },
+    
+    // Helper to get current usage stats (mocked)
+    getCurrentUsageStats: async (agentId: string) => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return CURRENT_USAGE;
     }
 };
