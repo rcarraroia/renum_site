@@ -56,3 +56,35 @@ export interface MemoryListResponse {
   page: number;
   per_page: number;
 }
+
+// --- Tipos para Fila de Aprendizados ---
+
+export type LearningStatus = 'pending' | 'approved' | 'rejected';
+export type LearningType = 'memory_added' | 'pattern_detected' | 'behavior_updated';
+
+export interface Learning {
+  id: string;
+  learning_type: LearningType;
+  title: string;
+  source_data: {
+    conversations: { id: string; date: string }[];
+    impact_estimate: string;
+  };
+  analysis: string; // análise ISA completa
+  quality_score: number; // confidence
+  status: LearningStatus;
+  created_at: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  rejection_reason?: string;
+}
+
+export interface LearningQueueResponse {
+  data: Learning[];
+  stats: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    approval_rate: number;
+  };
+}

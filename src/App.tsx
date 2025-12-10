@@ -30,6 +30,7 @@ import AgentCreatePage from './pages/admin/agents/AgentCreatePage'; // Import ne
 import AgentDetailsPage from './pages/admin/agents/AgentDetailsPage'; // Import updated page
 import EvolutionPage from './pages/sicc/EvolutionPage.tsx'; // Import new SICC page
 import MemoryManagerPage from './pages/sicc/MemoryManagerPage.tsx'; // Import new SICC page
+import LearningQueuePage from './pages/sicc/LearningQueuePage.tsx'; // Import new SICC page
 
 const queryClient = new QueryClient();
 
@@ -89,7 +90,7 @@ const App = () => (
                   {/* SICC Routes */}
                   <Route path="/dashboard/admin/sicc/evolution" element={<EvolutionPage />} />
                   <Route path="/dashboard/admin/sicc/memories" element={<MemoryManagerPage />} />
-                  <Route path="/dashboard/admin/sicc/queue" element={<AdminOverview />} /> {/* Mock */}
+                  <Route path="/dashboard/admin/sicc/queue" element={<LearningQueuePage />} />
                   <Route path="/dashboard/admin/sicc/settings" element={<AdminOverview />} /> {/* Mock */}
                 </Route>
 

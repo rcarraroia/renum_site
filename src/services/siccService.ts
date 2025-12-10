@@ -1,4 +1,4 @@
-import { EvolutionStats, RecentActivity, Memory, MemoryListResponse } from "@/types/sicc";
+import { EvolutionStats, RecentActivity, Memory, MemoryListResponse, Learning, LearningQueueResponse, LearningStatus } from "@/types/sicc";
 import { mockAgents } from "@/mocks/agents.mock";
 
 // Mock data generation utility
@@ -108,6 +108,66 @@ const MOCK_MEMORIES: Memory[] = [
     },
 ];
 
+const MOCK_LEARNINGS: Learning[] = [
+    {
+        id: 'l1',
+        learning_type: 'memory_added',
+        title: 'Novo termo: "onboarding personalizado"',
+        source_data: {
+            conversations: [{ id: 'c4521', date: '2025-01-20' }, { id: 'c4489', date: '2025-01-19' }],
+            impact_estimate: '+15% precisão em respostas sobre onboarding',
+        },
+        analysis: 'A ISA detectou que o termo "onboarding personalizado" foi usado 12 vezes em conversas de alto valor nos últimos 7 dias, mas não estava na base de conhecimento. A sugestão é adicionar este termo como um Business Term para melhorar a precisão.',
+        quality_score: 0.75,
+        status: 'pending',
+        created_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    },
+    {
+        id: 'l2',
+        learning_type: 'pattern_detected',
+        title: 'Padrão detectado: "Saudação personalizada"',
+        source_data: {
+            conversations: [{ id: 'c4500', date: '2025-01-21' }, { id: 'c4490', date: '2025-01-20' }, { id: 'c4480', date: '2025-01-19' }],
+            impact_estimate: '+5% na satisfação do usuário (CSAT)',
+        },
+        analysis: 'A ISA identificou que saudações que incluem o nome do cliente e o nome do agente (ex: "Olá [Nome], aqui é o Renus") resultam em uma taxa de continuação de conversa 10% maior. Sugere-se atualizar o comportamento padrão de saudação.',
+        quality_score: 0.68,
+        status: 'pending',
+        created_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+    },
+    {
+        id: 'l3',
+        learning_type: 'behavior_updated',
+        title: 'Comportamento atualizado: Foco em ROI',
+        source_data: {
+            conversations: [{ id: 'c4000', date: '2025-01-01' }],
+            impact_estimate: 'N/A',
+        },
+        analysis: 'Atualização de comportamento aprovada pelo Admin. Foco em métricas de ROI.',
+        quality_score: 0.99,
+        status: 'approved',
+        created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+        reviewed_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+        reviewed_by: 'Admin Renum',
+    },
+    {
+        id: 'l4',
+        learning_type: 'memory_added',
+        title: 'Termo rejeitado: "preço fixo"',
+        source_data: {
+            conversations: [{ id: 'c3900', date: '2024-12-25' }],
+            impact_estimate: 'N/A',
+        },
+        analysis: 'A ISA sugeriu adicionar o termo "preço fixo", mas foi rejeitado.',
+        quality_score: 0.55,
+        status: 'rejected',
+        created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
+        reviewed_at: new Date(Date.now() - 86400000 * 9).toISOString(),
+        reviewed_by: 'Ana Silva',
+        rejection_reason: 'A política de preços é dinâmica e não deve ser fixada na memória base.',
+    },
+];
+
 export const siccService = {
     getEvolutionStats: async (agentId: string, periodDays: number): Promise<EvolutionStats> => {
         console.log(`[SICC Service] Fetching evolution stats for agent ${agentId} over ${periodDays} days.`);
@@ -186,5 +246,70 @@ export const siccService = {
         
         // Simulate archiving instead of deleting
         MOCK_MEMORIES[index].is_active = false;
+    },
+    
+    // --- Learning Queue Mocks ---
+    
+    getLearningQueue: async (agentId: string, status: LearningStatus): Promise<LearningQueueResponse> => {
+        console.log(`[SICC Service] Fetching learning queue for agent ${agentId} with status: ${status}`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const filteredData = MOCK_LEARNINGS.filter(l => l.status === status);
+        
+        return {
+            data: filteredData,
+            stats: {
+                pending: MOCK_LEARNINGS.filter(l => l.status === 'pending').length,
+                approved: MOCK_LEARNINGS.filter(l => l.status === 'approved').length,
+                rejected: MOCK_LEARNINGS.filter(l => l.status === 'rejected').length,
+                approval_rate: 89, // Mock rate
+            }
+        };
+    },
+    
+    approveLearning: async (id: string): Promise<void> => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const learning = MOCK_LEARNINGS.find(l => l.id === id);
+        if (learning) {
+            learning.status = 'approved';
+            learning.reviewed_at = new Date().toISOString();
+            learning.reviewed_by = 'Admin Mock';
+        }
+    },
+    
+    rejectLearning: async (id: string, reason: string): Promise<void> => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const learning = MOCK_LEARNINGS.find(l => l.id === id);
+        if (learning) {
+            learning.status = 'rejected';
+            learning.reviewed_at = new Date().toISOString();
+            learning.reviewed_by = 'Admin Mock';
+            learning.rejection_reason = reason;
+        }
+    },
+    
+    batchApproveLearning: async (ids: string[]): Promise<void> => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        ids.forEach(id => {
+            const learning = MOCK_LEARNINGS.find(l => l.id === id);
+            if (learning) {
+                learning.status = 'approved';
+                learning.reviewed_at = new Date().toISOString();
+                learning.reviewed_by = 'Admin Mock';
+            }
+        });
+    },
+    
+    batchRejectLearning: async (ids: string[], reason: string): Promise<void> => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        ids.forEach(id => {
+            const learning = MOCK_LEARNINGS.find(l => l.id === id);
+            if (learning) {
+                learning.status = 'rejected';
+                learning.reviewed_at = new Date().toISOString();
+                learning.reviewed_by = 'Admin Mock';
+                learning.rejection_reason = reason;
+            }
+        });
     }
 };
