@@ -28,6 +28,7 @@ import AssistenteIsaPage from './pages/dashboard/AssistenteIsaPage';
 import AgentsListPage from './pages/admin/agents/AgentsListPage'; // Import new page
 import AgentCreatePage from './pages/admin/agents/AgentCreatePage'; // Import new page
 import AgentDetailsPage from './pages/admin/agents/AgentDetailsPage'; // Import updated page
+import EvolutionPage from './pages/sicc/EvolutionPage.tsx'; // Import new SICC page
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,12 @@ const App = () => (
                   <Route path="/dashboard/admin/pesquisas/resultados" element={<PesquisasResultadosPage />} />
                   <Route path="/dashboard/admin/pesquisas/analise" element={<PesquisasAnalisePage />} />
                   <Route path="/dashboard/admin/assistente-isa" element={<AssistenteIsaPage />} />
+                  
+                  {/* SICC Routes */}
+                  <Route path="/dashboard/admin/sicc/evolution" element={<EvolutionPage />} />
+                  <Route path="/dashboard/admin/sicc/memories" element={<AdminOverview />} /> {/* Mock */}
+                  <Route path="/dashboard/admin/sicc/queue" element={<AdminOverview />} /> {/* Mock */}
+                  <Route path="/dashboard/admin/sicc/settings" element={<AdminOverview />} /> {/* Mock */}
                 </Route>
 
                 {/* Protected Client Routes */}
