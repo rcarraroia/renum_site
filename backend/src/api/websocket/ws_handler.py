@@ -45,9 +45,11 @@ class WebSocketHandler:
             # Authenticate connection BEFORE accepting
             user_id = await self.authenticate_connection(token)
             
+            # Accept connection first (required by ASGI)
+            await websocket.accept()
+            
             if not user_id:
-                # Must accept before closing
-                await websocket.accept()
+                # Close with unauthorized code
                 await websocket.close(code=4001, reason="Unauthorized")
                 return
             
@@ -56,13 +58,9 @@ class WebSocketHandler:
             # try:
             #     await conversation_service.get_conversation_by_id(conversation_id)
             # except Exception:
-            #     # Must accept before closing
-            #     await websocket.accept()
+            #     # Close with not found code
             #     await websocket.close(code=4004, reason="Conversation not found")
             #     return
-            
-            # Accept connection AFTER authentication succeeds
-            await websocket.accept()
             
             # Register connection
             await connection_manager.connect(websocket, conversation_id, user_id)

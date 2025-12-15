@@ -28,3 +28,11 @@ logger.add(
     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function} - {message}",
     level="DEBUG"
 )
+
+def get_logger(name: str = None):
+    """
+    Retorna uma instância do logger configurado
+    """
+    if name:
+        return logger.bind(name=name)
+    return logger

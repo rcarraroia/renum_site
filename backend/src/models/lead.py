@@ -73,3 +73,11 @@ class LeadList(BaseModel):
     page: int
     limit: int
     has_next: bool
+
+
+class LeadConvertRequest(BaseModel):
+    """Schema para converter Lead em Cliente"""
+    company_name: str = Field(..., min_length=2, max_length=200)
+    cnpj: str = Field(..., min_length=14, max_length=18)
+    segment: str = Field(..., min_length=2, max_length=100)
+    plan: Literal["basic", "pro", "enterprise"] = "basic"

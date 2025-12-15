@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus, Bot, TrendingUp, Brain, Clock } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus, Bot, Brain, TrendingUp, Database, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import RenumLogo from '@/components/RenumLogo';
@@ -35,10 +35,10 @@ const adminPesquisaItems: NavItem[] = [
 ];
 
 const adminSiccItems: NavItem[] = [
-  { title: 'Evolução do Agente', href: '/dashboard/admin/sicc/evolution', icon: TrendingUp, roles: ['admin'] },
-  { title: 'Memórias', href: '/dashboard/admin/sicc/memories', icon: Brain, roles: ['admin'] },
-  { title: 'Fila de Aprendizados', href: '/dashboard/admin/sicc/queue', icon: Clock, roles: ['admin'] },
-  { title: 'Configurações IA', href: '/dashboard/admin/sicc/settings', icon: Settings, roles: ['admin'] },
+  { title: 'Evolução do Agente', href: '/intelligence/evolution', icon: TrendingUp, roles: ['admin'] },
+  { title: 'Memórias', href: '/intelligence/memories', icon: Brain, roles: ['admin'] },
+  { title: 'Fila de Aprendizados', href: '/intelligence/queue', icon: Clock, roles: ['admin'] },
+  { title: 'Configurações IA', href: '/intelligence/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const clientNavItems: NavItem[] = [
@@ -142,10 +142,11 @@ const Sidebar: React.FC = () => {
             {renderNavGroup([{ title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] }], 'Comunicação')}
             
             {renderNavGroup(adminPesquisaItems, 'Pesquisas')}
-            {renderNavGroup([{ title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] }], 'Análise')}
             
             {/* NOVA SEÇÃO: INTELIGÊNCIA */}
             {renderNavGroup(adminSiccItems, 'Inteligência')}
+            
+            {renderNavGroup([{ title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] }], 'Análise')}
             
             {renderNavGroup([{ title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] }], 'Ferramentas')}
             {renderNavGroup([{ title: 'Config. Global', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] }], 'Sistema')}

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-12-12T23:11:41.727459",
+  "tables": {
+    "agent_behavior_patterns": 0,
+    "agent_dna": 0,
+    "agent_knowledge_snapshots": 0,
+    "agent_learning_logs": 0,
+    "agent_learning_settings": 0,
+    "agent_memory_chunks": 0,
+    "agent_performance_metrics": 0,
+    "agents": 0,
+    "clients": 3,
+    "conversations": 1,
+    "integrations": 0,
+    "interview_messages": 58,
+    "interviews": 7,
+    "isa_commands": 0,
+    "leads": 1,
+    "messages": 1,
+    "profiles": 2,
+    "projects": 1,
+    "renus_config": 0,
+    "sub_agents": 2,
+    "tools": 0,
+    "trigger_executions": 0,
+    "triggers": 0
+  }
+}

@@ -1,15 +1,18 @@
 """
 Email Tool - LangChain Tool for Sending Emails
-Sprint 04 - Sistema Multi-Agente
+Sprint 07A - Integrações Core (Updated)
 
 Tool that agents can use to send emails.
-Placeholder implementation - actual email provider to be configured per project.
+Uses SMTP or SendGrid clients and Celery for async sending.
 """
 
 from typing import Dict, Any, List, Optional
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field, EmailStr
 import asyncio
+from uuid import UUID
+
+from ..services.integration_service import IntegrationService
 
 
 class EmailInput(BaseModel):
@@ -49,12 +52,10 @@ class EmailTool(BaseTool):
     
     This tool allows agents to send emails to one or more recipients.
     Supports both HTML and plain text email bodies.
-    
-    Note: This is a placeholder implementation. The actual email provider
-    (SendGrid, AWS SES, SMTP, etc) should be configured per project.
+    Uses SMTP or SendGrid clients and Celery for async sending.
     
     Example usage in agent:
-        tools = [EmailTool()]
+        tools = [EmailTool(client_id="uuid")]
         agent = create_agent(llm, tools)
         result = agent.invoke("Send an email to user@example.com")
     """
@@ -70,9 +71,22 @@ class EmailTool(BaseTool):
     - body: Email body content (can be HTML or plain text)
     - cc: Optional list of CC recipients
     
-    Returns a dict with success status and message_id."""
+    Returns a dict with success status and task_id."""
     
     args_schema: type[BaseModel] = EmailInput
+    
+    client_id: Optional[UUID] = None
+    
+    def __init__(self, client_id: Optional[UUID] = None, **kwargs):
+        """
+        Initialize Email tool.
+        
+        Args:
+            client_id: Client ID for loading integration config
+            **kwargs: Additional BaseTool arguments
+        """
+        super().__init__(**kwargs)
+        self.client_id = client_id
     
     def _run(
         self,
@@ -92,7 +106,7 @@ class EmailTool(BaseTool):
         cc: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
-        Send email asynchronously.
+        Send email asynchronously via Celery.
         
         Args:
             to: List of recipient email addresses
@@ -101,7 +115,7 @@ class EmailTool(BaseTool):
             cc: Optional CC recipients
         
         Returns:
-            Dict with success status and message_id or error
+            Dict with success status and task_id or error
         """
         try:
             # Validate recipients
@@ -111,110 +125,75 @@ class EmailTool(BaseTool):
                     "error": "At least one recipient is required"
                 }
             
-            # TODO: Implement actual email sending based on configured provider
-            # For now, this is a placeholder that logs the email
-            
-            from ...config.settings import settings
-            
-            provider = settings.EMAIL_PROVIDER.lower()
-            
-            if provider == "none" or not provider:
-                # Mock implementation for development
-                print(f"📧 [MOCK] Email sent:")
-                print(f"   To: {', '.join(to)}")
-                if cc:
-                    print(f"   CC: {', '.join(cc)}")
-                print(f"   Subject: {subject}")
-                print(f"   Body: {body[:100]}...")
-                
-                return {
-                    "success": True,
-                    "message_id": f"mock_email_{asyncio.get_event_loop().time()}",
-                    "recipients": to,
-                    "note": "Using mock email provider - no real email sent"
-                }
-            
-            # Future providers can be added here:
-            # elif provider == "sendgrid":
-            #     return await self._send_via_sendgrid(to, subject, body, cc)
-            # elif provider == "ses":
-            #     return await self._send_via_ses(to, subject, body, cc)
-            # elif provider == "smtp":
-            #     return await self._send_via_smtp(to, subject, body, cc)
-            
-            else:
+            # Load integration config
+            if not self.client_id:
                 return {
                     "success": False,
-                    "error": f"Unknown email provider: {provider}. Set EMAIL_PROVIDER in .env"
+                    "error": "client_id is required to send emails"
                 }
+            
+            integration_service = IntegrationService()
+            
+            # Try SMTP first
+            integration = await integration_service.get_integration(self.client_id, "email_smtp")
+            
+            # If no SMTP, try SendGrid
+            if not integration:
+                integration = await integration_service.get_integration(self.client_id, "email_sendgrid")
+            
+            if not integration:
+                return {
+                    "success": False,
+                    "error": "Email integration not configured for this client"
+                }
+            
+            if integration.status != "active":
+                return {
+                    "success": False,
+                    "error": f"Email integration is {integration.status}, not active"
+                }
+            
+            # Enqueue Celery task for async sending
+            from ..workers.message_tasks import send_email_task
+            
+            task = send_email_task.delay(
+                client_id=str(self.client_id),
+                to=to,
+                subject=subject,
+                body=body,
+                cc=cc
+            )
+            
+            return {
+                "success": True,
+                "task_id": task.id,
+                "recipients": to,
+                "status": "queued"
+            }
             
         except Exception as e:
             return {
                 "success": False,
                 "error": f"Failed to send email: {str(e)}"
             }
-    
-    # Placeholder methods for future email providers
-    
-    async def _send_via_sendgrid(
-        self,
-        to: List[str],
-        subject: str,
-        body: str,
-        cc: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """
-        Send email via SendGrid.
-        
-        TODO: Implement SendGrid integration
-        Requires: pip install sendgrid
-        """
-        raise NotImplementedError("SendGrid integration not yet implemented")
-    
-    async def _send_via_ses(
-        self,
-        to: List[str],
-        subject: str,
-        body: str,
-        cc: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """
-        Send email via AWS SES.
-        
-        TODO: Implement AWS SES integration
-        Requires: pip install boto3
-        """
-        raise NotImplementedError("AWS SES integration not yet implemented")
-    
-    async def _send_via_smtp(
-        self,
-        to: List[str],
-        subject: str,
-        body: str,
-        cc: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """
-        Send email via SMTP.
-        
-        TODO: Implement SMTP integration
-        Requires SMTP server configuration
-        """
-        raise NotImplementedError("SMTP integration not yet implemented")
 
 
-def get_email_tool() -> EmailTool:
+def get_email_tool(client_id: Optional[UUID] = None) -> EmailTool:
     """
     Get email tool instance.
+    
+    Args:
+        client_id: Client ID for loading integration config
     
     Returns:
         EmailTool instance
     
     Example:
-        >>> tool = get_email_tool()
+        >>> tool = get_email_tool(client_id="uuid")
         >>> result = await tool._arun(
         ...     to=["user@example.com"],
         ...     subject="Test",
         ...     body="Hello!"
         ... )
     """
-    return EmailTool()
+    return EmailTool(client_id=client_id)

@@ -4,6 +4,7 @@ Sprint 04 - Discovery Agent MVP
 """
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 
 from ...models.interview import (
@@ -48,6 +49,64 @@ async def create_interview(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create interview: {str(e)}"
+        )
+
+
+class InterviewStartRequest(BaseModel):
+    """Request to start interview"""
+    lead_id: Optional[str] = None
+    subagent_id: Optional[str] = None
+
+
+@router.post("/start", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def start_interview(
+    request: InterviewStartRequest,
+    service: InterviewService = Depends(get_interview_service)
+):
+    """
+    Start new interview (Discovery Agent)
+    
+    Creates a new interview for Discovery Agent.
+    Note: interviews table is from Sprint 04 (Discovery Agent), not linked to projects.
+    
+    Args:
+        request: InterviewStartRequest with optional lead_id and subagent_id
+    
+    Returns:
+        dict: Created interview data
+    """
+    try:
+        # Criar entrevista no banco
+        from src.config.supabase import supabase_admin
+        from datetime import datetime
+        import uuid
+        
+        interview_data = {
+            'id': str(uuid.uuid4()),
+            'lead_id': request.lead_id,
+            'subagent_id': request.subagent_id,
+            'status': 'in_progress',
+            'started_at': datetime.now().isoformat(),
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        response = supabase_admin.table('interviews')\
+            .insert(interview_data)\
+            .execute()
+        
+        if not response.data:
+            raise Exception("Failed to create interview in database")
+        
+        interview = response.data[0]
+        logger.info(f"Interview started via API: {interview['id']}")
+        return interview
+        
+    except Exception as e:
+        logger.error(f"Error starting interview: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start interview: {str(e)}"
         )
 
 

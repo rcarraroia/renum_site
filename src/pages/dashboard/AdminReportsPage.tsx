@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { reportService, ReportFilters } from '@/services/reportService';
 
 // Import Tab Components
 import ReportsOverviewTab from '@/components/reports/ReportsOverviewTab';
@@ -27,6 +28,37 @@ const AdminReportsPage: React.FC = () => {
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<any>(null);
+
+  // Carregar dados do relatório
+  const loadReportData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filters: ReportFilters = {
+        startDate: dateRange?.from?.toISOString().split('T')[0],
+        endDate: dateRange?.to?.toISOString().split('T')[0],
+      };
+      
+      const data = await reportService.getOverview(filters);
+      setReportData(data);
+    } catch (err) {
+      setError('Erro ao carregar dados do relatório. Tente novamente.');
+      console.error('Erro ao carregar relatório:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar dados quando dateRange mudar
+  useEffect(() => {
+    if (dateRange?.from && dateRange?.to) {
+      loadReportData();
+    }
+  }, [dateRange]);
 
   const tabs = [
     { value: 'overview', label: 'Visão Geral', icon: BarChart, component: ReportsOverviewTab },
@@ -37,12 +69,32 @@ const AdminReportsPage: React.FC = () => {
     { value: 'saved', label: 'Salvos', icon: List, component: SavedReportsTab },
   ];
 
-  const handleExport = (format: string) => {
-    toast.info(`Exportando relatório (${activeTab}) para ${format}...`);
-    // Mock export logic
-    setTimeout(() => {
-        toast.success(`Exportação para ${format} concluída!`);
-    }, 1000);
+  const handleExport = async (format: string) => {
+    try {
+      toast.info(`Exportando relatório (${activeTab}) para ${format.toLowerCase()}...`);
+      
+      const filters: ReportFilters = {
+        startDate: dateRange?.from?.toISOString().split('T')[0],
+        endDate: dateRange?.to?.toISOString().split('T')[0],
+      };
+      
+      const blob = await reportService.exportData(format.toLowerCase() as 'csv' | 'excel', filters);
+      
+      // Criar download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `relatorio_${activeTab}_${format.toLowerCase()}.${format.toLowerCase() === 'excel' ? 'xlsx' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Exportação para ${format} concluída!`);
+    } catch (err) {
+      toast.error('Erro ao exportar relatório. Tente novamente.');
+      console.error('Erro ao exportar:', err);
+    }
   };
 
   const handlePrint = () => {

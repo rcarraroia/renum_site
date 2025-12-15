@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { isaService, IsaMessage } from '@/services/isaService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,15 +9,8 @@ import { Sparkles, Send, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-  commandExecuted?: boolean;
-}
-
 const AssistenteIsaPage = () => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<IsaMessage[]>([
     {
       role: 'assistant',
       content: 'Olá! Sou a Isa, sua assistente de IA. Posso executar comandos no sistema como:\n\n• Iniciar/pausar pesquisas\n• Gerar relatórios\n• Gerenciar agentes\n• Consultar dados\n• Enviar mensagens em lote\n\nComo posso ajudar?',
@@ -33,29 +27,29 @@ const AssistenteIsaPage = () => {
     'Exporte conversas da última semana'
   ];
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
-    const newMessage: Message = {
+    const userMessage: IsaMessage = {
       role: 'user',
       content: input,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    // Adiciona mensagem do usuário imediatamente
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
 
-    // Mock response
-    setTimeout(() => {
-      const response: Message = {
-        role: 'assistant',
-        content: 'Comando recebido! Executando...\n\n✓ Pesquisa MMN iniciada\n✓ 50 mensagens enviadas via WhatsApp\n✓ Tempo estimado de conclusão: 2 horas',
-        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        commandExecuted: true
-      };
+    try {
+      const response = await isaService.sendMessage(input);
+      // Backend deve retornar estrutura { role, content, timestamp }
       setMessages(prev => [...prev, response]);
-      toast.success("Comando executado! A tarefa foi iniciada com sucesso.");
-    }, 1000);
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao enviar mensagem para ISA');
+      // Remover mensagem do usuário em caso de erro ou marcar como falha?
+      // Por enquanto mantemos.
+    }
   };
 
   const handleClearChat = () => {
@@ -116,8 +110,8 @@ const AssistenteIsaPage = () => {
                           msg.role === 'user'
                             ? 'bg-[#0ca7d2] text-white'
                             : msg.commandExecuted
-                            ? 'bg-green-50 dark:bg-green-950 border-2 border-green-500'
-                            : 'bg-white dark:bg-gray-800 border-2'
+                              ? 'bg-green-50 dark:bg-green-950 border-2 border-green-500'
+                              : 'bg-white dark:bg-gray-800 border-2'
                         )}
                       >
                         <div className="text-sm whitespace-pre-wrap">{msg.content}</div>

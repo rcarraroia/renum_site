@@ -8,20 +8,12 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Placeholder for chat messages
-interface ChatMessage {
-  id: number;
-  sender: 'user' | 'renus';
-  text: string;
-}
+import { ChatMessage } from '@/services/publicChatService';
 
-const mockMessages: ChatMessage[] = [
-  { id: 1, sender: 'renus', text: 'Olá! Eu sou Renus, seu assistente de descoberta. Como posso ajudar a transformar seu negócio hoje?' },
-  { id: 2, sender: 'user', text: 'Quero automatizar meu processo de vendas.' },
-];
+
 
 const RenusChatWidget: React.FC = () => {
-  const { isChatOpen, toggleChat, closeChat } = useRenusChat();
-  const [messages, setMessages] = React.useState<ChatMessage[]>(mockMessages);
+  const { isChatOpen, toggleChat, closeChat, messages, sendMessage, isTyping } = useRenusChat();
   const [input, setInput] = React.useState('');
   const chatContentRef = React.useRef<HTMLDivElement>(null);
 
@@ -34,25 +26,8 @@ const RenusChatWidget: React.FC = () => {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() === '') return;
-
-    const newUserMessage: ChatMessage = {
-      id: Date.now(),
-      sender: 'user',
-      text: input.trim(),
-    };
-
-    setMessages(prev => [...prev, newUserMessage]);
+    sendMessage(input.trim());
     setInput('');
-
-    // Mock Renus response after a delay
-    setTimeout(() => {
-      const renusResponse: ChatMessage = {
-        id: Date.now() + 1,
-        sender: 'renus',
-        text: 'Entendido! Para otimizar seu processo de vendas, precisamos analisar seus funis atuais. Você pode me dar mais detalhes sobre seus desafios?',
-      };
-      setMessages(prev => [...prev, renusResponse]);
-    }, 1500);
   };
 
   const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => (
@@ -105,7 +80,7 @@ const RenusChatWidget: React.FC = () => {
                   <X className="h-5 w-5" />
                 </Button>
               </CardHeader>
-              
+
               <CardContent ref={chatContentRef} className="flex-grow overflow-y-auto p-4 space-y-3 bg-background">
                 {messages.map((msg) => (
                   <MessageBubble key={msg.id} message={msg} />

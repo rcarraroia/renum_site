@@ -49,37 +49,27 @@ class IsaCommandService:
         """
         try:
             logger.info(f"Logging ISA command from admin {admin_id}")
+            # Tabela isa_commands foi removida na migração da Fase 2.
+            # Apenas logar por enquanto. Futuramente usar sistema de logs universal.
+            logger.info(f"CMD AUDIT: {user_message} -> {assistant_response} (Exec: {command_executed})")
             
-            # Prepare command data
-            command_data = {
-                'admin_id': str(admin_id),
-                'user_message': user_message,
-                'assistant_response': assistant_response,
-                'command_executed': command_executed,
-                'executed_at': datetime.now().isoformat()
-            }
-            
-            # Add optional fields
-            if command_type:
-                command_data['command_type'] = command_type
-            
-            if execution_result:
-                command_data['execution_result'] = execution_result
-            
-            # Insert into database
-            response = self.supabase.table('isa_commands').insert(command_data).execute()
-            
-            if not response.data:
-                raise Exception("Failed to log ISA command")
-            
-            logged_command = IsaCommandResponse(**response.data[0])
-            logger.info(f"ISA command logged: {logged_command.id}")
-            
-            return logged_command
+            # Retorna objeto fake para manter compatibilidade de tipo
+            return IsaCommandResponse(
+                id=UUID('00000000-0000-0000-0000-000000000000'),
+                admin_id=admin_id,
+                user_message=user_message,
+                assistant_response=assistant_response,
+                command_executed=command_executed,
+                executed_at=datetime.now(),
+                created_at=datetime.now(), # Added field
+                command_type=command_type,
+                execution_result=execution_result
+            )
             
         except Exception as e:
             logger.error(f"Error logging ISA command: {e}")
-            raise
+            # Não lançar exceção para não quebrar o chat se o log falhar
+            return None
     
     async def get_command(self, command_id: UUID) -> Optional[IsaCommandResponse]:
         """

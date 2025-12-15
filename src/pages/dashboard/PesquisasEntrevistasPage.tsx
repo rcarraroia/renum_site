@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { interviewService, Interview, InterviewList } from '@/services/interviewService';
 import { 
   Select, 
   SelectContent, 
@@ -58,7 +59,28 @@ interface Message {
 }
 
 const PesquisasEntrevistasPage = () => {
-  // Mock data
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadInterviews();
+  }, []);
+
+  const loadInterviews = async () => {
+    try {
+      setLoading(true);
+      const data = await interviewService.getInterviews();
+      setInterviews(data.items);
+    } catch (err) {
+      setError('Erro ao carregar entrevistas');
+      console.error('Erro:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data para fallback
   const [entrevistas] = useState<Entrevista[]>([
     {
       id: '1',

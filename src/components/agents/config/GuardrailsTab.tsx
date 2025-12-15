@@ -1,361 +1,250 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Zap, Shield, Lock, AlertTriangle, Save, TestTube, CheckCircle, XCircle, Settings, ChevronDown, ChevronUp, Mail, Phone, Landmark, MapPin, Tag, Trash2, Brain, Clock, RefreshCw, Plus } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Shield, Lock, AlertTriangle, Save, Tag, UserX, Copy, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Slider } from '@/components/ui/slider';
-
-type ActionType = 'Bloquear' | 'Sanitizar' | 'Alertar';
-
-interface ValidatorCardProps {
-    title: string;
-    icon: React.ElementType;
-    defaultEnabled: boolean;
-    defaultAction: ActionType;
-    isPremium?: boolean;
-    children: React.ReactNode;
-}
-
-const ValidatorCard: React.FC<ValidatorCardProps> = ({ title, icon: Icon, defaultEnabled, defaultAction, isPremium, children }) => {
-    const [isEnabled, setIsEnabled] = useState(defaultEnabled);
-    const [action, setAction] = useState<ActionType>(defaultAction);
-    const [isExpanded, setIsExpanded] = useState(false);
-
-    return (
-        <Card className={cn("transition-all", isEnabled ? "border-[#4e4ea8] dark:border-[#0ca7d2]" : "border-dashed border-gray-300 dark:border-gray-700")}>
-            <CardHeader className="p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <Icon className={cn("h-6 w-6", isEnabled ? "text-[#FF6B35]" : "text-muted-foreground")} />
-                        <CardTitle className="text-lg">{title}</CardTitle>
-                        {isPremium && <Badge className="bg-yellow-500 text-gray-900">Premium</Badge>}
-                    </div>
-                    <Switch checked={isEnabled} onCheckedChange={setIsEnabled} className={cn(isEnabled ? 'data-[state=checked]:bg-[#4e4ea8]' : '')} />
-                </div>
-            </CardHeader>
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-                <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-between px-4 py-2 text-sm text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800">
-                        Detalhes e Configuração
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <Separator />
-                    <CardContent className="p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4 items-center">
-                            <Label>Ação em Caso de Violação</Label>
-                            <Select value={action} onValueChange={(v) => setAction(v as ActionType)} disabled={!isEnabled}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Ação" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Bloquear">Bloquear Mensagem</SelectItem>
-                                    <SelectItem value="Sanitizar">Sanitizar Conteúdo</SelectItem>
-                                    <SelectItem value="Alertar">Apenas Alertar</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {children}
-                    </CardContent>
-                </CollapsibleContent>
-            </Collapsible>
-        </Card>
-    );
-};
+import agentService from '@/services/agentService';
 
 const GuardrailsTab: React.FC = () => {
-    const [isGuardrailsEnabled, setIsGuardrailsEnabled] = useState(true);
-    const [securityLevel, setSecurityLevel] = useState('Intermediário');
-    const [testMessage, setTestMessage] = useState('');
-    const [testResult, setTestResult] = useState<any>(null);
-    const [isTesting, setIsTesting] = useState(false);
-    const [blockedWords, setBlockedWords] = useState(['preço', 'concorrente', 'fraude']);
-    const [newBlockedWord, setNewBlockedWord] = useState('');
+    const [agent, setAgent] = useState<any>(null);
+    const [config, setConfig] = useState<any>({
+        enabled: true,
+        input: { keywords: [], pii: { enabled: true, types: ['email', 'phone'] }, jailbreak: { enabled: true } },
+        output: { keywords: [], secrets: { enabled: true }, hallucination: { enabled: false } }
+    });
+    const [isLoading, setIsLoading] = useState(true);
+    const [keywordInput, setKeywordInput] = useState('');
 
-    const handleSave = () => {
-        toast.success("Configurações de Guardrails salvas e prontas para publicação.");
-    };
+    useEffect(() => {
+        loadAgent();
+    }, []);
 
-    const handlePublish = () => {
-        toast.success("Configuração de Guardrails publicada com sucesso.");
-    };
-
-    const handleTest = () => {
-        if (!testMessage) return;
-        setIsTesting(true);
-        setTestResult(null);
-        toast.info("Executando teste de Guardrails...");
-
-        setTimeout(() => {
-            const violations = [];
-            if (testMessage.toLowerCase().includes('api-key')) {
-                violations.push({ type: 'Secret Detector', detail: 'API Key detectada.', action: 'Bloquear' });
-            }
-            if (testMessage.toLowerCase().includes('renato carraro')) {
-                violations.push({ type: 'PII Detector', detail: 'Nome completo detectado.', action: 'Sanitizar' });
-            }
-            if (testMessage.toLowerCase().includes('como burlar')) {
-                violations.push({ type: 'Jailbreak Protection', detail: 'Tentativa de desvio detectada.', action: 'Bloquear' });
+    const loadAgent = async () => {
+        try {
+            setIsLoading(true);
+            const agents = await agentService.listAgents({ role: 'system_orchestrator' });
+            // Fallback default
+            let foundAgent = agents[0];
+            if (!foundAgent) {
+                const all = await agentService.listAgents();
+                foundAgent = all.find((a: any) => a.slug === 'renus') || all[0];
             }
 
-            setTestResult({
-                status: violations.length === 0 ? 'PASS' : 'FAIL',
-                violations,
-                sanitizedText: violations.length > 0 ? testMessage.replace(/api-key/gi, '[REDACTED]').replace(/renato carraro/gi, 'RC') : testMessage,
-                latency: (Math.random() * 500 + 100).toFixed(0) + 'ms',
-            });
-            setIsTesting(false);
-            if (violations.length > 0) {
-                toast.error(`Teste falhou: ${violations.length} violações encontradas.`);
-            } else {
-                toast.success("Teste bem-sucedido! Nenhuma violação encontrada.");
-            }
-        }, 1500);
-    };
+            if (foundAgent) {
+                // Fetch full details
+                const fullAgent = await agentService.getAgent(foundAgent.id);
+                setAgent(fullAgent);
 
-    const handleAddBlockedWord = () => {
-        const word = newBlockedWord.trim().toLowerCase();
-        if (word && !blockedWords.includes(word)) {
-            setBlockedWords([...blockedWords, word]);
-            setNewBlockedWord('');
-            toast.info(`Palavra-chave '${word}' adicionada.`);
+                // Load guardrails config or use defaults
+                if (fullAgent.config?.guardrails) {
+                    setConfig(fullAgent.config.guardrails);
+                }
+            }
+        } catch (error) {
+            toast.error("Erro ao carregar configurações.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleRemoveBlockedWord = (wordToRemove: string) => {
-        setBlockedWords(blockedWords.filter(word => word !== wordToRemove));
-        toast.warning(`Palavra-chave '${wordToRemove}' removida.`);
+    const handleSave = async () => {
+        if (!agent) return;
+        try {
+            const updatedConfig = {
+                ...agent.config,
+                guardrails: config
+            };
+            await agentService.updateAgent(agent.id, { config: updatedConfig });
+            setAgent({ ...agent, config: updatedConfig });
+            toast.success("Políticas de segurança salvas!");
+        } catch (error) {
+            toast.error("Erro ao salvar.");
+        }
     };
 
+    const addKeyword = (list: 'input' | 'output') => {
+        if (!keywordInput) return;
+        const current = config[list]?.keywords || [];
+        const updated = {
+            ...config,
+            [list]: {
+                ...config[list],
+                keywords: [...current, keywordInput]
+            }
+        };
+        setConfig(updated);
+        setKeywordInput('');
+    };
+
+    const removeKeyword = (list: 'input' | 'output', word: string) => {
+        const current = config[list]?.keywords || [];
+        const updated = {
+            ...config,
+            [list]: {
+                ...config[list],
+                keywords: current.filter((w: string) => w !== word)
+            }
+        };
+        setConfig(updated);
+    };
+
+    const toggleFeature = (path: string, value: boolean) => {
+        const parts = path.split('.');
+        const newConfig = { ...config };
+        let current = newConfig;
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (!current[parts[i]]) current[parts[i]] = {};
+            current = current[parts[i]];
+        }
+        current[parts[parts.length - 1]] = value;
+        setConfig(newConfig);
+    };
+
+    if (isLoading) return <div>Carregando Guardrails...</div>;
+
     return (
-        <div className="space-y-8">
-            {/* Header and Global Toggle */}
-            <Card className="p-6 border-2 border-[#0ca7d2] dark:border-[#4e4ea8]">
-                <div className="flex justify-between items-start">
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                    <Shield className="h-8 w-8 text-primary" />
                     <div>
-                        <h2 className="text-2xl font-bold flex items-center text-[#4e4ea8] dark:text-[#0ca7d2]">
-                            <Shield className="h-6 w-6 mr-3" /> Guardrails de Segurança
-                        </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Defina limites e políticas de segurança para o agente Renus, protegendo contra conteúdo impróprio e vazamento de dados.
-                        </p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-2">
-                        <Switch checked={isGuardrailsEnabled} onCheckedChange={setIsGuardrailsEnabled} className={cn(isGuardrailsEnabled ? 'data-[state=checked]:bg-[#FF6B35]' : '')} />
-                        <Badge className={cn(isGuardrailsEnabled ? 'bg-green-500' : 'bg-red-500', 'text-white')}>
-                            {isGuardrailsEnabled ? 'Ativo' : 'Inativo'}
-                        </Badge>
+                        <h3 className="text-xl font-bold">Segurança e Guardrails</h3>
+                        <p className="text-sm text-muted-foreground">Sistema de proteção em 2 camadas (Entrada e Saída).</p>
                     </div>
                 </div>
-                <Separator className="my-4" />
-                <div className="grid grid-cols-2 gap-4">
-                    <Label className="flex items-center">Nível de Segurança Global</Label>
-                    <Select value={securityLevel} onValueChange={setSecurityLevel}>
-                        <SelectTrigger><SelectValue placeholder="Nível" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Básico">Básico</SelectItem>
-                            <SelectItem value="Intermediário">Intermediário</SelectItem>
-                            <SelectItem value="Avançado">Avançado</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="flex items-center gap-2">
+                    <Label>Ativar Sistema de Segurança</Label>
+                    <Switch
+                        checked={config.enabled}
+                        onCheckedChange={(v: boolean) => toggleFeature('enabled', v)}
+                    />
                 </div>
-            </Card>
-
-            {/* Validator Cards Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
-                
-                {/* 1. PII Detector */}
-                <ValidatorCard title="Detector de Informações Pessoais (PII)" icon={Mail} defaultEnabled={true} defaultAction="Sanitizar">
-                    <div className="space-y-3">
-                        <Label>Tipos de PII a Detectar:</Label>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="flex items-center space-x-2"><Switch defaultChecked /><Label>Email</Label></div>
-                            <div className="flex items-center space-x-2"><Switch defaultChecked /><Label>Telefone</Label></div>
-                            <div className="flex items-center space-x-2"><Switch defaultChecked /><Label>CPF/CNPJ</Label></div>
-                            <div className="flex items-center space-x-2"><Switch defaultChecked /><Label>Endereço</Label></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground italic">Exemplo: "Meu email é joao@exemplo.com" &rarr; "Meu email é [REDACTED]"</p>
-                    </div>
-                </ValidatorCard>
-
-                {/* 2. Secret Detector */}
-                <ValidatorCard title="Detector de Credenciais e API Keys" icon={Lock} defaultEnabled={true} defaultAction="Bloquear">
-                    <div className="space-y-3">
-                        <Label>Padrões de Detecção:</Label>
-                        <p className="text-xs text-muted-foreground">Detecta chaves de API, tokens de acesso e senhas em formatos comuns (ex: JWT, AWS Key).</p>
-                        <Label htmlFor="sensitivity">Nível de Sensibilidade</Label>
-                        <Slider id="sensitivity" defaultValue={[70]} max={100} step={10} className="w-[90%]" />
-                    </div>
-                </ValidatorCard>
-
-                {/* 3. Jailbreak Protection */}
-                <ValidatorCard title="Proteção contra Jailbreak" icon={Brain} defaultEnabled={true} defaultAction="Bloquear" isPremium>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <Label>Análise Avançada (LLM)</Label>
-                            <Switch defaultChecked />
-                        </div>
-                        <p className="text-xs text-muted-foreground italic">Bloqueia tentativas de desviar o Renus de sua persona e instruções de sistema.</p>
-                    </div>
-                </ValidatorCard>
-
-                {/* 4. Keyword Filter */}
-                <ValidatorCard title="Filtro de Palavras-chave" icon={Tag} defaultEnabled={true} defaultAction="Alertar">
-                    <div className="space-y-3">
-                        <Label>Lista de Palavras Bloqueadas:</Label>
-                        <div className="flex space-x-2">
-                            <Input 
-                                placeholder="Adicionar palavra..." 
-                                value={newBlockedWord} 
-                                onChange={(e) => setNewBlockedWord(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddBlockedWord()}
-                            />
-                            <Button type="button" onClick={handleAddBlockedWord} className="bg-[#FF6B35] hover:bg-[#e55f30]">
-                                <Plus className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {blockedWords.map(word => (
-                                <Badge key={word} variant="secondary" className="text-sm cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => handleRemoveBlockedWord(word)}>
-                                    {word} <Trash2 className="h-3 w-3 ml-1" />
-                                </Badge>
-                            ))}
-                        </div>
-                    </div>
-                </ValidatorCard>
-
-                {/* 5. Topic Alignment (Premium) */}
-                <ValidatorCard title="Alinhamento de Tópico" icon={Settings} defaultEnabled={false} defaultAction="Alertar" isPremium>
-                    <div className="space-y-3">
-                        <Label>Tópicos Permitidos (separados por vírgula):</Label>
-                        <Input placeholder="Ex: Vendas, Automação, Discovery" disabled />
-                        <Label htmlFor="strictness">Rigor da Detecção</Label>
-                        <Slider id="strictness" defaultValue={[50]} max={100} step={10} className="w-[90%]" disabled />
-                        <p className="text-xs text-yellow-600 dark:text-yellow-400">Recurso Premium. Faça upgrade para configurar o alinhamento de tópico.</p>
-                    </div>
-                </ValidatorCard>
-
-                {/* 6. NSFW Detector (Premium) */}
-                <ValidatorCard title="Filtro de Conteúdo Impróprio" icon={AlertTriangle} defaultEnabled={false} defaultAction="Bloquear" isPremium>
-                    <div className="space-y-3">
-                        <Label>Nível de Sensibilidade:</Label>
-                        <Select disabled>
-                            <SelectTrigger><SelectValue placeholder="Moderado" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="low">Baixo</SelectItem>
-                                <SelectItem value="moderate">Moderado</SelectItem>
-                                <SelectItem value="high">Alto</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-yellow-600 dark:text-yellow-400">Recurso Premium. Faça upgrade para ativar a filtragem NSFW.</p>
-                    </div>
-                </ValidatorCard>
             </div>
 
-            {/* Testing Area */}
-            <Card>
-                <CardHeader><CardTitle className="flex items-center text-[#FF6B35]"><TestTube className="h-5 w-5 mr-2" /> Área de Teste</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <Textarea 
-                        placeholder="Digite uma mensagem para testar as políticas de Guardrails..."
-                        rows={3}
-                        value={testMessage}
-                        onChange={(e) => setTestMessage(e.target.value)}
-                    />
-                    <Button onClick={handleTest} disabled={isTesting} className="bg-[#0ca7d2] hover:bg-[#0987a8]">
-                        <TestTube className="h-4 w-4 mr-2" /> {isTesting ? 'Testando...' : 'Testar Guardrails'}
-                    </Button>
+            <Tabs defaultValue="input" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="input" className="flex gap-2"><UserX className="h-4 w-4" /> Camada 1: Entrada (Usuário)</TabsTrigger>
+                    <TabsTrigger value="output" className="flex gap-2"><Eye className="h-4 w-4" /> Camada 2: Saída (Agente)</TabsTrigger>
+                </TabsList>
 
-                    {testResult && (
-                        <div className="mt-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 space-y-2">
-                            <div className="flex justify-between items-center">
-                                <span className="font-semibold">Status do Teste:</span>
-                                <Badge className={cn(testResult.status === 'PASS' ? 'bg-green-500' : 'bg-red-500', 'text-white')}>
-                                    {testResult.status}
-                                </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Latência de Processamento: {testResult.latency}</p>
-                            
-                            {testResult.violations.length > 0 ? (
-                                <div className="space-y-2 pt-2 border-t dark:border-gray-700">
-                                    <p className="font-semibold text-red-500 flex items-center"><XCircle className="h-4 w-4 mr-2" /> Violações Encontradas:</p>
-                                    <ul className="list-disc pl-5 text-sm space-y-1">
-                                        {testResult.violations.map((v: any, i: number) => (
-                                            <li key={i}>[{v.type}] {v.detail} (Ação: {v.action})</li>
-                                        ))}
-                                    </ul>
-                                    <p className="font-semibold text-sm mt-3">Texto Sanitizado (Simulação):</p>
-                                    <p className="text-xs font-mono bg-white dark:bg-gray-900 p-2 rounded border">{testResult.sanitizedText}</p>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-green-500 flex items-center"><CheckCircle className="h-4 w-4 mr-2" /> Nenhuma violação detectada.</p>
-                            )}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Advanced Settings */}
-            <Collapsible>
-                <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                        <span className="flex items-center"><Settings className="h-4 w-4 mr-2" /> Configurações Avançadas</span>
-                        <ChevronDown className="h-4 w-4" />
-                    </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4">
+                {/* INPUT LAYER */}
+                <TabsContent value="input" className="space-y-4 mt-4">
                     <Card>
-                        <CardContent className="p-6 space-y-4">
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label>Cache TTL (Tempo de Vida do Cache)</Label>
-                                    <Select defaultValue="1h">
-                                        <SelectTrigger><SelectValue placeholder="1 hora" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="15min">15 minutos</SelectItem>
-                                            <SelectItem value="1h">1 hora</SelectItem>
-                                            <SelectItem value="6h">6 horas</SelectItem>
-                                            <SelectItem value="24h">24 horas</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Comportamento de Fallback</Label>
-                                    <Select defaultValue="default_msg">
-                                        <SelectTrigger><SelectValue placeholder="Mensagem Padrão" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="default_msg">Mensagem Padrão</SelectItem>
-                                            <SelectItem value="transfer_human">Transferir para Humano</SelectItem>
-                                            <SelectItem value="end_conv">Encerrar Conversa</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Lock className="h-5 w-5 text-orange-500" /> Proteção de Dados (PII)
+                            </CardTitle>
+                            <CardDescription>Detectar e anonimizar dados sensíveis antes de processar.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <Label>Anonimizar Email e Telefone</Label>
+                                <p className="text-xs text-muted-foreground">Substitui dados reais por [REDACTED]</p>
                             </div>
-                            <div>
-                                <Label>Mensagem de Erro Customizada</Label>
-                                <Input placeholder="Ex: Desculpe, não posso discutir esse tópico." />
+                            <Switch
+                                checked={config.input?.pii?.enabled}
+                                onCheckedChange={(v: boolean) => toggleFeature('input.pii.enabled', v)}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5 text-red-500" /> Proteção contra Jailbreak
+                            </CardTitle>
+                            <CardDescription>Bloqueia tentativas de manipular as instruções do sistema ("Ignore previous instructions").</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex items-center justify-between">
+                            <Label>Ativar Proteção Heurística</Label>
+                            <Switch
+                                checked={config.input?.jailbreak?.enabled}
+                                onCheckedChange={(v: boolean) => toggleFeature('input.jailbreak.enabled', v)}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Tag className="h-5 w-5 text-blue-500" /> Palavras Proibidas (Input)
+                            </CardTitle>
+                            <CardDescription>Bloqueia mensagens do usuário contendo estes termos.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Adicionar palavra..."
+                                    value={keywordInput}
+                                    onChange={e => setKeywordInput(e.target.value)}
+                                />
+                                <Button onClick={() => addKeyword('input')}>Adicionar</Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(config.input?.keywords || []).map((word: string) => (
+                                    <Badge key={word} variant="secondary" className="cursor-pointer hover:bg-destructive/20" onClick={() => removeKeyword('input', word)}>
+                                        {word} x
+                                    </Badge>
+                                ))}
                             </div>
                         </CardContent>
                     </Card>
-                </CollapsibleContent>
-            </Collapsible>
+                </TabsContent>
 
-            <div className="flex justify-end space-x-3">
-                <Button onClick={handleSave} variant="outline">
-                    <Save className="h-4 w-4 mr-2" /> Salvar Rascunho
-                </Button>
-                <Button onClick={handlePublish} className="bg-[#4e4ea8] hover:bg-[#3a3a80]">
-                    <Zap className="h-4 w-4 mr-2" /> Publicar Configuração
+                {/* OUTPUT LAYER */}
+                <TabsContent value="output" className="space-y-4 mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Lock className="h-5 w-5 text-purple-500" /> Vazamento de Segredos
+                            </CardTitle>
+                            <CardDescription>Impede que o agente vaze API Keys ou credenciais (formato sk-...).</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex items-center justify-between">
+                            <Label>Bloquear Padrões de API Key</Label>
+                            <Switch
+                                checked={config.output?.secrets?.enabled}
+                                onCheckedChange={(v: boolean) => toggleFeature('output.secrets.enabled', v)}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Copy className="h-5 w-5 text-yellow-500" /> Palavras Proibidas (Output)
+                            </CardTitle>
+                            <CardDescription>Garante que o agente nunca use estes termos na resposta.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Adicionar palavra..."
+                                    value={keywordInput}
+                                    onChange={e => setKeywordInput(e.target.value)}
+                                />
+                                <Button onClick={() => addKeyword('output')}>Adicionar</Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(config.output?.keywords || []).map((word: string) => (
+                                    <Badge key={word} variant="outline" className="cursor-pointer hover:bg-destructive/20" onClick={() => removeKeyword('output', word)}>
+                                        {word} x
+                                    </Badge>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end pt-4">
+                <Button onClick={handleSave} className="gap-2 bg-green-600 hover:bg-green-700">
+                    <Save className="h-4 w-4" /> Salvar Configurações de Segurança
                 </Button>
             </div>
         </div>

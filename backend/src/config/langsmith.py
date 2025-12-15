@@ -59,7 +59,7 @@ def configure_langsmith(
         global _default_metadata
         _default_metadata = metadata
     
-    print(f"✅ LangSmith configured:")
+    print(f"LangSmith configured:")
     print(f"   Project: {os.environ['LANGCHAIN_PROJECT']}")
     print(f"   Environment: {env_tag}")
     print(f"   Tracing: {os.environ['LANGCHAIN_TRACING_V2']}")
@@ -110,12 +110,12 @@ def test_langsmith_connection() -> bool:
         
         # Try to get current project
         project = client.read_project(project_name=settings.LANGSMITH_PROJECT)
-        print(f"✅ LangSmith connection successful!")
+        print(f"LangSmith connection successful!")
         print(f"   Project: {project.name}")
         return True
         
     except Exception as e:
-        print(f"❌ LangSmith connection failed: {e}")
+        print(f"LangSmith connection failed: {e}")
         return False
 
 
@@ -128,5 +128,5 @@ if not settings.DEBUG:
     try:
         configure_langsmith()
     except ValueError as e:
-        print(f"⚠️  WARNING: {e}")
-        print("⚠️  LangSmith tracing will be disabled.")
+        print(f"WARNING: {e}")
+        print("LangSmith tracing will be disabled.")

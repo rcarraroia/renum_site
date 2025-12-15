@@ -30,6 +30,15 @@ class DashboardService {
     const response = await apiClient.get<DashboardStats>('/api/dashboard/stats');
     return response.data;
   }
+
+  /**
+   * Get client-specific metrics
+   */
+  async getClientMetrics(clientId?: string): Promise<DashboardStats> {
+    const params = clientId ? { clientId } : {};
+    const response = await apiClient.get<DashboardStats>('/api/dashboard/client-metrics', params);
+    return response.data;
+  }
 }
 
 export const dashboardService = new DashboardService();

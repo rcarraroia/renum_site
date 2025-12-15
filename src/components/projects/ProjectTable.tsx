@@ -109,8 +109,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEdit, onArchive
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <Link to={`/dashboard/admin/clients/${project.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">
-                    {project.clientName}
+                  <Link to={`/dashboard/admin/clients/${project.client_id}`} className="text-muted-foreground hover:text-primary hover:underline">
+                    {project.client_id || 'N/A'}
                   </Link>
                 </TableCell>
                 <TableCell>
@@ -120,16 +120,16 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEdit, onArchive
                   <TypeBadge type={project.type} />
                 </TableCell>
                 <TableCell className="text-sm">
-                  {format(project.startDate, 'dd/MM/yyyy', { locale: ptBR })}
+                  {project.start_date ? format(new Date(project.start_date), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}
                 </TableCell>
                 <TableCell className={cn(
                     "text-sm font-medium",
-                    isDueDatePast(project.dueDate) && project.status !== 'Concluído' && 'text-red-500 font-bold',
-                    isDueDateCritical(project.dueDate) && project.status !== 'Concluído' && 'text-yellow-500'
+                    project.due_date && isDueDatePast(new Date(project.due_date)) && project.status !== 'Concluído' && 'text-red-500 font-bold',
+                    project.due_date && isDueDateCritical(new Date(project.due_date)) && project.status !== 'Concluído' && 'text-yellow-500'
                 )}>
                   <div className="flex items-center space-x-1">
-                    {isDueDatePast(project.dueDate) && project.status !== 'Concluído' && <Clock className="h-4 w-4" />}
-                    {format(project.dueDate, 'dd/MM/yyyy', { locale: ptBR })}
+                    {project.due_date && isDueDatePast(new Date(project.due_date)) && project.status !== 'Concluído' && <Clock className="h-4 w-4" />}
+                    {project.due_date ? format(new Date(project.due_date), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -142,10 +142,10 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEdit, onArchive
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-xs bg-gray-200 dark:bg-gray-700">
-                        {project.responsible.avatarUrl ? <img src={project.responsible.avatarUrl} alt={project.responsible.name} /> : getInitials(project.responsible.name)}
+                        <UserIcon className="h-3 w-3" />
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm hidden lg:inline">{project.responsible.name}</span>
+                    <span className="text-sm hidden lg:inline">{project.responsible_id || 'N/A'}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">

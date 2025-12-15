@@ -14,18 +14,10 @@ from src.agents.isa import IsaAgent
 from src.services.isa_command_service import IsaCommandService
 
 
+from src.services.agent_service import get_agent_service
+from src.models.agent import AgentRole
+
 router = APIRouter(prefix="/isa", tags=["ISA"])
-
-# Inicializar ISA Agent (singleton)
-isa_agent = None
-
-def get_isa_agent() -> IsaAgent:
-    """Get or create ISA Agent instance"""
-    global isa_agent
-    if isa_agent is None:
-        isa_agent = IsaAgent()
-    return isa_agent
-
 
 class IsaChatRequest(BaseModel):
     """Request para chat com ISA"""
@@ -59,15 +51,36 @@ async def chat_with_isa(
     try:
         logger.info(f"ISA chat request from admin {current_user.id}: {request.message}")
         
-        # Processar com ISA Agent real
-        agent = get_isa_agent()
+        # Carregar Agente ISA Real do Banco
+        agent_service = get_agent_service()
+        db_agent = await agent_service.get_system_agent(AgentRole.SYSTEM_SUPERVISOR)
+        
+        if db_agent:
+            logger.info(f"Inicializando ISA Real (ID: {db_agent.id}, Model: {db_agent.model})")
+            # Configuração dinâmica carregada do DB
+            agent = IsaAgent(
+                model=db_agent.model,
+                system_prompt=db_agent.system_prompt
+            )
+        else:
+            logger.warning("ISA não encontrada no banco. Usando fallback hardcoded.")
+            agent = IsaAgent()
+
         command_service = IsaCommandService()
         
-        # Invocar agente com mensagem
-        result = await agent.invoke({
-            "messages": [{"role": "user", "content": request.message}],
-            "user_id": current_user.id
-        })
+        # Criar mensagem no formato BaseMessage
+        from langchain_core.messages import HumanMessage
+        messages = [HumanMessage(content=request.message)]
+        
+        # Criar contexto
+        context = {
+            "admin_id": str(current_user.id),
+            "is_admin": current_user.role == "admin",
+            "user_id": str(current_user.id)
+        }
+        
+        # Invocar agente com mensagem e contexto separados
+        result = await agent.invoke(messages, context)
         
         # Extrair resposta e dados
         response_text = result.get("response", "Desculpe, não consegui processar sua solicitação.")
@@ -76,13 +89,13 @@ async def chat_with_isa(
         
         # Salvar comando para auditoria
         try:
-            await command_service.create({
-                "admin_id": current_user.id,
-                "user_message": request.message,
-                "assistant_response": response_text,
-                "command_executed": command_executed,
-                "result": command_data
-            })
+            await command_service.log_command(
+                admin_id=current_user.id,
+                user_message=request.message,
+                assistant_response=response_text,
+                command_executed=command_executed,
+                execution_result=command_data
+            )
         except Exception as audit_error:
             logger.warning(f"Failed to save ISA command audit: {audit_error}")
         

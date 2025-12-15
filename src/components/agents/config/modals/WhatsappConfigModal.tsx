@@ -15,23 +15,31 @@ interface WhatsappConfigModalProps {
   agentSlug: string;
 }
 
+import { integrationService } from '@/services/integrationService';
+
 const WhatsappConfigModal: React.FC<WhatsappConfigModalProps> = ({ isOpen, onClose, initialConfig, onSave, agentSlug }) => {
   const [config, setConfig] = useState(initialConfig);
   const [isTesting, setIsTesting] = useState(false);
   const webhookUrl = `https://api.renum.com.br/webhook/${agentSlug}/whatsapp`;
 
-  const handleTestConnection = () => {
+  const handleTestConnection = async () => {
     setIsTesting(true);
     toast.info("Testando conexão com a API Uazapi...");
-    setTimeout(() => {
-      setIsTesting(false);
-      if (config.token && config.url && config.phoneId) {
-        toast.success("Conexão bem-sucedida! Status: 200 OK.");
-        onSave(config);
+
+    try {
+      const result = await integrationService.testIntegration('uazapi', config);
+
+      if (result.success) {
+        toast.success("Conexão bem-sucedida!");
+        onSave({ ...config, isConnected: true }); // Pass isConnected status to parent
       } else {
-        toast.error("Falha na conexão. Verifique as credenciais.");
+        toast.error(`Falha na conexão: ${result.message || 'Erro desconhecido'}`);
       }
-    }, 1500);
+    } catch (e: any) {
+      toast.error(`Erro ao conectar: ${e.message}`);
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleCopy = () => {
@@ -47,7 +55,7 @@ const WhatsappConfigModal: React.FC<WhatsappConfigModalProps> = ({ isOpen, onClo
             <MessageSquare className="h-5 w-5 mr-2" /> Configurar WhatsApp Business (Uazapi)
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="url">API URL *</Label>
@@ -67,8 +75,8 @@ const WhatsappConfigModal: React.FC<WhatsappConfigModalProps> = ({ isOpen, onClo
           <div className="space-y-2">
             <Label htmlFor="webhook">Webhook URL (Readonly)</Label>
             <div className="flex space-x-2">
-                <Input id="webhook" readOnly value={webhookUrl} className="font-mono text-xs" />
-                <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4" /></Button>
+              <Input id="webhook" readOnly value={webhookUrl} className="font-mono text-xs" />
+              <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4" /></Button>
             </div>
             <p className="text-xs text-muted-foreground">Configure esta URL no painel Uazapi para receber mensagens.</p>
           </div>

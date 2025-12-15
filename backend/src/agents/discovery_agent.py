@@ -10,10 +10,13 @@ import json
 from typing import Any, Dict, List, Optional, TypedDict
 from datetime import datetime
 
-from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
 from langsmith import traceable
+
+from src.tools.registry import get_tools_by_names
 
 from .base import BaseAgent
 from ..config.settings import settings
@@ -77,16 +80,44 @@ class DiscoveryAgent(BaseAgent):
     
     def __init__(self, **kwargs):
         """Initialize Discovery Agent"""
+        model = kwargs.get("model", "gpt-4o-mini")
+        
+        # Load tools from config (list of strings keys)
+        config_tools = kwargs.get("config", {}).get("tools", [])
+        if not config_tools and kwargs.get('tools'): 
+             # Fallback if tools passed directly as list of objects
+             tools = kwargs.get('tools')
+        else:
+             # Load from registry
+             client_id = kwargs.get("client_id") # Should be passed from service
+             agent_id = kwargs.get("config", {}).get("agent_id")
+             tools = get_tools_by_names(config_tools, client_id=client_id, agent_id=agent_id)
+        
+        # Extract config explicitly to use in prompt generation
+        # BaseAgent will also store it in self.config
+        config = kwargs
+        
         super().__init__(
-            model=kwargs.get("model", "gpt-4o-mini"),
-            system_prompt=self._get_system_prompt(),
-            tools=kwargs.get("tools", []),
+            model=model,
+            system_prompt=self._get_system_prompt(config),
+            tools=tools,
             **kwargs
         )
         self.channel = kwargs.get("channel", "web")
     
-    def _get_system_prompt(self) -> str:
+    def _get_system_prompt(self, config: Optional[Dict[str, Any]] = None) -> str:
         """Get system prompt for Discovery Agent"""
+        # Check if custom system prompt is provided in config
+        if config:
+            # Try to get from identity.system_prompt (Phase 1 Spec)
+            identity = config.get('identity', {})
+            if isinstance(identity, dict) and identity.get('system_prompt'):
+                return identity['system_prompt']
+            
+            # Fallback: check validation root level (legacy/simplification)
+            if config.get('system_prompt'):
+                return config['system_prompt']
+
         return """You are a friendly and professional Discovery Agent conducting an interview.
 
 Your goal is to collect the following information naturally through conversation:
@@ -117,12 +148,15 @@ You will receive the current interview state showing what's been collected."""
     
     def _initialize_llm(self) -> ChatOpenAI:
         """Initialize OpenAI LLM"""
-        return ChatOpenAI(
+        llm = ChatOpenAI(
             model=self.model,
             temperature=0.7,
             streaming=True,
             api_key=settings.OPENAI_API_KEY
         )
+        if self.tools:
+            return llm.bind_tools(self.tools)
+        return llm
     
     def _build_graph(self) -> StateGraph:
         """Build LangGraph workflow for interview process"""
@@ -134,6 +168,9 @@ You will receive the current interview state showing what's been collected."""
         workflow.add_node("validate_fields", self._validate_fields_node)
         workflow.add_node("check_completion", self._check_completion_node)
         workflow.add_node("generate_response", self._generate_response_node)
+        
+        if self.tools:
+            workflow.add_node("tools", ToolNode(self.tools))
         
         # Define edges
         workflow.set_entry_point("extract_fields")
@@ -149,8 +186,27 @@ You will receive the current interview state showing what's been collected."""
                 "continue": "generate_response"
             }
         )
-        workflow.add_edge("generate_response", END)
         
+        # Logic for Tools vs End
+        def should_continue(state):
+            messages = state['messages']
+            last_message = messages[-1]
+            if isinstance(last_message, AIMessage) and last_message.tool_calls:
+                return "tools"
+            return END
+
+        workflow.add_conditional_edges(
+            "generate_response",
+            should_continue,
+            {
+                "tools": "tools",
+                END: END
+            }
+        )
+        
+        if self.tools:
+            workflow.add_edge("tools", "generate_response") # Loop back to generator
+            
         return workflow.compile()
     
     # ========================================================================
@@ -262,19 +318,35 @@ You will receive the current interview state showing what's been collected."""
                 break
         
         # Build prompt for LLM
-        prompt = f"""{context}
-
-User's latest message: {last_user_message}
-
+        # Build prompt for LLM
+        instruction_addon = f"""
 Respond naturally and conversationally. 
 {f"Ask about: {state['next_field']} - {self.FIELD_DESCRIPTIONS.get(state['next_field'], '')}" if state['next_field'] else "Thank them for completing the interview."}
 {f"Validation errors to address: {', '.join(state['validation_errors'])}" if state['validation_errors'] else ""}"""
+
+        messages = [SystemMessage(content=self.system_prompt + "\n\n" + context)]
+
+        # Find the last HumanMessage to maintain flow with tools
+        last_human_index = -1
+        for i, msg in enumerate(reversed(state["messages"])):
+            if isinstance(msg, HumanMessage):
+                last_human_index = len(state["messages"]) - 1 - i
+                break
         
-        # Generate response
-        messages = [
-            SystemMessage(content=self.system_prompt),
-            HumanMessage(content=prompt)
-        ]
+        if last_human_index != -1:
+            conversation_slice = state["messages"][last_human_index:]
+            original_human_msg = conversation_slice[0]
+            
+            # Inject instructions into the User message
+            modified_content = f"{original_human_msg.content}\n\n{instruction_addon}"
+            
+            messages.append(HumanMessage(content=modified_content))
+            # Append subsequent messages (AI tool calls, Tool outputs)
+            messages.extend(conversation_slice[1:])
+        else:
+            # Fallback if no human message found (should not happen in normal flow)
+            messages.append(HumanMessage(content=instruction_addon))
+
         
         response = await self.llm.ainvoke(messages)
         
@@ -454,7 +526,7 @@ Format your response as JSON:
                 recommendations=analysis_data.get('recommendations', []),
                 generated_at=datetime.now()
             )
-        except (json.JSONDecodeError, KeyError, IndexError):
+        except (json.JSONDecodeError, KeyError, IndexError, Exception):
             # Fallback if JSON parsing fails
             return AIAnalysis(
                 summary=f"Interview completed with {collected_data.get('contact_name', 'lead')}",
@@ -463,3 +535,71 @@ Format your response as JSON:
                 recommendations=['Review conversation manually for insights'],
                 generated_at=datetime.now()
             )
+
+    async def process_message(
+        self,
+        interview_id: str,
+        user_message: str,
+        message_history: List[Dict[str, Any]],
+        interview_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Processa mensagem do usuário de forma simplificada (Adapter para InterviewService).
+        
+        Args:
+            interview_id: ID da entrevista
+            user_message: Mensagem do usuário
+            message_history: Histórico de mensagens
+            interview_data: Dados da entrevista
+        
+        Returns:
+            Resposta do agente com metadados
+        """
+        # Converter histórico para BaseMessage
+        messages = []
+        for msg in message_history:
+            if msg['role'] == 'user':
+                messages.append(HumanMessage(content=msg['content']))
+            elif msg['role'] == 'assistant':
+                messages.append(AIMessage(content=msg['content']))
+        
+        # Adicionar mensagem atual
+        messages.append(HumanMessage(content=user_message))
+        
+        # Preparar contexto
+        context = {
+            "interview_id": interview_id,
+            "collected_fields": {
+                "contact_name": interview_data.get("contact_name"),
+                "email": interview_data.get("email"),
+                "contact_phone": interview_data.get("contact_phone"),
+                "country": interview_data.get("country"),
+                "company": interview_data.get("company"),
+                "experience_level": interview_data.get("experience_level"),
+                "operation_size": interview_data.get("operation_size")
+            }
+        }
+        
+        # Processar com o agente
+        result = await self.invoke(messages, context)
+        
+        # Calcular progresso
+        collected_count = len(result["collected_fields"])
+        total_fields = len(self.REQUIRED_FIELDS)
+        
+        return {
+            "message": result["message"],
+            "is_complete": result["is_complete"],
+            "progress": {
+                "collected": collected_count,
+                "total": total_fields,
+                "percentage": int((collected_count / total_fields) * 100) if total_fields > 0 else 0,
+                "missing_fields": [f for f in self.REQUIRED_FIELDS if f not in result["collected_fields"]]
+            },
+            "metadata": {
+                "next_field": result["next_field"],
+                "collected_data": result["collected_fields"],
+                "validation_errors": result["validation_errors"]
+            },
+            "analysis": None # DiscoveryAgent só analisa no final, via generate_analysis separado se necessário
+        }

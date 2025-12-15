@@ -1,0 +1,27 @@
+# Deep System Audit - Checklist
+
+- [ ] **Preparation**
+    - [ ] Locate SSH Credentials for VPS (`72.60.151.78`)
+    - [ ] Confirm Supabase Connection Details (Pooler vs Direct)
+    - [ ] Check `docs/VPS_ACCESS.md` and `docs/SUPABASE_ACCESS.md`
+- [ ] **Database Audit (Real Reality)**
+    - [ ] Connect to Supabase (`aws-0-us-east-1.pooler.supabase.com`)
+    - [ ] List ALL tables (information_schema)
+    - [ ] Count records in critical tables (`clients`, `leads`, `agents`, `sicc_*`)
+    - [ ] Verify RLS policies
+- [ ] **Backend Audit (VPS)**
+    - [ ] SSH into VPS
+    - [ ] Check running processes (`uvicorn`, `celery`)
+    - [ ] Curl local endpoints on VPS (`/health`, `/api/clients`)
+    - [ ] Verify `requirements.txt` vs installed packages on VPS
+- [ ] **Frontend Audit (Local)**
+    - [ ] Run `npm run build` (Confirm clean build)
+    - [ ] Run `npm run dev`
+    - [ ] **Browser Testing**:
+        - [ ] Login Flow
+        - [ ] Dashboard Load
+        - [ ] Console Error Analysis (F12)
+- [ ] **Reporting**
+    - [ ] Create `ESTADO_REAL_RENUM.md`
+    - [ ] Compare "Kiro Claims" vs "Evidence"
+    - [ ] Final "Go/No-Go" status

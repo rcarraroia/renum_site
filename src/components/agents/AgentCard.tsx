@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 interface AgentCardProps {
   agent: Agent;
   onEdit: (agent: Agent) => void;
+  onClone?: (agent: Agent) => void;
+  onPauseResume?: (agent: Agent) => void;
   onDelete: (id: string) => void;
 }
 
@@ -38,15 +40,27 @@ const getAgentTypeLabel = (type: string) => {
     }
 };
 
-const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
+const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onClone, onPauseResume, onDelete }) => {
   const categoryInfo = getCategoryInfo(agent.category);
   const client = mockClients.find(c => c.id === agent.client_id);
   const project = mockProjects.find(p => p.id === agent.project_id);
 
   const handleToggleStatus = () => {
-    // Mock action
-    const newStatus = agent.status === 'ativo' ? 'pausado' : 'ativo';
-    toast.info(`Agente ${agent.name} ${newStatus === 'ativo' ? 'ativado' : 'pausado'}.`);
+    if (onPauseResume) {
+      onPauseResume(agent);
+    } else {
+      // Fallback mock action
+      const newStatus = agent.status === 'ativo' ? 'pausado' : 'ativo';
+      toast.info(`Agente ${agent.name} ${newStatus === 'ativo' ? 'ativado' : 'pausado'}.`);
+    }
+  };
+
+  const handleClone = () => {
+    if (onClone) {
+      onClone(agent);
+    } else {
+      toast.info(`Clonando agente ${agent.name}...`);
+    }
   };
 
   return (
@@ -113,7 +127,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
       </CardContent>
 
       <CardFooter className="flex gap-2 pt-3 border-t">
-        <Link to={`/dashboard/admin/agents/${agent.id}`} className="flex-1">
+        <Link to={`/dashboard/admin/agents/${agent.slug}`} className="flex-1">
             <Button
                 size="sm"
                 className="w-full bg-[#4e4ea8] hover:bg-[#3a3a80]"
@@ -142,7 +156,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
                 <DropdownMenuItem onClick={() => onEdit(agent)}>
                     <Edit className="h-4 w-4 mr-2" /> Editar Detalhes
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toast.info(`Clonando agente ${agent.name}...`)}>
+                <DropdownMenuItem onClick={handleClone}>
                     <Copy className="h-4 w-4 mr-2" /> Clonar
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

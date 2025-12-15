@@ -3,7 +3,7 @@ Endpoints REST para Leads
 """
 from fastapi import APIRouter, Depends, Query, status, HTTPException
 from typing import Optional
-from src.models.lead import LeadCreate, LeadUpdate, LeadResponse, LeadList
+from src.models.lead import LeadCreate, LeadUpdate, LeadResponse, LeadList, LeadConvertRequest
 from src.models.user import UserProfile
 from src.services.lead_service import lead_service
 from src.api.middleware.auth_middleware import get_current_user
@@ -110,4 +110,28 @@ async def delete_lead(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Error in delete_lead: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{lead_id}/convert")
+async def convert_lead_to_client(
+    lead_id: str,
+    data: LeadConvertRequest,
+    current_user: UserProfile = Depends(get_current_user)
+):
+    """Converte Lead em Cliente"""
+    try:
+        return await lead_service.convert_to_client(
+            lead_id=lead_id,
+            company_name=data.company_name,
+            cnpj=data.cnpj,
+            segment=data.segment,
+            plan=data.plan
+        )
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in convert_lead_to_client: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,7 +1,27 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Briefcase, DollarSign, Clock, TrendingUp, Target, ArrowRight } from 'lucide-react';
-import { MOCK_CLIENT_ACQUISITION, MOCK_BUDGET_COMPARISON, MOCK_PROJECT_TYPE_DATA } from '@/data/mockReports';
+// Mock data (local fallback)
+const MOCK_CLIENT_ACQUISITION = [
+  { month: 'Jan', clients: 12, revenue: 45000 },
+  { month: 'Fev', clients: 15, revenue: 52000 },
+  { month: 'Mar', clients: 18, revenue: 61000 },
+  { month: 'Abr', clients: 22, revenue: 78000 },
+  { month: 'Mai', clients: 25, revenue: 89000 },
+  { month: 'Jun', clients: 28, revenue: 95000 }
+];
+
+const MOCK_BUDGET_COMPARISON = [
+  { project: 'Agente MMN', planned: 50000, actual: 48000 },
+  { project: 'Bot Clínica', planned: 35000, actual: 38000 },
+  { project: 'Sistema Vereador', planned: 60000, actual: 55000 }
+];
+
+const MOCK_PROJECT_TYPE_DATA = [
+  { name: 'AI Native', value: 45, color: '#4e4ea8' },
+  { name: 'Workflow', value: 30, color: '#FF6B35' },
+  { name: 'Agente Solo', value: 25, color: '#00D4AA' }
+];
 import ReportChart from './ReportChart';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';

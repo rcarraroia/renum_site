@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./context/ThemeContext";
 import { RenusChatProvider } from "./context/RenusChatContext";
 import RenusPage from "./pages/RenusPage";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminOverview from "./pages/dashboard/AdminOverview";
@@ -28,10 +28,23 @@ import AssistenteIsaPage from './pages/dashboard/AssistenteIsaPage';
 import AgentsListPage from './pages/admin/agents/AgentsListPage'; // Import new page
 import AgentCreatePage from './pages/admin/agents/AgentCreatePage'; // Import new page
 import AgentDetailsPage from './pages/admin/agents/AgentDetailsPage'; // Import updated page
-import EvolutionPage from './pages/sicc/EvolutionPage.tsx'; // Import new SICC page
-import MemoryManagerPage from './pages/sicc/MemoryManagerPage.tsx'; // Import new SICC page
-import LearningQueuePage from './pages/sicc/LearningQueuePage.tsx'; // Import new SICC page
-import SettingsPage from './pages/sicc/SettingsPage.tsx'; // Import new SICC page
+import EvolutionPage from './pages/sicc/EvolutionPage'; // Import new SICC page
+import MemoryManagerPage from './pages/sicc/MemoryManagerPage'; // Import new SICC page
+import LearningQueuePage from './pages/sicc/LearningQueuePage'; // Import new SICC page
+import SettingsPage from './pages/sicc/SettingsPage'; // Import new SICC page
+import ErrorBoundary from './components/ErrorBoundary'; // Import ErrorBoundary
+
+// Component to redirect authenticated users to dashboard
+const HomeRedirect = () => {
+  const { isAuthenticated, role } = useAuth();
+  
+  if (isAuthenticated) {
+    const dashboardPath = role === 'admin' ? '/dashboard/admin' : '/dashboard/client';
+    return <Navigate to={dashboardPath} replace />;
+  }
+  
+  return <Index />;
+};
 
 const queryClient = new QueryClient();
 
@@ -49,9 +62,10 @@ const DebugWrapper = () => {
 
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <RenusChatProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <RenusChatProvider>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
@@ -59,7 +73,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<HomeRedirect />} />
                 <Route path="/renus" element={<RenusPage />} />
                 <Route path="/auth/login" element={<LoginPage />} />
 
@@ -70,11 +84,12 @@ const App = () => (
                   <Route path="/dashboard/admin/projects" element={<AdminProjectsPage />} />
                   <Route path="/dashboard/admin/leads" element={<AdminLeadsPage />} />
                   <Route path="/dashboard/admin/clients" element={<AdminClientsPage />} />
+                  <Route path="/dashboard/admin/clients/:id" element={<AdminClientsPage />} />
                   
                   {/* Agent Routes */}
                   <Route path="/dashboard/admin/agents" element={<AgentsListPage />} />
                   <Route path="/dashboard/admin/agents/create" element={<AgentCreatePage />} />
-                  <Route path="/dashboard/admin/agents/:id" element={<AgentDetailsPage />} />
+                  <Route path="/dashboard/admin/agents/:slug" element={<AgentDetailsPage />} />
                   <Route path="/dashboard/admin/agents/templates" element={<AdminOverview />} /> {/* Mock route for templates */}
                   
                   <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
@@ -89,10 +104,10 @@ const App = () => (
                   <Route path="/dashboard/admin/assistente-isa" element={<AssistenteIsaPage />} />
                   
                   {/* SICC Routes */}
-                  <Route path="/dashboard/admin/sicc/evolution" element={<EvolutionPage />} />
-                  <Route path="/dashboard/admin/sicc/memories" element={<MemoryManagerPage />} />
-                  <Route path="/dashboard/admin/sicc/queue" element={<LearningQueuePage />} />
-                  <Route path="/dashboard/admin/sicc/settings" element={<SettingsPage />} />
+                  <Route path="/intelligence/evolution" element={<EvolutionPage />} />
+                  <Route path="/intelligence/memories" element={<MemoryManagerPage />} />
+                  <Route path="/intelligence/queue" element={<LearningQueuePage />} />
+                  <Route path="/intelligence/settings" element={<SettingsPage />} />
                 </Route>
 
                 {/* Protected Client Routes */}
@@ -121,6 +136,7 @@ const App = () => (
       </RenusChatProvider>
     </ThemeProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

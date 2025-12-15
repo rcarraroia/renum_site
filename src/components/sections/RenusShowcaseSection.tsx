@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Send, MessageSquare, Brain, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRenusChat } from '@/context/RenusChatContext';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -9,26 +10,15 @@ import TypingIndicator from '@/components/TypingIndicator';
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 
-interface ChatMessage {
-  id: number;
-  sender: 'user' | 'renus';
-  text: string;
-  isThinking?: boolean;
-  keywords?: string[];
-}
+import { ChatMessage } from '@/services/publicChatService';
 
-const initialMessages: ChatMessage[] = [
-  { id: 1, sender: 'renus', text: 'Olá! Eu sou Renus, seu assistente de descoberta. Estou aqui para entender seus desafios de negócio.' },
-  { id: 2, sender: 'renus', text: 'Qual é o principal desafio de automação ou IA que sua empresa enfrenta hoje?' },
-];
+
 
 const RenusShowcaseSection: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const { messages, sendMessage, isTyping } = useRenusChat();
   const [input, setInput] = useState('');
-  const [isRenusTyping, setIsRenusTyping] = useState(false);
-  const [isRenusThinking, setIsRenusThinking] = useState(false);
   const chatContentRef = useRef<HTMLDivElement>(null);
-  
+
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -42,59 +32,9 @@ const RenusShowcaseSection: React.FC = () => {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() === '' || isRenusTyping || isRenusThinking) return;
-
-    const userMessageText = input.trim();
-    const newUserMessage: ChatMessage = {
-      id: Date.now(),
-      sender: 'user',
-      text: userMessageText,
-    };
-
-    setMessages(prev => [...prev, newUserMessage]);
+    if (input.trim() === '' || isTyping) return;
+    sendMessage(input.trim());
     setInput('');
-    
-    // Start mock response sequence
-    setTimeout(() => {
-      processRenusResponse(userMessageText);
-    }, 500);
-  };
-
-  const processRenusResponse = (userInput: string) => {
-    setIsRenusThinking(true);
-    
-    const keywords = ['Automação', 'Vendas', 'Desafio', 'Análise', 'Estratégia'];
-    
-    // Simulate thinking visualization
-    const thinkingMessage: ChatMessage = {
-        id: Date.now() + 1,
-        sender: 'renus',
-        text: 'Processando informações...',
-        isThinking: true,
-        keywords: keywords.slice(0, 3),
-    };
-    setMessages(prev => [...prev, thinkingMessage]);
-
-    setTimeout(() => {
-      setIsRenusThinking(false);
-      setMessages(prev => prev.filter(msg => !msg.isThinking)); // Remove thinking message
-
-      setIsRenusTyping(true);
-      
-      setTimeout(() => {
-        const responseText = userInput.toLowerCase().includes('vendas') 
-          ? 'Com base no seu interesse em vendas, Renus pode analisar seus KPIs e sugerir um agente solo para qualificação de leads. Isso pode aumentar sua conversão em 30%.'
-          : 'Entendido. Renus está analisando sua solicitação. Nosso próximo passo seria gerar um relatório de viabilidade técnica e ROI potencial.';
-        
-        const renusResponse: ChatMessage = {
-          id: Date.now() + 2,
-          sender: 'renus',
-          text: responseText,
-        };
-        setMessages(prev => [...prev, renusResponse]);
-        setIsRenusTyping(false);
-      }, 2000);
-    }, 3000); // Thinking time
   };
 
   const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => (
@@ -122,31 +62,8 @@ const RenusShowcaseSection: React.FC = () => {
           </div>
         )}
         <p className="text-sm">{message.text}</p>
-        
-        {message.isThinking && message.keywords && (
-            <div className="mt-2 p-2 bg-white/10 rounded-lg flex flex-wrap gap-2">
-                <Brain className="h-4 w-4 text-[#FF6B35]" />
-                <span className="text-xs font-medium">Pensando:</span>
-                {message.keywords.map((k, i) => (
-                    <motion.span 
-                        key={i} 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.2 }}
-                        className="text-xs font-mono bg-[#0ca7d2] text-white px-2 py-0.5 rounded-full"
-                    >
-                        {k}
-                    </motion.span>
-                ))}
-            </div>
-        )}
-        
-        {message.sender === 'renus' && message.text.includes('relatório') && (
-            <Button variant="secondary" size="sm" className="mt-3 bg-[#FF6B35] hover:bg-[#e55f30] text-white">
-                <FileText className="h-4 w-4 mr-2" />
-                Gerar Relatório Mock
-            </Button>
-        )}
+
+
       </div>
     </motion.div>
   );
@@ -154,7 +71,7 @@ const RenusShowcaseSection: React.FC = () => {
   return (
     <section id="renus-showcase" className="py-20 md:py-32 bg-white dark:bg-gray-900 overflow-hidden">
       <div className="container mx-auto px-4">
-        <motion.h2 
+        <motion.h2
           ref={ref}
           initial={{ opacity: 0, y: 50 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -166,7 +83,7 @@ const RenusShowcaseSection: React.FC = () => {
         </motion.h2>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          
+
           {/* Left Side: Visual Representation */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -179,14 +96,14 @@ const RenusShowcaseSection: React.FC = () => {
             <p className="text-center text-muted-foreground">
               Renus combina algoritmos avançados com a sensibilidade humana para mapear soluções ideais.
             </p>
-            
+
             {/* Live Demo Indicator */}
             <div className="absolute top-4 left-4 flex items-center space-x-2 text-sm font-medium text-green-500">
-                <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span>Live Demo</span>
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <span>Live Demo</span>
             </div>
           </motion.div>
 
@@ -204,17 +121,17 @@ const RenusShowcaseSection: React.FC = () => {
                   Chat Demo
                 </CardTitle>
               </CardHeader>
-              
+
               <CardContent ref={chatContentRef} className="flex-grow overflow-y-auto p-4 space-y-3 bg-background">
                 {messages.map((msg) => (
                   <MessageBubble key={msg.id} message={msg} />
                 ))}
-                {isRenusTyping && (
-                    <div className="flex justify-start">
-                        <div className="max-w-[80%] p-3 rounded-xl bg-gray-100 dark:bg-gray-700 rounded-tl-none">
-                            <TypingIndicator className="text-gray-500 dark:text-gray-300" />
-                        </div>
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] p-3 rounded-xl bg-gray-100 dark:bg-gray-700 rounded-tl-none">
+                      <TypingIndicator className="text-gray-500 dark:text-gray-300" />
                     </div>
+                  </div>
                 )}
               </CardContent>
 
@@ -225,9 +142,9 @@ const RenusShowcaseSection: React.FC = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     className="flex-grow"
-                    disabled={isRenusTyping || isRenusThinking}
+                    disabled={isTyping}
                   />
-                  <Button type="submit" size="icon" className="bg-[#FF6B35] hover:bg-[#e55f30]" disabled={isRenusTyping || isRenusThinking}>
+                  <Button type="submit" size="icon" className="bg-[#FF6B35] hover:bg-[#e55f30]" disabled={isTyping}>
                     <Send className="h-5 w-5" />
                   </Button>
                 </form>
@@ -235,18 +152,18 @@ const RenusShowcaseSection: React.FC = () => {
             </Card>
           </motion.div>
         </div>
-        
+
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-center mt-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="text-center mt-12"
         >
-            <Link to="/renus">
-                <Button size="lg" className="text-lg px-8 py-6 bg-[#4e4ea8] hover:bg-[#3a3a80] text-white shadow-lg">
-                    Experimente o Renus Completo
-                </Button>
-            </Link>
+          <Link to="/renus">
+            <Button size="lg" className="text-lg px-8 py-6 bg-[#4e4ea8] hover:bg-[#3a3a80] text-white shadow-lg">
+              Experimente o Renus Completo
+            </Button>
+          </Link>
         </motion.div>
       </div>
     </section>

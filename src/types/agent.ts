@@ -1,57 +1,202 @@
-export type AgentStatus = 'ativo' | 'inativo' | 'pausado' | 'erro';
-export type AgentType = 'b2b_empresa' | 'b2c_marketplace' | 'b2c_individual';
-export type AgentChannel = 'whatsapp' | 'web' | 'telegram' | 'sms';
-export type AgentCategory = 'discovery' | 'vendas' | 'suporte' | 'mmn' | 'clinica' | 'vereador' | 'custom';
+/**
+ * Agent Types - Sprint 09
+ * Type definitions for agents and sub-agents
+ */
 
+/**
+ * Agent status
+ */
+export type AgentStatus = 'draft' | 'active' | 'paused' | 'archived';
+
+/**
+ * Communication channel
+ */
+export type Channel = 'whatsapp' | 'web' | 'sms' | 'email';
+
+/**
+ * Template type
+ */
+export type TemplateType = 'custom' | 'mmn' | 'vereador' | 'clinica' | 'pesquisa';
+
+/**
+ * LLM model
+ */
+export type Model = 'gpt-4' | 'gpt-4-turbo-preview' | 'gpt-4o-mini' | 'claude-3-5-sonnet-20241022' | 'claude-3-opus';
+
+/**
+ * Agent (main agent in hierarchy: clients → agents → sub_agents)
+ */
 export interface Agent {
   id: string;
-  name: string;
-  description: string;
   client_id: string;
-  project_id: string;
-  type: AgentType;
-  category: AgentCategory;
-  slug: string;
-  domain: string;
-  channel: AgentChannel[];
-  model: string;
+  name: string;
+  description: string | null;
+  slug: string | null;
+  model: Model;
+  system_prompt: string;
+  channel: Channel;
+  template_type: TemplateType;
   status: AgentStatus;
-  instances_count: number;
-  conversations_today: number;
-  created_at: string; // Date string
-  version: string; // Added version property
+  is_public: boolean;
+  public_url: string | null;
+  config: Record<string, any>;
+  access_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ProjectMock {
-  id: string;
-  name: string;
+/**
+ * Agent create payload
+ */
+export interface AgentCreate {
   client_id: string;
-  agents_limit: number;
+  name: string;
+  description?: string | null;
+  slug?: string | null;
+  model?: Model;
+  system_prompt: string;
+  channel: Channel;
+  template_type?: TemplateType;
+  status?: AgentStatus;
+  is_public?: boolean;
+  public_url?: string | null;
+  config?: Record<string, any>;
 }
 
-export interface ClientMock {
+/**
+ * Agent update payload
+ */
+export interface AgentUpdate {
+  name?: string;
+  description?: string | null;
+  slug?: string | null;
+  model?: Model;
+  system_prompt?: string;
+  channel?: Channel;
+  template_type?: TemplateType;
+  status?: AgentStatus;
+  is_public?: boolean;
+  public_url?: string | null;
+  config?: Record<string, any>;
+}
+
+/**
+ * Agent list item (lightweight)
+ */
+export interface AgentListItem {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  channel: Channel;
+  template_type: TemplateType;
+  status: AgentStatus;
+  is_public: boolean;
+  model: Model;
+  created_at: string;
+  updated_at: string;
+  sub_agents_count?: number;
+  access_count?: number;
+}
+
+/**
+ * Agent statistics
+ */
+export interface AgentStats {
+  agent_id: string;
+  sub_agents_count: number;
+  total_conversations: number;
+  active_conversations: number;
+  total_messages: number;
+  access_count: number;
+  last_used_at: string | null;
+}
+
+// ============================================================================
+// SUB-AGENTS
+// ============================================================================
+
+/**
+ * Sub-agent (specialized agent under main agent)
+ */
+export interface SubAgent {
+  id: string;
+  agent_id: string | null;
+  name: string;
+  description: string | null;
+  channel: Channel;
+  system_prompt: string;
+  topics: string[] | null;
+  model: Model;
+  is_active: boolean;
+  fine_tuning_config: Record<string, any> | null;
+  config_id: number | null;
+  slug: string | null;
+  public_url: string | null;
+  access_count: number;
+  is_public: boolean;
+  knowledge_base: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Sub-agent create payload
+ */
+export interface SubAgentCreate {
+  name: string;
+  description?: string | null;
+  channel: Channel;
+  system_prompt: string;
+  topics?: string[] | null;
+  model?: Model;
+  is_active?: boolean;
+  fine_tuning_config?: Record<string, any> | null;
+  config_id?: number | null;
+}
+
+/**
+ * Sub-agent update payload
+ */
+export interface SubAgentUpdate {
+  name?: string;
+  description?: string | null;
+  channel?: Channel;
+  system_prompt?: string;
+  topics?: string[] | null;
+  model?: Model;
+  is_active?: boolean;
+  fine_tuning_config?: Record<string, any> | null;
+}
+
+/**
+ * Sub-agent list item (lightweight)
+ */
+export interface SubAgentListItem {
   id: string;
   name: string;
-  type: AgentType;
-  slug: string;
+  description: string | null;
+  channel: Channel;
+  model: Model;
+  is_active: boolean;
+  topics: string[] | null;
+  created_at: string;
+  updated_at: string;
+  total_interviews?: number;
+  completion_rate?: number;
 }
 
-export interface ChannelMock {
-  id: AgentChannel;
-  name: string;
-  icon: string;
+/**
+ * Agent with sub-agents count
+ */
+export interface AgentWithStats extends Agent {
+  sub_agents_count: number;
 }
 
-export interface ModelMock {
-  id: string;
-  name: string;
-  provider: string;
-  cost: string;
-  description: string;
-}
-
-export interface CategoryMock {
-  id: AgentCategory; // Changed type to AgentCategory
-  name: string;
-  icon: string;
+/**
+ * Sub-agent with parent agent info
+ */
+export interface SubAgentWithAgent extends SubAgent {
+  agent_name?: string;
+  agent_slug?: string;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,42 @@ import {
 } from '@/components/ui/select';
 import { Sparkles, Download, Copy, RefreshCw, Loader2, AlertCircle, TrendingUp, Target, Lightbulb, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { interviewService } from '@/services/interviewService';
 
 const PesquisasAnalisePage = () => {
   const { toast } = useToast();
   const [selectedSubagent, setSelectedSubagent] = useState('mmn');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Carregar analytics na inicialização
+  useEffect(() => {
+    loadAnalytics();
+  }, []);
+
+  const loadAnalytics = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await interviewService.getAnalytics();
+      setAnalytics(data);
+    } catch (err) {
+      setError('Erro ao carregar analytics. Usando dados de exemplo.');
+      console.error('Erro ao carregar analytics:', err);
+      // Usar dados mock em caso de erro
+      setAnalytics({
+        total_interviews: 50,
+        completed_interviews: 42,
+        completion_rate: 84,
+        avg_duration: 8.5
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Mock analysis
   const mockAnalysis = `# 📊 Análise Completa - Pesquisa MMN (50 entrevistas)

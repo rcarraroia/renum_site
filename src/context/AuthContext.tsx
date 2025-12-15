@@ -1,52 +1,45 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { User, UserRole, AuthContextType } from '@/types/auth';
 import { toast } from 'sonner';
+import { apiClient } from '@/services/api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_ADMIN: User = {
-  id: 'admin-123',
-  name: 'Admin Renum',
-  email: 'admin@renum.tech',
-  role: 'admin',
-};
-
-const MOCK_CLIENT: User = {
-  id: 'client-456',
-  name: 'Client Alpha',
-  email: 'client@alpha.com',
-  role: 'client',
-};
-
-// Function to simulate checking local storage for a session
+// Function to get initial user from localStorage if valid
 const getInitialUser = (): User | null => {
-    if (typeof window !== 'undefined') {
-        const storedUser = localStorage.getItem('renum_user');
-        if (storedUser) {
-            try {
-                return JSON.parse(storedUser) as User;
-            } catch (e) {
-                console.error("Failed to parse stored user:", e);
-                return null;
-            }
-        }
+  if (typeof window !== 'undefined') {
+    const storedUser = localStorage.getItem('renum_user');
+    const storedToken = localStorage.getItem('renum_token');
+
+    if (storedUser && storedToken) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('[Auth] Usuário restaurado do localStorage:', parsedUser.email);
+        return parsedUser;
+      } catch (e) {
+        console.error('[Auth] Erro ao parsear usuário do storage', e);
+        localStorage.removeItem('renum_user');
+        localStorage.removeItem('renum_token');
+      }
     }
-    return null;
+  }
+  return null;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(getInitialUser());
-  const [isLoading, setIsLoading] = useState(false); // Set to false initially since we check local storage synchronously
+  const [user, setUser] = useState<User | null>(getInitialUser);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isAuthenticated = !!user;
   const role: UserRole = user?.role || 'guest';
 
+  // Sincronizar localStorage quando user mudar
   useEffect(() => {
-    // Persist user state to local storage whenever it changes
     if (user) {
-        localStorage.setItem('renum_user', JSON.stringify(user));
+      localStorage.setItem('renum_user', JSON.stringify(user));
     } else {
-        localStorage.removeItem('renum_user');
+      localStorage.removeItem('renum_user');
+      // Nota: renum_token é gerido no login/logout explicitamente
     }
     console.log(`[Auth] State updated. Authenticated: ${isAuthenticated}, Role: ${role}`);
   }, [user, isAuthenticated, role]);
@@ -55,52 +48,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     console.log(`[Auth] Attempting login for: ${email}`);
-    
-    try {
-      // Chamar API real do backend
-      const response = await fetch('http://localhost:8000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.detail || 'Credenciais inválidas');
-        setIsLoading(false);
-        return;
+    try {
+      // Login real via API
+      const response = await apiClient.post<any>('/auth/login', { email, password });
+      const data = response.data;
+
+      const { access_token, user: userData } = data;
+
+      if (!access_token || !userData) {
+        throw new Error('Resposta de login inválida');
       }
 
-      const data = await response.json();
-      
-      // Mapear resposta do backend para formato do frontend
+      // Mapear resposta do backend para tipo User do frontend
       const loggedInUser: User = {
-        id: data.user.id,
-        name: data.user.name || `${data.user.first_name || ''} ${data.user.last_name || ''}`.trim() || data.user.email,
-        email: data.user.email,
-        role: data.user.role as UserRole,
+        id: userData.id,
+        name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.email,
+        email: userData.email,
+        role: (userData.role as UserRole) || 'client',
+        avatar: userData.avatar_url
       };
 
-      // Salvar token
-      localStorage.setItem('renum_token', data.access_token);
-      
+      // Salvar token e usuário
+      localStorage.setItem('renum_token', access_token);
       setUser(loggedInUser);
+
       toast.success(`Bem-vindo, ${loggedInUser.name}!`);
-    } catch (error) {
+      console.log('[Auth] Login successful');
+
+      // Redirecionar para dashboard se estiver na pagina de login
+      // Redirecionar para dashboard se estiver na pagina de login
+      if (window.location.pathname.includes('/login')) {
+        const dashboardPath = loggedInUser.role === 'admin' ? '/dashboard/admin' : '/dashboard/client';
+        window.location.href = dashboardPath;
+      }
+
+    } catch (error: any) {
       console.error('[Auth] Login error:', error);
-      toast.error('Erro ao conectar com o servidor');
+      const msg = error.response?.data?.detail || 'Erro ao realizar login. Verifique suas credenciais.';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const logout = () => {
     console.log("[Auth] Logging out.");
     localStorage.removeItem('renum_token');
+    localStorage.removeItem('renum_user');
     setUser(null);
     toast.info('Sessão encerrada.');
+    window.location.href = '/auth/login';
   };
 
   const value = useMemo(() => ({

@@ -14,6 +14,7 @@ from langsmith import traceable
 from .base import BaseAgent
 from ..config.settings import settings
 from ..config.langsmith import get_trace_metadata
+from ..utils.logger import logger
 
 
 class RenusAgent(BaseAgent):
@@ -33,20 +34,47 @@ class RenusAgent(BaseAgent):
     - (More sub-agents will be added in future)
     """
     
-    def __init__(self, **kwargs):
-        """Initialize RENUS with default configuration"""
+    def __init__(self, model: str = None, system_prompt: str = None, **kwargs):
+        """Initialize RENUS with configuration (dynamic from DB or default)"""
+        
+        # Resolve configuration
+        final_model = model or kwargs.get("model") or settings.DEFAULT_RENUS_MODEL
+        self._dynamic_system_prompt = system_prompt or kwargs.get("system_prompt")
+        
         super().__init__(
-            model=kwargs.get("model", settings.DEFAULT_RENUS_MODEL),
-            system_prompt=self._get_system_prompt(),
+            model=final_model,
+            system_prompt=self._get_system_prompt(), # Will use dynamic if set
             tools=kwargs.get("tools", []),
             **kwargs
         )
         
-        # Registry of available sub-agents
+        # Dynamic registry (Sprint 09)
+        from .agent_loader import get_agent_registry
+        from .topic_analyzer import get_topic_analyzer
+        from ..utils.logger import logger
+        
+        self.agent_registry = get_agent_registry()
+        self.topic_analyzer = get_topic_analyzer()
+        
+        # Load agents from database on initialization
+        try:
+            count = self.agent_registry.load_agents_from_db()
+            logger.info(f"RENUS initialized with {count} agents from database")
+        except Exception as e:
+            logger.error(f"Error loading agents on RENUS init: {e}")
+        
+        # Start periodic sync (every 60 seconds)
+        if kwargs.get("enable_periodic_sync", True):
+            self.start_periodic_sync(interval_seconds=60)
+        
+        # Legacy sub-agents registry (for backward compatibility)
         self.sub_agents: Dict[str, Any] = {}
     
     def _get_system_prompt(self) -> str:
         """Get system prompt for RENUS"""
+        if hasattr(self, '_dynamic_system_prompt') and self._dynamic_system_prompt:
+            return self._dynamic_system_prompt
+            
         return """You are RENUS, the main orchestrator agent for the RENUM system.
 
 Your responsibilities:
@@ -293,3 +321,85 @@ Always be:
             List of sub-agent names
         """
         return list(self.sub_agents.keys())
+    
+    def sync_agents(self) -> Dict[str, int]:
+        """
+        Sync agent registry with database (Sprint 09)
+        
+        Should be called periodically (e.g., every 60 seconds)
+        
+        Returns:
+            Sync statistics
+        """
+        from ..utils.logger import logger
+        
+        stats = self.agent_registry.sync()
+        logger.info(f"Agent registry synced: {stats}")
+        return stats
+    
+    def start_periodic_sync(self, interval_seconds: int = 60) -> None:
+        """
+        Start periodic sync of agent registry (Sprint 09 - E.2)
+        
+        Detects new agents every N seconds and updates registry
+        
+        Args:
+            interval_seconds: Sync interval (default: 60s)
+        """
+        import threading
+        import time
+        
+        def sync_loop():
+            while True:
+                try:
+                    time.sleep(interval_seconds)
+                    self.sync_agents()
+                except Exception as e:
+                    logger.error(f"Error in periodic sync: {e}")
+        
+        # Start sync thread
+        sync_thread = threading.Thread(target=sync_loop, daemon=True)
+        sync_thread.start()
+        logger.info(f"Started periodic agent sync (interval: {interval_seconds}s)")
+    
+    async def route_message_dynamic(
+        self,
+        message: str,
+        agent_id: str
+    ) -> Dict[str, Any]:
+        """
+        Route message using dynamic agent registry (Sprint 09)
+        
+        Args:
+            message: User message
+            agent_id: Target agent ID
+            
+        Returns:
+            Routing decision with agent/sub-agent info
+        """
+        # Get agent from registry
+        agent_data = self.agent_registry.get_agent(agent_id)
+        
+        if not agent_data:
+            raise ValueError(f"Agent {agent_id} not found in registry")
+        
+        # Get sub-agents for this agent
+        sub_agents = self.agent_registry.get_subagents(agent_id)
+        
+        # Route message
+        routing = await self.topic_analyzer.route_message(
+            message=message,
+            agent_data=agent_data,
+            sub_agents=sub_agents
+        )
+        
+        return routing
+    
+    def get_registry_stats(self) -> dict:
+        """
+        Get agent registry statistics (Sprint 09)
+        
+        Returns:
+            Registry statistics
+        """
+        return self.agent_registry.get_stats()

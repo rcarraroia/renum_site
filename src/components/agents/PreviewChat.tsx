@@ -16,11 +16,19 @@ interface Message {
 
 interface PreviewChatProps {
   agentName?: string;
+  agentSlug?: string;
   systemPrompt?: string;
   onTest?: (message: string) => void;
+  useRealAgent?: boolean;
 }
 
-const PreviewChat: React.FC<PreviewChatProps> = ({ agentName = 'Agente Renum', systemPrompt, onTest }) => {
+const PreviewChat: React.FC<PreviewChatProps> = ({ 
+  agentName = 'Agente Renum', 
+  agentSlug = 'agente-teste',
+  systemPrompt, 
+  onTest,
+  useRealAgent = true 
+}) => {
   const initialMessages: Message[] = [
     { id: 1, sender: 'agent', text: `Olá! Sou o ${agentName}. Como posso ajudar você hoje?` },
   ];
@@ -36,7 +44,7 @@ const PreviewChat: React.FC<PreviewChatProps> = ({ agentName = 'Agente Renum', s
     }
   }, [messages, isAgentTyping]);
 
-  const handleSend = (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) {
         e.preventDefault();
     }
@@ -54,29 +62,56 @@ const PreviewChat: React.FC<PreviewChatProps> = ({ agentName = 'Agente Renum', s
     setInput('');
     setIsAgentTyping(true);
 
-    // Mock Agent response based on input/system prompt
-    setTimeout(() => {
-      let responseText = '';
-      if (userMessageText.toLowerCase().includes('ajuda')) {
-        responseText = `Compreendo. Para mapear a solução ideal, preciso entender seu desafio. Qual é o seu principal gargalo hoje?`;
-      } else if (systemPrompt) {
-        responseText = `Processando sua solicitação com base nas instruções de sistema (${systemPrompt.substring(0, 30)}...).`;
-      } else {
-        responseText = `O ${agentName} está processando a informação. Qual é o seu principal objetivo?`;
+    try {
+      // Conectar ao agente REAL via API (se habilitado)
+      if (!useRealAgent) {
+        throw new Error('Modo simulação ativado');
       }
       
-      const agentResponse: Message = {
+      const response = await fetch(`/api/chat/${agentSlug}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+        },
+        body: JSON.stringify({
+          message: userMessageText,
+          interview_id: null // Nova conversa
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const agentResponse: Message = {
+          id: Date.now() + 1,
+          sender: 'agent',
+          text: data.message || 'Resposta do agente não disponível',
+        };
+        setMessages(prev => [...prev, agentResponse]);
+      } else {
+        // Fallback para simulação se API falhar
+        const fallbackResponse: Message = {
+          id: Date.now() + 1,
+          sender: 'agent',
+          text: `⚠️ Conectando ao agente real... (API Status: ${response.status})\n\nSimulação: ${agentName} processando "${userMessageText}"`,
+        };
+        setMessages(prev => [...prev, fallbackResponse]);
+      }
+    } catch (error) {
+      // Fallback para simulação se houver erro de rede
+      const errorResponse: Message = {
         id: Date.now() + 1,
         sender: 'agent',
-        text: responseText,
+        text: `⚠️ Erro de conexão com agente real. Usando simulação.\n\n${agentName}: Processando sua mensagem "${userMessageText}"`,
       };
-      setMessages(prev => [...prev, agentResponse]);
-      setIsAgentTyping(false);
-      
-      if (onTest) {
-          onTest(userMessageText); // Notify parent component if needed
-      }
-    }, 1500);
+      setMessages(prev => [...prev, errorResponse]);
+    }
+
+    setIsAgentTyping(false);
+    
+    if (onTest) {
+        onTest(userMessageText);
+    }
   };
 
   const MessageBubble: React.FC<{ message: Message }> = ({ message }) => (

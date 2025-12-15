@@ -20,6 +20,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     return <Navigate to="/auth/login" replace />;
   }
 
+  // Se usuário admin acessar raiz, redirecionar para dashboard admin
+  if (role === 'admin' && window.location.pathname === '/') {
+    return <Navigate to="/dashboard/admin" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(role)) {
     // Redirect unauthorized users (e.g., client trying to access admin)
     // Redirect to their respective overview page if they are authenticated but unauthorized for this specific route

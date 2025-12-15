@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Zap, Settings, Wrench, BookOpen, Clock, RefreshCw, Shield, Users, Sliders, FileText } from 'lucide-react';
+import { Zap, Settings, Wrench, BookOpen, Clock, RefreshCw, Shield, Users, Sliders, FileText, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Import Tab Components
 import InstructionsTab from './InstructionsTab';
+import SiccTab from './SiccTab';
 import ToolsTab from './ToolsTab';
 import IntegrationsTab from './IntegrationsTab';
 import KnowledgeTab from './KnowledgeTab';
@@ -20,11 +21,13 @@ interface ConfigRenusPanelProps {
 }
 
 const ConfigRenusPanel: React.FC<ConfigRenusPanelProps> = ({ isGlobalConfig = false, initialTab = 'instructions' }) => {
-    const [activeTab, setActiveTab] = useState(initialTab);
+    const activeTabState = useState(initialTab);
+    const [activeTab, setActiveTab] = activeTabState;
 
     const tabs = useMemo(() => {
         const baseTabs = [
             { value: 'instructions', label: 'Instruções', icon: Settings, component: InstructionsTab },
+            { value: 'sicc', label: 'Inteligência', icon: Brain, component: SiccTab },
             { value: 'tools', label: 'Ferramentas', icon: Wrench, component: ToolsTab },
             { value: 'integrations', label: 'Integrações', icon: RefreshCw, component: IntegrationsTab },
             { value: 'knowledge', label: 'Conhecimento', icon: BookOpen, component: KnowledgeTab },
@@ -44,11 +47,11 @@ const ConfigRenusPanel: React.FC<ConfigRenusPanelProps> = ({ isGlobalConfig = fa
 
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-9 h-auto p-1 bg-gray-100 dark:bg-gray-800">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-10 h-auto p-1 bg-gray-100 dark:bg-gray-800">
                 {tabs.map(tab => (
-                    <TabsTrigger 
-                        key={tab.value} 
-                        value={tab.value} 
+                    <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
                         className={cn(
                             "flex items-center space-x-1 text-xs md:text-sm data-[state=active]:bg-[#0ca7d2] data-[state=active]:text-white transition-all"
                         )}

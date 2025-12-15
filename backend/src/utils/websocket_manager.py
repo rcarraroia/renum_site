@@ -31,7 +31,8 @@ class ConnectionManager:
             conversation_id: Conversation ID
             user_id: User ID
         """
-        await websocket.accept()
+        # NOTE: websocket.accept() is called in ws_handler before this
+        # Do NOT call accept() here to avoid "websocket.accept already called" error
         
         # Add to active connections
         if conversation_id not in self.active_connections:

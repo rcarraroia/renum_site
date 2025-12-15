@@ -1,33 +1,67 @@
-export type ClientStatus = 'Ativo' | 'Inativo' | 'Prospecto';
-export type ClientSegment = 'MMN' | 'Saúde' | 'Governo' | 'Serviços' | 'Tecnologia';
+export type ClientStatus = 'active' | 'inactive' | 'suspended';
 
-export interface Contact {
-  name: string;
-  position: string;
-  email: string;
-  phone: string;
+export interface ContactInfo {
+  phone?: string;
+  email?: string;
+  whatsapp?: string;
+  telegram?: string;
 }
 
-export interface Address {
-  zipCode: string;
-  street: string;
-  number: string;
+export interface AddressInfo {
+  street?: string;
+  number?: string;
   complement?: string;
-  city: string;
-  state: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zipcode?: string;
+  country?: string;
 }
 
 export interface Client {
   id: string;
-  companyName: string;
-  document: string; // CNPJ/CPF
+  company_name: string;
+  document?: string;
   website?: string;
-  segment: ClientSegment;
+  segment: string;  // Obrigatório no backend
   status: ClientStatus;
-  contact: Contact;
-  address: Address;
-  projectsCount: number;
-  lastInteraction: Date;
-  tags: string[];
+  contact?: ContactInfo;
+  address?: AddressInfo;
+  tags?: string[];
   notes?: string;
+  last_interaction?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ClientCreate {
+  company_name: string;
+  document?: string;
+  website?: string;
+  segment?: string;
+  status?: ClientStatus;
+  contact?: ContactInfo;
+  address?: AddressInfo;
+  tags?: string[];
+  notes?: string;
+}
+
+export interface ClientUpdate {
+  company_name?: string;
+  document?: string;
+  website?: string;
+  segment?: string;
+  status?: ClientStatus;
+  contact?: ContactInfo;
+  address?: AddressInfo;
+  tags?: string[];
+  notes?: string;
+}
+
+export interface ClientList {
+  items: Client[];
+  total: number;
+  page: number;
+  limit: number;
+  has_next: boolean;
 }

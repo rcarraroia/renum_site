@@ -10,15 +10,52 @@ export interface TeamMember {
 export interface Project {
   id: string;
   name: string;
-  clientName: string;
-  clientId: string;
-  status: ProjectStatus;
   type: ProjectType;
-  startDate: Date;
-  dueDate: Date;
+  description?: string;
+  scope?: string;
+  status: ProjectStatus;
+  start_date?: string;
+  due_date?: string;
   progress: number; // 0 to 100
-  responsible: TeamMember;
-  budget: number;
-  description: string;
-  scope: string;
+  client_id?: string;
+  responsible_id?: string;
+  budget?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ProjectCreate {
+  name: string;
+  type: ProjectType;
+  description?: string;
+  scope?: string;
+  status?: ProjectStatus;
+  start_date?: string;
+  due_date?: string;
+  progress?: number;
+  client_id?: string;
+  responsible_id?: string;
+  budget?: number;
+}
+
+export interface ProjectUpdate {
+  name?: string;
+  type?: ProjectType;
+  description?: string;
+  scope?: string;
+  status?: ProjectStatus;
+  start_date?: string;
+  due_date?: string;
+  progress?: number;
+  client_id?: string;
+  responsible_id?: string;
+  budget?: number;
+}
+
+export interface ProjectList {
+  items: Project[];
+  total: number;
+  page: number;
+  limit: number;
+  has_next: boolean;
 }

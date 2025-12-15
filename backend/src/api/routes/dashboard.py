@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any
 from src.api.middleware.auth_middleware import get_current_user
 from src.services.dashboard_service import DashboardService
+from src.models.user import UserProfile
 from src.utils.logger import logger
 
 
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 @router.get("/stats")
 async def get_dashboard_stats(
-    current_user: dict = Depends(get_current_user)
+    current_user: UserProfile = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get dashboard statistics and metrics
@@ -34,7 +35,7 @@ async def get_dashboard_stats(
         # Get client_id if user is not admin
         client_id = None
         if current_user.role != "admin":
-            client_id = getattr(current_user, "client_id", None)
+            client_id = current_user.id
         
         stats = service.get_stats(client_id=client_id)
         

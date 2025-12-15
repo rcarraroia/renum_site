@@ -1,14 +1,19 @@
 """
 Supabase Tool - LangChain Tool for Database Queries
-Sprint 04 - Sistema Multi-Agente
+Sprint 07A - Integrações Core (Updated)
 
-Tool that allows agents to query the Supabase database with proper RLS enforcement.
+Tool that allows agents to query the CLIENT'S Supabase database.
+Uses ClientSupabaseClient for secure, read-only access.
 """
 
 from typing import Any, Dict, Optional, Type
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
-from ..config.supabase import supabase_admin
+from uuid import UUID
+import asyncio
+
+from ..integrations.client_supabase import ClientSupabaseClient
+from ..services.integration_service import IntegrationService
 
 
 class SupabaseQueryInput(BaseModel):
@@ -44,33 +49,33 @@ class SupabaseQueryInput(BaseModel):
 
 class SupabaseTool(BaseTool):
     """
-    Tool for querying Supabase database.
+    Tool for querying CLIENT'S Supabase database.
     
-    Supports select, insert, update, delete operations.
-    Automatically enforces RLS based on user context (client_id).
+    Supports read-only select operations on whitelisted tables.
+    Uses ClientSupabaseClient for secure access.
     """
     
-    name: str = "supabase_query"
-    description: str = """Query the Supabase database. 
-    Supports select, insert, update, delete operations.
-    Automatically enforces Row Level Security (RLS) based on user context.
+    name: str = "query_client_database"
+    description: str = """Query the client's Supabase database (read-only).
+    
+    Use this tool to fetch data from the client's database.
+    Only SELECT operations are allowed on whitelisted tables.
     
     Examples:
     - Select all active leads: table='leads', operation='select', filters={'status': 'active'}
-    - Insert new client: table='clients', operation='insert', data={'name': 'Acme Corp', 'email': 'contact@acme.com'}
-    - Update interview status: table='interviews', operation='update', filters={'id': 'uuid'}, data={'status': 'completed'}
     - Count interviews: table='interviews', operation='select', columns='count(*)'
+    - Get recent orders: table='orders', operation='select', order_by='created_at', order_desc=True, limit=10
     """
     args_schema: Type[BaseModel] = SupabaseQueryInput
     
-    client_id: Optional[str] = None
+    client_id: Optional[UUID] = None
     
-    def __init__(self, client_id: Optional[str] = None, **kwargs):
+    def __init__(self, client_id: Optional[UUID] = None, **kwargs):
         """
         Initialize Supabase Tool.
         
         Args:
-            client_id: Client ID for multi-tenant filtering (optional)
+            client_id: Client ID for loading database integration config
             **kwargs: Additional arguments for BaseTool
         """
         super().__init__(**kwargs)
@@ -87,14 +92,28 @@ class SupabaseTool(BaseTool):
         order_by: Optional[str] = None,
         order_desc: bool = False
     ) -> Dict[str, Any]:
+        """Synchronous version"""
+        return asyncio.run(self._arun(table, operation, filters, data, columns, limit, order_by, order_desc))
+    
+    async def _arun(
+        self,
+        table: str,
+        operation: str,
+        filters: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        columns: str = "*",
+        limit: Optional[int] = None,
+        order_by: Optional[str] = None,
+        order_desc: bool = False
+    ) -> Dict[str, Any]:
         """
-        Execute synchronous query.
+        Execute async query on client's database.
         
         Args:
             table: Table name
-            operation: Operation type (select, insert, update, delete)
+            operation: Operation type (only 'select' is allowed)
             filters: Filter conditions
-            data: Data for insert/update
+            data: Data (not used for read-only)
             columns: Columns to select
             limit: Maximum records to return
             order_by: Column to order by
@@ -104,116 +123,73 @@ class SupabaseTool(BaseTool):
             Dictionary with success status and data/error
         """
         try:
-            # Add client_id filter if provided (multi-tenant)
-            if self.client_id and filters is None:
-                filters = {}
-            if self.client_id:
-                filters["client_id"] = self.client_id
-            
-            # Execute operation
-            if operation == "select":
-                query = supabase_admin.table(table).select(columns)
-                
-                # Apply filters
-                if filters:
-                    for key, value in filters.items():
-                        query = query.eq(key, value)
-                
-                # Apply ordering
-                if order_by:
-                    query = query.order(order_by, desc=order_desc)
-                
-                # Apply limit
-                if limit:
-                    query = query.limit(limit)
-                
-                result = query.execute()
-                return {
-                    "success": True,
-                    "data": result.data,
-                    "count": len(result.data)
-                }
-            
-            elif operation == "insert":
-                if not data:
-                    return {"success": False, "error": "Data is required for insert operation"}
-                
-                # Add client_id to data if provided
-                if self.client_id:
-                    data["client_id"] = self.client_id
-                
-                result = supabase_admin.table(table).insert(data).execute()
-                return {
-                    "success": True,
-                    "data": result.data,
-                    "count": len(result.data)
-                }
-            
-            elif operation == "update":
-                if not data:
-                    return {"success": False, "error": "Data is required for update operation"}
-                if not filters:
-                    return {"success": False, "error": "Filters are required for update operation"}
-                
-                query = supabase_admin.table(table).update(data)
-                
-                # Apply filters
-                for key, value in filters.items():
-                    query = query.eq(key, value)
-                
-                result = query.execute()
-                return {
-                    "success": True,
-                    "data": result.data,
-                    "count": len(result.data)
-                }
-            
-            elif operation == "delete":
-                if not filters:
-                    return {"success": False, "error": "Filters are required for delete operation"}
-                
-                query = supabase_admin.table(table).delete()
-                
-                # Apply filters
-                for key, value in filters.items():
-                    query = query.eq(key, value)
-                
-                result = query.execute()
-                return {
-                    "success": True,
-                    "data": result.data,
-                    "count": len(result.data)
-                }
-            
-            else:
+            # Validate operation (read-only)
+            if operation != "select":
                 return {
                     "success": False,
-                    "error": f"Unknown operation: {operation}. Supported: select, insert, update, delete"
+                    "error": f"Operation '{operation}' not allowed. Only 'select' is permitted (read-only mode)"
                 }
-        
+            
+            # Load integration config
+            if not self.client_id:
+                return {
+                    "success": False,
+                    "error": "client_id is required to query database"
+                }
+            
+            integration_service = IntegrationService()
+            integration = await integration_service.get_integration(self.client_id, "database")
+            
+            if not integration:
+                return {
+                    "success": False,
+                    "error": "Database integration not configured for this client"
+                }
+            
+            if integration.status != "active":
+                return {
+                    "success": False,
+                    "error": f"Database integration is {integration.status}, not active"
+                }
+            
+            # Get decrypted config
+            config = await integration_service.decrypt_credentials(integration.config)
+            
+            # Create ClientSupabaseClient
+            client = ClientSupabaseClient(
+                supabase_url=config.get("supabase_url"),
+                supabase_key=config.get("supabase_key"),
+                read_only=True,  # Enforce read-only
+                allowed_tables=config.get("allowed_tables", [])
+            )
+            
+            # Execute query
+            result = await client.execute_query(
+                table=table,
+                operation=operation,
+                filters=filters,
+                columns=columns,
+                limit=limit,
+                order_by=order_by,
+                order_desc=order_desc
+            )
+            
+            return result
+            
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
                 "error_type": type(e).__name__
             }
-    
-    async def _arun(self, *args, **kwargs) -> Dict[str, Any]:
-        """
-        Execute async query.
-        
-        Note: Currently uses sync implementation.
-        For true async, would need async Supabase client.
-        """
-        return self._run(*args, **kwargs)
 
 
-def create_supabase_tool(client_id: Optional[str] = None) -> SupabaseTool:
+def create_supabase_tool(client_id: Optional[UUID] = None) -> SupabaseTool:
     """
-    Factory function to create a Supabase Tool with optional client_id.
+    Factory function to create a Supabase Tool with client_id.
     
     Args:
-        client_id: Client ID for multi-tenant filtering
+        client_id: Client ID for loading database integration config
     
     Returns:
         Configured SupabaseTool instance

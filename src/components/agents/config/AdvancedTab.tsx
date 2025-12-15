@@ -6,7 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Zap, Info, DollarSign } from 'lucide-react';
+import { Zap, Info, DollarSign, Activity } from 'lucide-react';
+import { monitoringService, MonitoringStats } from '@/services/monitoringService';
+import { useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 export const AdvancedTab = () => {
   const [config, setConfig] = useState({
@@ -17,39 +20,57 @@ export const AdvancedTab = () => {
     apiKey: ''
   });
 
+  const [monitoringStats, setMonitoringStats] = useState<MonitoringStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+        const stats = await monitoringService.getStats();
+        setMonitoringStats(stats);
+      } catch (error) {
+        console.error("Failed to load LangSmith stats", error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    loadStats();
+  }, []);
+
   const modelOptions = [
-    { 
-      value: 'anthropic/claude-sonnet-4', 
+    {
+      value: 'anthropic/claude-sonnet-4',
       label: 'Claude Sonnet 4',
       tier: 'premium',
       cost: '$15/1M tokens'
     },
-    { 
-      value: 'openai/gpt-4o', 
+    {
+      value: 'openai/gpt-4o',
       label: 'GPT-4o',
       tier: 'premium',
       cost: '$10/1M tokens'
     },
-    { 
-      value: 'openai/gpt-4o-mini', 
+    {
+      value: 'openai/gpt-4o-mini',
       label: 'GPT-4o Mini',
       tier: 'standard',
       cost: '$0.15/1M tokens'
     },
-    { 
-      value: 'google/gemini-pro-1.5', 
+    {
+      value: 'google/gemini-pro-1.5',
       label: 'Gemini Pro 1.5',
       tier: 'standard',
       cost: '$7/1M tokens'
     },
-    { 
-      value: 'meta-llama/llama-3.1-8b-instruct:free', 
+    {
+      value: 'meta-llama/llama-3.1-8b-instruct:free',
       label: 'Llama 3.1 8B',
       tier: 'free',
       cost: 'FREE'
     },
-    { 
-      value: 'meta-llama/llama-3.1-70b-instruct', 
+    {
+      value: 'meta-llama/llama-3.1-70b-instruct',
       label: 'Llama 3.1 70B',
       tier: 'standard',
       cost: '$0.80/1M tokens'
@@ -82,7 +103,7 @@ export const AdvancedTab = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Provider</Label>
-            <Select value={config.provider} onValueChange={(value) => setConfig({...config, provider: value})}>
+            <Select value={config.provider} onValueChange={(value) => setConfig({ ...config, provider: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -105,7 +126,7 @@ export const AdvancedTab = () => {
               type="password"
               placeholder="sk-or-v1-..."
               value={config.apiKey}
-              onChange={(e) => setConfig({...config, apiKey: e.target.value})}
+              onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
             />
             <p className="text-xs text-muted-foreground">
               Obtenha sua chave em: <a href="https://openrouter.ai/keys" target="_blank" className="text-[#0ca7d2] hover:underline">openrouter.ai/keys</a>
@@ -125,7 +146,7 @@ export const AdvancedTab = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Modelo de IA</Label>
-            <Select value={config.model} onValueChange={(value) => setConfig({...config, model: value})}>
+            <Select value={config.model} onValueChange={(value) => setConfig({ ...config, model: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -135,12 +156,12 @@ export const AdvancedTab = () => {
                     <div className="flex items-center justify-between w-full">
                       <span>{model.label}</span>
                       <div className="flex items-center gap-2 ml-4">
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={
                             model.tier === 'premium' ? 'border-purple-500 text-purple-700' :
-                            model.tier === 'free' ? 'border-green-500 text-green-700' :
-                            'border-blue-500 text-blue-700'
+                              model.tier === 'free' ? 'border-green-500 text-green-700' :
+                                'border-blue-500 text-blue-700'
                           }
                         >
                           {model.tier}
@@ -170,7 +191,7 @@ export const AdvancedTab = () => {
             </div>
             <Slider
               value={[config.temperature]}
-              onValueChange={(value) => setConfig({...config, temperature: value[0]})}
+              onValueChange={(value) => setConfig({ ...config, temperature: value[0] })}
               min={0}
               max={2}
               step={0.1}
@@ -186,7 +207,7 @@ export const AdvancedTab = () => {
             <Input
               type="number"
               value={config.maxTokens}
-              onChange={(e) => setConfig({...config, maxTokens: parseInt(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) })}
               min={100}
               max={8000}
             />
@@ -201,11 +222,82 @@ export const AdvancedTab = () => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Dica:</strong> Modelos diferentes têm custos e capacidades variadas. 
-          Use modelos premium (Claude Sonnet 4, GPT-4) para tarefas críticas e modelos 
+          <strong>Dica:</strong> Modelos diferentes têm custos e capacidades variadas.
+          Use modelos premium (Claude Sonnet 4, GPT-4) para tarefas críticas e modelos
           mais baratos ou FREE para testes e tarefas simples.
         </AlertDescription>
       </Alert>
+
+      {/* Monitoring Section (LangSmith) */}
+      <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-500" />
+                Observabilidade LangSmith
+              </CardTitle>
+              <CardDescription>Monitoramento em tempo real das execuções do agente</CardDescription>
+            </div>
+            {monitoringStats?.status === 'active' && (
+              <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                Ativo: {monitoringStats.project}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingStats ? (
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <span className="animate-spin">⌛</span> Carregando métricas...
+            </div>
+          ) : monitoringStats?.status === 'active' ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                  <div className="text-xs text-muted-foreground">Total Runs (100)</div>
+                  <div className="text-2xl font-bold">{monitoringStats.total_runs_in_window}</div>
+                </div>
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                  <div className="text-xs text-muted-foreground">Taxa de Erro</div>
+                  <div className={cn("text-2xl font-bold", monitoringStats.error_rate > 0 ? "text-red-500" : "text-green-500")}>
+                    {monitoringStats.error_rate}%
+                  </div>
+                </div>
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                  <div className="text-xs text-muted-foreground">Sucesso</div>
+                  <div className="text-2xl font-bold text-green-600">{monitoringStats.success_rate}%</div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Últimas 5 Execuções</h4>
+                <div className="space-y-2">
+                  {monitoringStats.recent_runs.slice(0, 5).map(run => (
+                    <div key={run.id} className="text-xs flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", run.status === 'success' ? "bg-green-500" : "bg-red-500")} />
+                        <span className="font-medium truncate max-w-[150px]">{run.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <span>{run.latency}s</span>
+                        <span>{run.timestamp ? new Date(run.timestamp).toLocaleTimeString() : '-'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded border border-yellow-200">
+              LangSmith não está configurado ou ativo neste ambiente.
+              <br />
+              Verifique as variáveis de ambiente LANGSMITH_API_KEY.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
     </div>
   );
 };

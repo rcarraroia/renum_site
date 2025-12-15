@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-12-12T18:51:10.610468",
+  "connection": "SUCCESS",
+  "table_counts": {
+    "clients": "ERROR: [Errno 11001] getaddrinfo failed",
+    "leads": "ERROR: [Errno 11001] getaddrinfo failed",
+    "projects": "ERROR: [Errno 11001] getaddrinfo failed",
+    "agents": "ERROR: [Errno 11001] getaddrinfo failed",
+    "sub_agents": "ERROR: [Errno 11001] getaddrinfo failed",
+    "conversations": "ERROR: [Errno 11001] getaddrinfo failed",
+    "messages": "ERROR: [Errno 11001] getaddrinfo failed",
+    "interviews": "ERROR: [Errno 11001] getaddrinfo failed",
+    "interview_messages": "ERROR: [Errno 11001] getaddrinfo failed",
+    "integrations": "ERROR: [Errno 11001] getaddrinfo failed",
+    "triggers": "ERROR: [Errno 11001] getaddrinfo failed",
+    "trigger_executions": "ERROR: [Errno 11001] getaddrinfo failed",
+    "interaction_logs": "ERROR: [Errno 11001] getaddrinfo failed",
+    "sicc_memories": "ERROR: [Errno 11001] getaddrinfo failed",
+    "sicc_learnings": "ERROR: [Errno 11001] getaddrinfo failed",
+    "sicc_patterns": "ERROR: [Errno 11001] getaddrinfo failed",
+    "sicc_snapshots": "ERROR: [Errno 11001] getaddrinfo failed",
+    "sicc_evolution_entries": "ERROR: [Errno 11001] getaddrinfo failed",
+    "users": "ERROR: [Errno 11001] getaddrinfo failed",
+    "profiles": "ERROR: [Errno 11001] getaddrinfo failed",
+    "categories": "ERROR: [Errno 11001] getaddrinfo failed",
+    "tools": "ERROR: [Errno 11001] getaddrinfo failed",
+    "agent_tools": "ERROR: [Errno 11001] getaddrinfo failed",
+    "renus_config": "ERROR: [Errno 11001] getaddrinfo failed",
+    "webhooks": "ERROR: [Errno 11001] getaddrinfo failed"
+  }
+}

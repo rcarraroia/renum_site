@@ -33,7 +33,7 @@ class ClientBase(BaseModel):
     company_name: str = Field(..., min_length=3, max_length=200)
     document: Optional[str] = Field(None, description="CPF ou CNPJ")
     website: Optional[str] = None
-    segment: str = Field(..., description="Segmento de atuação")
+    segment: str = Field(..., description="Segmento de atuação")  # Obrigatório no banco
     contact: Optional[ContactInfo] = None
     address: Optional[AddressInfo] = None
     tags: Optional[List[str]] = None

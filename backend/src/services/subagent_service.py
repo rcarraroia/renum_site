@@ -102,6 +102,7 @@ class SubAgentService:
     
     async def list_subagents(
         self,
+        agent_id: Optional[UUID] = None,
         is_active: Optional[bool] = None,
         channel: Optional[str] = None,
         limit: int = 50,
@@ -111,6 +112,7 @@ class SubAgentService:
         List sub-agents with optional filtering.
         
         Args:
+            agent_id: Filter by agent ID (optional)
             is_active: Filter by active status (optional)
             channel: Filter by channel (optional)
             limit: Number of results per page
@@ -124,6 +126,9 @@ class SubAgentService:
             query = self.supabase.table('sub_agents').select('*')
             
             # Apply filters
+            if agent_id:
+                query = query.eq('agent_id', str(agent_id))
+            
             if is_active is not None:
                 query = query.eq('is_active', is_active)
             
@@ -598,3 +603,32 @@ class SubAgentService:
         except Exception as e:
             logger.error(f"Error listing sub-agents: {e}")
             return []
+
+
+    async def list_by_agent(
+        self,
+        agent_id: UUID,
+        is_active: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> List[SubAgentResponse]:
+        """
+        List sub-agents of a specific agent.
+        
+        Alias for list_subagents with agent_id required.
+        
+        Args:
+            agent_id: Agent ID (required)
+            is_active: Filter by active status (optional)
+            limit: Number of results per page
+            offset: Offset for pagination
+        
+        Returns:
+            List of SubAgentResponse objects
+        """
+        return await self.list_subagents(
+            agent_id=agent_id,
+            is_active=is_active,
+            limit=limit,
+            offset=offset
+        )

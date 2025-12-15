@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Zap, Briefcase, Clock, CheckCircle, Plus, Filter, Download, List, LayoutGrid, Search } from 'lucide-react';
+import { Zap, Briefcase, Clock, CheckCircle, Plus, Filter, Download, List, LayoutGrid, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MOCK_PROJECTS } from '@/data/mockProjects';
 import { Project } from '@/types/project';
 import ProjectTable from '@/components/projects/ProjectTable';
 import ProjectCreationModal from '@/components/projects/ProjectCreationModal';
@@ -12,20 +11,42 @@ import { toast } from 'sonner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { StatusBadge } from '@/components/projects/ProjectBadges';
 import { Progress } from '@/components/ui/progress';
+import { projectService } from '@/services/projectService';
 
 const AdminProjectsPage: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load projects on mount
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await projectService.getAll({ limit: 100 });
+      setProjects(response.items);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar projetos';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredProjects = useMemo(() => {
     if (!searchTerm) return projects;
     const lowerCaseSearch = searchTerm.toLowerCase();
     return projects.filter(project => 
         project.name.toLowerCase().includes(lowerCaseSearch) ||
-        project.clientName.toLowerCase().includes(lowerCaseSearch) ||
-        project.responsible.name.toLowerCase().includes(lowerCaseSearch)
+        (project.description && project.description.toLowerCase().includes(lowerCaseSearch))
     );
   }, [projects, searchTerm]);
 
@@ -35,14 +56,27 @@ const AdminProjectsPage: React.FC = () => {
     completed: projects.filter(p => p.status === 'Concluído').length,
   }), [projects]);
 
-  const handleCreateProject = (newProjectData: Omit<Project, 'id' | 'status' | 'progress'>) => {
-    const newProject: Project = {
-      ...newProjectData,
-      id: `p${Date.now()}`,
-      status: 'Em Andamento', // Default status upon creation
-      progress: 0,
-    };
-    setProjects(prev => [newProject, ...prev]);
+  const handleCreateProject = async (newProjectData: any) => {
+    try {
+      const createdProject = await projectService.create({
+        name: newProjectData.name,
+        type: newProjectData.type,
+        description: newProjectData.description,
+        scope: newProjectData.scope,
+        start_date: newProjectData.startDate?.toISOString().split('T')[0],
+        due_date: newProjectData.dueDate?.toISOString().split('T')[0],
+        budget: newProjectData.budget,
+        client_id: newProjectData.clientId,
+        responsible_id: newProjectData.responsible?.id,
+        status: 'Em Andamento',
+        progress: 0,
+      });
+      setProjects(prev => [createdProject, ...prev]);
+      toast.success('Projeto criado com sucesso!');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar projeto';
+      toast.error(errorMessage);
+    }
   };
 
   const handleEditProject = (project: Project) => {
@@ -50,9 +84,15 @@ const AdminProjectsPage: React.FC = () => {
     toast.info(`Abrindo edição para: ${project.name}`);
   };
 
-  const handleArchiveProject = (projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-    toast.warning(`Projeto arquivado (ID: ${projectId})`);
+  const handleArchiveProject = async (projectId: string) => {
+    try {
+      await projectService.delete(projectId);
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      toast.success('Projeto arquivado com sucesso!');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao arquivar projeto';
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -127,7 +167,21 @@ const AdminProjectsPage: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      {viewMode === 'table' ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-[#4e4ea8]" />
+          <span className="ml-3 text-muted-foreground">Carregando projetos...</span>
+        </div>
+      ) : error ? (
+        <Card className="p-6">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={loadProjects} variant="outline">
+              Tentar Novamente
+            </Button>
+          </div>
+        </Card>
+      ) : viewMode === 'table' ? (
         <ProjectTable projects={filteredProjects} onEdit={handleEditProject} onArchive={handleArchiveProject} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,17 +1,19 @@
 """
 WhatsApp Tool - LangChain Tool for Sending WhatsApp Messages
-Sprint 04 - Sistema Multi-Agente
+Sprint 07A - Integrações Core (Updated)
 
 Tool that agents can use to send WhatsApp messages.
-Uses the abstract WhatsAppProvider interface for flexibility.
+Uses UazapiClient and Celery for async message sending.
 """
 
 from typing import Dict, Any, Optional
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 import asyncio
+from uuid import UUID
 
-from ..providers.whatsapp.base import WhatsAppProvider, get_whatsapp_provider
+from ..integrations.uazapi_client import UazapiClient
+from ..services.integration_service import IntegrationService
 
 
 class WhatsAppMessageInput(BaseModel):
@@ -61,10 +63,10 @@ class WhatsAppTool(BaseTool):
     Tool for sending WhatsApp text messages.
     
     This tool allows agents to send WhatsApp messages to phone numbers.
-    It uses the configured WhatsApp provider (Evolution, Twilio, etc).
+    Uses UazapiClient and Celery for async message sending.
     
     Example usage in agent:
-        tools = [WhatsAppTool()]
+        tools = [WhatsAppTool(client_id="uuid")]
         agent = create_agent(llm, tools)
         result = agent.invoke("Send a WhatsApp to +5511999999999 saying hello")
     """
@@ -78,22 +80,22 @@ class WhatsAppTool(BaseTool):
     - phone: Phone number in international format (e.g., +5511999999999)
     - message: The text message to send
     
-    Returns a dict with success status and message_id."""
+    Returns a dict with success status and task_id."""
     
     args_schema: type[BaseModel] = WhatsAppMessageInput
     
-    provider: Optional[WhatsAppProvider] = None
+    client_id: Optional[UUID] = None
     
-    def __init__(self, provider: Optional[WhatsAppProvider] = None, **kwargs):
+    def __init__(self, client_id: Optional[UUID] = None, **kwargs):
         """
         Initialize WhatsApp tool.
         
         Args:
-            provider: WhatsApp provider instance (defaults to configured provider)
+            client_id: Client ID for loading integration config
             **kwargs: Additional BaseTool arguments
         """
         super().__init__(**kwargs)
-        self.provider = provider or get_whatsapp_provider()
+        self.client_id = client_id
     
     def _run(self, phone: str, message: str) -> Dict[str, Any]:
         """
@@ -104,33 +106,66 @@ class WhatsAppTool(BaseTool):
             message: Message content
         
         Returns:
-            Dict with success status and message_id or error
+            Dict with success status and task_id or error
         """
         return asyncio.run(self._arun(phone, message))
     
     async def _arun(self, phone: str, message: str) -> Dict[str, Any]:
         """
-        Send WhatsApp message asynchronously.
+        Send WhatsApp message asynchronously via Celery.
         
         Args:
             phone: Phone number in international format
             message: Message content
         
         Returns:
-            Dict with success status and message_id or error
+            Dict with success status and task_id or error
         """
         try:
-            # Validate phone format
-            if not self.provider.validate_phone(phone):
+            # Validate phone format (basic check)
+            if not phone.startswith("+"):
                 return {
                     "success": False,
-                    "error": f"Invalid phone format: {phone}. Must be in international format (e.g., +5511999999999)"
+                    "error": f"Invalid phone format: {phone}. Must start with + and country code"
                 }
             
-            # Send message via provider
-            result = await self.provider.send_message(phone, message)
+            # Load integration config
+            if not self.client_id:
+                return {
+                    "success": False,
+                    "error": "client_id is required to send WhatsApp messages"
+                }
             
-            return result
+            integration_service = IntegrationService()
+            integration = await integration_service.get_integration(self.client_id, "whatsapp")
+            
+            if not integration:
+                return {
+                    "success": False,
+                    "error": "WhatsApp integration not configured for this client"
+                }
+            
+            if integration.status != "active":
+                return {
+                    "success": False,
+                    "error": f"WhatsApp integration is {integration.status}, not active"
+                }
+            
+            # Enqueue Celery task for async sending
+            from ..workers.message_tasks import send_whatsapp_message_task
+            
+            task = send_whatsapp_message_task.delay(
+                client_id=str(self.client_id),
+                phone=phone,
+                message=message
+            )
+            
+            return {
+                "success": True,
+                "task_id": task.id,
+                "phone": phone,
+                "status": "queued"
+            }
             
         except Exception as e:
             return {
@@ -144,9 +179,10 @@ class WhatsAppMediaTool(BaseTool):
     Tool for sending WhatsApp media (images, videos, documents).
     
     This tool allows agents to send media files via WhatsApp.
+    Uses UazapiClient for media sending.
     
     Example usage in agent:
-        tools = [WhatsAppMediaTool()]
+        tools = [WhatsAppMediaTool(client_id="uuid")]
         agent = create_agent(llm, tools)
         result = agent.invoke("Send an image to +5511999999999")
     """
@@ -166,18 +202,18 @@ class WhatsAppMediaTool(BaseTool):
     
     args_schema: type[BaseModel] = WhatsAppMediaInput
     
-    provider: Optional[WhatsAppProvider] = None
+    client_id: Optional[UUID] = None
     
-    def __init__(self, provider: Optional[WhatsAppProvider] = None, **kwargs):
+    def __init__(self, client_id: Optional[UUID] = None, **kwargs):
         """
         Initialize WhatsApp media tool.
         
         Args:
-            provider: WhatsApp provider instance (defaults to configured provider)
+            client_id: Client ID for loading integration config
             **kwargs: Additional BaseTool arguments
         """
         super().__init__(**kwargs)
-        self.provider = provider or get_whatsapp_provider()
+        self.client_id = client_id
     
     def _run(
         self,
@@ -210,7 +246,7 @@ class WhatsAppMediaTool(BaseTool):
         """
         try:
             # Validate phone format
-            if not self.provider.validate_phone(phone):
+            if not phone.startswith("+"):
                 return {
                     "success": False,
                     "error": f"Invalid phone format: {phone}"
@@ -224,13 +260,38 @@ class WhatsAppMediaTool(BaseTool):
                     "error": f"Invalid media_type: {media_type}. Must be one of: {', '.join(valid_types)}"
                 }
             
-            # Send media via provider
-            result = await self.provider.send_media(
-                phone=phone,
-                media_url=media_url,
-                caption=caption,
-                media_type=media_type
-            )
+            # Load integration config
+            if not self.client_id:
+                return {
+                    "success": False,
+                    "error": "client_id is required to send WhatsApp media"
+                }
+            
+            integration_service = IntegrationService()
+            integration = await integration_service.get_integration(self.client_id, "whatsapp")
+            
+            if not integration:
+                return {
+                    "success": False,
+                    "error": "WhatsApp integration not configured for this client"
+                }
+            
+            # Get decrypted config
+            config = await integration_service.decrypt_credentials(integration.config)
+            
+            # Create UazapiClient with context manager (auto-closes connection)
+            async with UazapiClient(
+                api_url=config.get("api_url"),
+                api_token=config.get("api_token"),
+                phone_number=config.get("phone_number")
+            ) as client:
+                # Send media
+                result = await client.send_media(
+                    phone=phone,
+                    media_url=media_url,
+                    caption=caption,
+                    media_type=media_type
+                )
             
             return result
             
@@ -242,21 +303,21 @@ class WhatsAppMediaTool(BaseTool):
 
 
 # Convenience function to get both tools
-def get_whatsapp_tools(provider: Optional[WhatsAppProvider] = None) -> list[BaseTool]:
+def get_whatsapp_tools(client_id: Optional[UUID] = None) -> list[BaseTool]:
     """
     Get all WhatsApp tools.
     
     Args:
-        provider: WhatsApp provider instance (optional)
+        client_id: Client ID for loading integration config
     
     Returns:
         List of WhatsApp tools (message and media)
     
     Example:
-        >>> tools = get_whatsapp_tools()
+        >>> tools = get_whatsapp_tools(client_id="uuid")
         >>> agent = create_agent(llm, tools)
     """
     return [
-        WhatsAppTool(provider=provider),
-        WhatsAppMediaTool(provider=provider)
+        WhatsAppTool(client_id=client_id),
+        WhatsAppMediaTool(client_id=client_id)
     ]

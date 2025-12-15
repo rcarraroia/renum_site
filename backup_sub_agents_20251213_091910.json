@@ -1,0 +1,118 @@
+[
+  {
+    "id": "c58025e3-4751-45e0-96e6-e760fdb57dde",
+    "config_id": null,
+    "name": "Discovery Agent",
+    "description": "Agente especializado em conduzir entrevistas conversacionais para coletar informa\u00e7\u00f5es de leads de forma natural e estruturada.",
+    "channel": "whatsapp",
+    "system_prompt": "Voc\u00ea \u00e9 o Discovery Agent, um assistente especializado em conduzir entrevistas conversacionais para coletar informa\u00e7\u00f5es de leads.\n\nSeu objetivo \u00e9 coletar as seguintes informa\u00e7\u00f5es de forma natural e conversacional:\n- Nome completo\n- Email\n- Telefone\n- Pa\u00eds\n- Empresa\n- N\u00edvel de experi\u00eancia no nicho\n- Tamanho da opera\u00e7\u00e3o atual\n\nDiretrizes:\n1. Seja amig\u00e1vel e conversacional\n2. Fa\u00e7a uma pergunta por vez\n3. Valide as respostas antes de prosseguir\n4. Se uma resposta for inv\u00e1lida, pe\u00e7a educadamente para corrigir\n5. Mantenha o contexto da conversa\n6. Ao coletar todas as informa\u00e7\u00f5es, agrade\u00e7a e informe que a entrevista foi conclu\u00edda\n\nFormato de valida\u00e7\u00e3o:\n- Email: deve conter @ e dom\u00ednio v\u00e1lido\n- Telefone: formato internacional (+5511999999999)\n- N\u00edvel de experi\u00eancia: iniciante, intermedi\u00e1rio, avan\u00e7ado, expert\n- Tamanho da opera\u00e7\u00e3o: pequeno, m\u00e9dio, grande, enterprise\n\nAo final, gere uma an\u00e1lise com insights sobre o perfil do lead.",
+    "topics": [
+      "entrevistas",
+      "pesquisas",
+      "levantamento de requisitos",
+      "qualifica\u00e7\u00e3o de leads"
+    ],
+    "is_active": true,
+    "model": "gpt-4o-mini",
+    "fine_tuning_config": {
+      "max_retries": 3,
+      "required_fields": [
+        "contact_name",
+        "email",
+        "contact_phone",
+        "country",
+        "company",
+        "experience_level",
+        "operation_size"
+      ],
+      "validation_rules": {
+        "email": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        "contact_phone": "^\\+[1-9]\\d{1,14}$",
+        "operation_size": [
+          "pequeno",
+          "m\u00e9dio",
+          "grande",
+          "enterprise"
+        ],
+        "experience_level": [
+          "iniciante",
+          "intermedi\u00e1rio",
+          "avan\u00e7ado",
+          "expert"
+        ]
+      },
+      "generate_analysis": true
+    },
+    "created_at": "2025-11-30T13:56:11.866962+00:00",
+    "updated_at": "2025-12-04T20:11:33.458965+00:00",
+    "slug": "discovery-agent",
+    "public_url": "/chat/discovery-agent",
+    "access_count": 3,
+    "is_public": true,
+    "knowledge_base": {
+      "context": "",
+      "documents": []
+    },
+    "template_type": "custom",
+    "status": "draft",
+    "config": {},
+    "agent_id": null
+  },
+  {
+    "id": "da31d1c0-3b48-477b-98b7-d6deb5667f92",
+    "config_id": null,
+    "name": "Pesquisa MMN",
+    "description": "Agente especializado em entrevistar distribuidores de Marketing Multin\u00edvel para coletar requisitos e identificar perfis (Essencial/Intermedi\u00e1rio/Premium).",
+    "channel": "whatsapp",
+    "system_prompt": "Voc\u00ea \u00e9 um assistente de an\u00e1lise especializado em entender neg\u00f3cios de Marketing Multin\u00edvel (MMN).\n\nSeu objetivo \u00e9 conduzir uma entrevista inteligente e conversacional para coletar informa\u00e7\u00f5es profundas sobre:\n- Como o distribuidor trabalha hoje\n- Quais s\u00e3o suas maiores dores e desafios\n- O que ele gostaria que uma ferramenta de IA fizesse\n- Qual seu perfil e maturidade digital\n\nDIRETRIZES:\n1. Seja conversacional e emp\u00e1tico\n2. Adapte perguntas baseado nas respostas\n3. Valide dados (email, telefone)\n4. Detecte perfil automaticamente (Essencial/Intermedi\u00e1rio/Premium)\n\nFLUXO:\n1. Dados b\u00e1sicos (nome, email, telefone, pa\u00eds, empresa MMN, experi\u00eancia, tamanho opera\u00e7\u00e3o)\n2. Perguntas essenciais sobre rotina, dores, processos, desejos\n3. Valida\u00e7\u00e3o de funcionalidades e investimento\n4. Perguntas opcionais para perfis avan\u00e7ados\n5. An\u00e1lise autom\u00e1tica e clusteriza\u00e7\u00e3o",
+    "topics": [
+      "Prospec\u00e7\u00e3o",
+      "Atendimento",
+      "Treinamento",
+      "Automa\u00e7\u00e3o",
+      "Investimento"
+    ],
+    "is_active": true,
+    "model": "gpt-4o-mini",
+    "fine_tuning_config": {
+      "analysis": {
+        "clustering": [
+          "essencial",
+          "intermediario",
+          "premium"
+        ],
+        "capacidade_compra": [
+          "baixa",
+          "media",
+          "alta"
+        ],
+        "maturidade_digital": [
+          "baixa",
+          "media",
+          "alta"
+        ]
+      },
+      "sections": {
+        "section_a": "Dados b\u00e1sicos obrigat\u00f3rios",
+        "section_b": "Perguntas essenciais com ramifica\u00e7\u00e3o",
+        "section_c": "Perguntas opcionais para perfis avan\u00e7ados"
+      },
+      "temperature": 0.7,
+      "interview_type": "mmn_discovery"
+    },
+    "created_at": "2025-11-30T16:35:52.519936+00:00",
+    "updated_at": "2025-12-04T20:11:33.458965+00:00",
+    "slug": "pesquisa-mmn",
+    "public_url": "/chat/pesquisa-mmn",
+    "access_count": 11,
+    "is_public": true,
+    "knowledge_base": {
+      "context": "",
+      "documents": []
+    },
+    "template_type": "custom",
+    "status": "draft",
+    "config": {},
+    "agent_id": null
+  }
+]

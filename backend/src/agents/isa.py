@@ -37,17 +37,21 @@ class IsaAgent(BaseAgent):
     - "list [entity]" - List records
     """
     
-    def __init__(self, **kwargs):
-        """Initialize ISA with default configuration"""
+    def __init__(self, model: str = None, system_prompt: str = None, **kwargs):
+        """Initialize ISA with configuration (dynamic from DB or default)"""
         # Initialize Supabase tool for database access
         supabase_tool = SupabaseTool()
         
         # Initialize audit service
         self.audit_service = IsaCommandService()
         
+        # Resolve configuration
+        final_model = model or kwargs.get("model") or settings.DEFAULT_ISA_MODEL
+        final_prompt = system_prompt or kwargs.get("system_prompt") or self._get_system_prompt()
+        
         super().__init__(
-            model=kwargs.get("model", settings.DEFAULT_ISA_MODEL),
-            system_prompt=self._get_system_prompt(),
+            model=final_model,
+            system_prompt=final_prompt,
             tools=[supabase_tool],
             **kwargs
         )

@@ -1,7 +1,26 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, MessageSquare, Clock, CheckCircle, Smile, Brain, Shield, TrendingUp } from 'lucide-react';
-import { MOCK_RENUS_METRICS, MOCK_INTENT_BREAKDOWN, MOCK_GUARDRAILS_STATS } from '@/data/mockReports';
+// Mock data (local fallback)
+const MOCK_RENUS_METRICS = {
+  totalInteractions: 15420,
+  successRate: 94.2,
+  avgResponseTime: 1.8,
+  userSatisfaction: 4.6
+};
+
+const MOCK_INTENT_BREAKDOWN = [
+  { name: 'Suporte', value: 45, color: '#4e4ea8' },
+  { name: 'Vendas', value: 30, color: '#FF6B35' },
+  { name: 'Informações', value: 25, color: '#00D4AA' }
+];
+
+const MOCK_GUARDRAILS_STATS = {
+  totalChecks: 8420,
+  blocked: 156,
+  warnings: 89,
+  passed: 8175
+};
 import ReportChart from './ReportChart';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';

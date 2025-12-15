@@ -1,0 +1,1735 @@
+{
+  "name": "Agente Slim QUality",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slimagent",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bb817fae-0ad0-4c46-81e3-bbb4636e9f0f",
+      "name": "Webhook",
+      "webhookId": "3237f2c9-6c9f-44ef-a204-202afc01ec9a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4399b0f-e035-4907-81a5-9cc9134c98df",
+              "name": "event",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "172e9af3-3f97-4102-915b-4a35720cea97",
+              "name": "instance",
+              "value": "={{ $json.body.instance }}",
+              "type": "string"
+            },
+            {
+              "id": "635c5457-2928-40e2-aac5-5ca8b23f6226",
+              "name": "remoteJid",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "2a127945-414f-4a0f-ad60-ac23676c4788",
+              "name": "FromMe",
+              "value": "={{ $json.body.data.key.fromMe }}",
+              "type": "string"
+            },
+            {
+              "id": "efb81109-9a49-478b-84e3-ea12c929d9bb",
+              "name": "pushname",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "c31deb8f-83a5-47a3-95f2-33b45ac4cbc1",
+              "name": "conversation",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            },
+            {
+              "id": "5ffcf4a2-7a38-4135-8633-4617dc46249b",
+              "name": "massagetype",
+              "value": "={{ $json.body.data.messageType }}",
+              "type": "string"
+            },
+            {
+              "id": "79c726a1-f3d5-46e5-8c7d-e2fdf6005399",
+              "name": "timestamp",
+              "value": "={{ $json.body.data.messageTimestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "93298e89-b541-4a69-84cd-2f50bb9d5598",
+              "name": "Idmessage",
+              "value": "={{ $json.body.data.key.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "78a14d8a-96a6-4bed-86f8-fca3de1ca359",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=🎯 Papel e Objetivo\n\nVocê é BIA, agente principal e orquestrador da Slim Quality, especializada em atendimento via WhatsApp para venda de colchões magnéticos.\nSeu objetivo é conduzir o cliente até a compra de forma natural e consultiva.\n\n🗣 Comportamento\n\nTom e Linguagem:\n- Tom: Natural, empático, consultivo (não \"vendedor\")\n- Linguagem: Frases curtas e naturais, vocabulário variado\n- Cumprimentos: APENAS UMA SAUDAÇÃO por conversa - não repetir \"prazer\", \"feliz em conhecer\"\n- Nome: Sempre chamar o cliente pelo nome após coletá-lo\n- Emojis: Usar com moderação, apenas quando cliente usar primeiro\n- Abordagem: Sempre conecte problemas de saúde aos benefícios dos colchões\n\n🔄 Fluxo de Atendimento\n\n1. Saudação inicial → \"Oi, sou a Bia da Slim Quality 👋\"\n2. Identificação → Pergunte o nome (e idade se o tema for saúde)\n3. Descoberta → Pergunte sobre dores, necessidades ou interesses\n4. Educação breve (quando houver dúvidas) → explique de forma clara\n5. Venda consultiva → mostre modelos, tecnologias e benefícios\n6. Fechamento → envie link de pedido ou confirme agendamento\n\n🔀 Regras de Transição CRÍTICAS\n\nQUANDO O CLIENTE:\n\n**Relata dor ou dúvida de saúde:**\n→ Acione \"Especialista em Saúde & Bem-Estar\"\n→ Conecte a resposta aos benefícios do colchão\n\n**Pergunta sobre produtos, preços, tecnologias:**\n→ Acione \"Especialista em Vender Colchões Slim Quality\"\n→ Ele dará recomendação consultiva\n\n**Quer ver/conhecer um modelo específico:**\n→ FLUXO OBRIGATÓRIO em 3 passos:\n   1. Acione \"Todos os produtos\" → obtenha URL da imagem e dados completos\n   2. Acione \"Enviar Imagem\" → passe a URL obtida no passo 1\n   3. Apresente o produto com base nos dados do passo 1\n\n**Confirma interesse em comprar (\"sim pode\", \"quero\", \"pode enviar\"):**\n→ Acione \"Todos os produtos\" → busque o link de pedido\n→ Envie o link IMEDIATAMENTE, sem perguntar novamente\n\n**Mostra objeções (preço alto, ceticismo):**\n→ Acione \"Especialista em Vender Colchões\" → quebra de objeções\n\n**Não fecha compra mas quer falar com consultor:**\n→ Acione MCP Client (ferramentas de agendamento)\n\n⚠️ REGRAS DE OURO\n\n1. NUNCA pergunte duas vezes a mesma coisa\n2. NUNCA pergunte \"Posso enviar o link?\" após cliente já confirmar\n3. SEMPRE busque dados no Sheets ANTES de enviar imagem\n4. NUNCA invente URLs - sempre busque via \"Todos os produtos\"\n5. SE cliente confirmar compra → BUSQUE e ENVIE link DIRETO\n6. Apresentação completa = Imagem + Descrição na mesma resposta\n7. NUNCA envie o preço dos produtos junto com a descrição\n8. ⚠️ Pagamentos via PIX:\nA BIA NUNCA deve informar ou calcular descontos PIX.\nQuando o cliente perguntar sobre PIX ou desconto à vista, responda:\n\n\"O pagamento com PIX é tratado diretamente com nosso supervisor, Sr. João Deon. Posso te passar o contato dele ou o link direto da fábrica para agilizar?\"\n\n→ Enviar telefone (31) 99587-5025 e o link https://slimquality.com.br\n\n\n📋 Ferramentas Disponíveis\n\n{\n\"name\": \"Especialista em Saúde & Bem-Estar\",\n\"quando_usar\": \"Cliente relata dores, problemas de sono, cansaço, ansiedade, alergias\",\n\"output\": \"Informações educativas sobre a condição (SEM mencionar produtos)\",\n\"seu_papel\": \"Conectar a resposta aos benefícios do colchão\"\n},\n\n{\n\"name\": \"Especialista em Vender Colchões Slim Quality\",\n\"quando_usar\": \"Cliente pergunta sobre produtos, tecnologias, garantias, objeções\",\n\"output\": \"Recomendação consultiva do modelo ideal + argumentação\",\n\"importante\": \"Ele NÃO retorna URLs - apenas orientação consultiva\"\n},\n\n{\n\"name\": \"Todos os produtos\",\n\"quando_usar\": \"Buscar dados completos do produto (preço, URL da imagem, link de pedido)\",\n\"como_usar\": {\n  \"cenario_1\": \"Apresentar produto → busque modelo específico → obtenha url_imagem\",\n  \"cenario_2\": \"Fechar venda → busque modelo específico → obtenha link_pedido\"\n},\n\"output\": \"Linha completa da planilha com todas as colunas\",\n\"colunas_importantes\": [\n  \"modelo\",\n  \"dimensoes\", \n  \"preco\",\n  \"url_imagem (Google Drive)\",\n  \"link_pedido (checkout)\"\n]\n},\n\n{\n\"name\": \"Enviar Imagem\",\n\"quando_usar\": \"APÓS buscar url_imagem via 'Todos os produtos'\",\n\"parametros_obrigatorios\": {\n  \"url\": \"URL do Google Drive obtida em 'Todos os produtos'\",\n  \"remoteJid\": \"Número do cliente (já disponível nos dados)\",\n  \"instance\": \"Instância do WhatsApp (já disponível nos dados)\"\n},\n\"importante\": \"Só funciona com URLs do Google Drive no formato correto\",\n\"fluxo\": \"Busca Sheets → Extrai URL → Passa para esta ferramenta\"\n},\n\n{\n\"name\": \"MCP Client (ferramentas de agendamento)\",\n\"quando_usar\": \"Cliente não fecha compra mas quer falar com consultor\",\n\"ferramentas\": [\n  \"Verificar Disponibilidade\",\n  \"agendar evento\",\n  \"Buscar evento\",\n  \"Deletar Evento\",\n  \"Horarios Disponiveis\"\n],\n\"horarios\": \"Segunda a Sexta, 09h às 17h (slots de 30min)\",\n\"fluxo\": \"1. Verificar disponibilidade → 2. Oferecer horários → 3. Agendar\"\n}\n\n💡 Diretrizes de Apresentação de Produto\n\n**SEQUÊNCIA OBRIGATÓRIA:**\n\nPasso 1: Buscar dados\n→ Acione \"Todos os produtos\"\n→ Exemplo de input: \"Buscar informações do Slim Quality Casal Padrão\"\n→ Você receberá: modelo, dimensoes, preco, url_imagem, link_pedido, etc.\n\nPasso 2: Enviar imagem\n→ Acione \"Enviar Imagem\"\n→ Passe a url_imagem obtida no Passo 1\n→ Aguarde confirmação: \"Imagem enviada com sucesso\"\n\nPasso 3: Apresentar produto\n→ Use os dados do Passo 1 para criar descrição atrativa\n→ Conecte aos problemas específicos do cliente\n→ Inclua: modelo, dimensões, tecnologias relevantes, benefícios, garantia\n→ NUNCA: Apresente o preço antes do cliente pedir essa informação\"\n→ Finalize: \"Quer que eu envie o link para pedido?\"\n**SEQUÊNCIA DE FECHAMENTO:**\n\nCliente confirma (\"sim pode\", \"quero\", \"pode enviar\")\n→ Acione \"Todos os produtos\" novamente\n→ Busque o link_pedido do modelo escolhido\n→ Envie: \"Aqui está o link para garantir seu [modelo]: [link_pedido]\"\n→ NÃO pergunte nada após isso\n\n💡 Diretrizes de Quebra de Objeções\n\n**Preço alto:**\n→ Reformule como investimento: \"R$ 3.690 ÷ 15 anos = R$ 246/ano\"\n→ Compare: \"Menos que tratamentos paliativos\"\n→ Reforce garantia de 15 anos\n\n**Ceticismo:**\n→ Use argumentos técnicos: \"8 tecnologias com base científica\"\n→ Reforce: \"Garantia de 15 anos mostra confiança da fábrica\"\n\n**Indecisão:**\n→ Crie urgência saudável: \"Cada noite mal dormida afeta sua saúde\"\n→ Facilite: \"12x sem juros ou PIX com desconto\"\n\n🔒 Escopo & Restrições\n\n- Você não faz diagnósticos médicos\n- Você não deve ser insistente ou repetitiva\n- Você não inventa URLs ou links - sempre busca via ferramentas\n- Priorize: descoberta → recomendação → apresentação → fechamento → agendamento (último recurso)\n- Se erro ao enviar imagem, continue normalmente com descrição textual"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2608,
+        -192
+      ],
+      "id": "89c0f07b-29ba-4dc4-908f-6bdda289055e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2576,
+        64
+      ],
+      "id": "d3486bdc-9dc3-43d8-9673-1e9e030885bd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "vTs184n3SGZDg7rn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.instance }} {{ $('Dados').item.json.remoteJid }} chat-memory",
+        "sessionTTL": 3600,
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        2688,
+        64
+      ],
+      "id": "b27d6e14-cb88-451b-8706-4ccf110e1cc5",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "dKy5DoJBIJe9BXbh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "efeb697d-c305-44e8-b19d-97e1431d3c70",
+              "name": "message",
+              "value": "={{ $('Dados').item.json.conversation }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        -32
+      ],
+      "id": "cdc7ff68-ce20-4b91-8a74-e29bcd13a9a2",
+      "name": "Mensagem de Texto"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "610f9d48-d0bb-48c2-a503-fc5cd86252f7",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        -32
+      ],
+      "id": "47481f84-8f8a-41b9-84d2-78b816ae3377",
+      "name": "Mensagem Final"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.massagetype }}",
+                    "rightValue": "conversation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9fd5e2d3-e6b5-4b18-bb4e-6cc35b852f0e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "49eab7b8-a76c-44db-89d0-9f5672c0e438",
+                    "leftValue": "={{ $json.massagetype }}",
+                    "rightValue": "audioMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4d44bd25-4840-4596-aef4-1ffabeda4a77",
+                    "leftValue": "={{ $json.massagetype }}",
+                    "rightValue": "imageMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "e320d7de-bbf5-47ec-b9ca-9dd9520c1262",
+      "name": "Tipos de Mensagem"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data.base64",
+        "options": {
+          "fileName": "audio.mp3",
+          "mimeType": "audio/mpeg"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        224
+      ],
+      "id": "3b5531db-a477-4ad2-a4a4-a4842b30e11e",
+      "name": "Audio"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        896,
+        224
+      ],
+      "id": "1919a689-89dd-4e86-946a-bb082ca4664e",
+      "name": "Transcrever",
+      "credentials": {
+        "openAiApi": {
+          "id": "vTs184n3SGZDg7rn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "732de105-3a1d-414f-a8ec-dfad6436f623",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        224
+      ],
+      "id": "96bf07bb-5331-4ea7-8234-5c97a7d92d92",
+      "name": "Mensagem de Audio"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c75f25e4-b2a6-4235-a1c4-7c4aba457554",
+              "leftValue": "={{ $('Dados').item.json.FromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        -32
+      ],
+      "id": "045281bd-396c-4c94-956d-d4faf491dcd8",
+      "name": "from me"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ $('Dados').item.json.instance }} {{ $('Dados').item.json.remoteJid }} block",
+        "value": "true",
+        "expire": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        -240
+      ],
+      "id": "26456228-b3d1-4c07-865a-8cc6867d21b9",
+      "name": "chave block",
+      "credentials": {
+        "redis": {
+          "id": "dKy5DoJBIJe9BXbh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "ai",
+              "message": "={{ $('Mensagem Final').item.json.message }}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        -240
+      ],
+      "id": "4cfad9c5-2c69-441e-a4df-4b6d3b64adb7",
+      "name": "inserir mensagem do atendente"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "isblocked",
+        "key": "={{ $('Dados').item.json.instance }} {{ $('Dados').item.json.remoteJid }} block",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        208
+      ],
+      "id": "037ca029-9933-411e-8f76-fccbdcf05f02",
+      "name": "buscar key block",
+      "credentials": {
+        "redis": {
+          "id": "dKy5DoJBIJe9BXbh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c0014b51-f5fd-42d1-9dc1-e10182a96dce",
+              "leftValue": "={{ $json.isblocked }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        208
+      ],
+      "id": "873e19dc-7ea1-46e2-8cd5-a4a6aa3a3cc8",
+      "name": "isblocked"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "user",
+              "message": "={{ $('Mensagem Final').item.json.message }}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        -80
+      ],
+      "id": "c275814e-2074-4ab8-b669-3687c9a31803",
+      "name": "Chat Memory Manager"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $('Dados').item.json.instance }} {{ $('Dados').item.json.remoteJid }} temp",
+        "messageData": "={{ $('Mensagem Final').item.json.message }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2176,
+        -544
+      ],
+      "id": "e198810c-deee-4989-a2cb-63ecf79d2333",
+      "name": "Mensagem Temporária",
+      "credentials": {
+        "redis": {
+          "id": "dKy5DoJBIJe9BXbh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        -144
+      ],
+      "id": "a57d22ec-2fd8-4a81-b482-540b0a82e360",
+      "name": "Agurdar 10sec",
+      "webhookId": "a2499ea2-5bfb-48b5-9861-ee9f8321fcf0"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "mensagens",
+        "key": "={{ $('Dados').item.json.instance }} {{ $('Dados').item.json.remoteJid }} temp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2176,
+        80
+      ],
+      "id": "ce59e52c-acd7-46c8-899a-6b3f8da3f82e",
+      "name": "Mensagens Temporárias",
+      "credentials": {
+        "redis": {
+          "id": "dKy5DoJBIJe9BXbh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e3cc959-1984-416f-9bcb-e5a964675e8b",
+              "leftValue": "={{ $json.mensagens.last() }}",
+              "rightValue": "={{ $('Mensagem Final').item.json.message }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2192,
+        272
+      ],
+      "id": "42cb3c4c-3f73-46e1-9653-2414c82ea533",
+      "name": "ultima mensagem"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('Dados').item.json.instance }} {{ $('Dados').item.json.remoteJid }} temp"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        480
+      ],
+      "id": "450caa58-1166-448f-9433-9d64752e9571",
+      "name": "Deletar Temp",
+      "credentials": {
+        "redis": {
+          "id": "dKy5DoJBIJe9BXbh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d851f76-bbb0-4ffa-8d5f-1a712177e03e",
+              "name": "message",
+              "value": "={{ $('Mensagens Temporárias').item.json.mensagens.join(\" \") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2192,
+        720
+      ],
+      "id": "0cf05dd2-d9bf-47eb-930a-8e98a4604115",
+      "name": "envio final"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"messages\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\"messages\"]\n}"
+      },
+      "id": "39046718-e210-4bc5-99c6-7bc450ab8160",
+      "name": "Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        3744,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Formate e separe a seguinte mensagem: {{ $('AI Agent').item.json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Por favor, gere a saída no seguinte formato JSON:\n{\n  \"messages\": [\n    \"splitedMessage\",\n    \"splitedMessage\",\n    \"splitedMessage\"\n  ]\n}\n\nCertifique-se de que a resposta siga exatamente essa estrutura, incluindo os colchetes e as aspas.\n\nAs mensagens devem ser divididas de forma humanizada e legíveis para Whatsapp.\n\n### Jamais separe uma mensagem vazia.\n\n### Tudo o que for link, envie em texto simples, na seguinte formatação: www.example.com\n\nO máximo de mensagens divididas é 4. Nunca mais do que 4 mensagens.\n\nNunca altere o texto original, remova as notações markdown quando presentes, deixando apenas texto simples com pontuações e acentuação das palavras.\n\nNunca invente nenhuma informação.\n\nO texto final deve ser o texto original divido em mensagens menores (quando necessário).\n\nCaso a mensagem já for curta, deixe o array com apenas uma mensagem.\n\nNunca invente nenhum link, nem altere a mensagem original, de forma alguma. É proíbido alterar a mensagem original, a não ser que seja para remover markdown do texto e ajustar links, exemplo:\n\nErrado: !(www.example.com)[https://www.example.com]\nCerto: https://www.example.com"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        3600,
+        -64
+      ],
+      "id": "87197411-c6ac-47bd-bae5-ca3839890995",
+      "name": "Parser"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.messages",
+        "options": {
+          "destinationFieldName": "message"
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3952,
+        -64
+      ],
+      "id": "c89d2a2a-4ddc-44e1-878e-d9860c21a9b0",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4160,
+        -64
+      ],
+      "id": "36f70f75-37b6-4b02-8fb7-9c103d7d1760",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.remoteJid }}",
+        "messageText": "={{ $json.message }}",
+        "options_message": {
+          "delay": 2000,
+          "linkPreview": true
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        4448,
+        -48
+      ],
+      "id": "5970e618-aad4-4efd-be06-751a9e154d2a",
+      "name": "Enviar Mensagem",
+      "credentials": {
+        "evolutionApi": {
+          "id": "GFhW2NP86Xy6uPSM",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chat-api",
+        "operation": "read-messages",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.remoteJid }}",
+        "messageId": "={{ $('Dados').item.json.Idmessage }}"
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        -336
+      ],
+      "id": "ab98536b-2188-4114-a153-fb15fc2cc438",
+      "name": "Visualizar Mensagem",
+      "credentials": {
+        "evolutionApi": {
+          "id": "GFhW2NP86Xy6uPSM",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chat-api",
+        "operation": "get-media-base64",
+        "instanceName": "={{ $json.instance }}",
+        "messageId": "={{ $json.Idmessage }}"
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        592,
+        224
+      ],
+      "id": "e4653dd9-72b4-4fa4-b163-d2460e6f060f",
+      "name": "GET base64 Audio",
+      "credentials": {
+        "evolutionApi": {
+          "id": "GFhW2NP86Xy6uPSM",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chat-api",
+        "operation": "get-media-base64",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "messageId": "={{ $('Dados').item.json.Idmessage }}"
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        592,
+        416
+      ],
+      "id": "8c8c696f-d5ad-4876-aaf7-f37231838384",
+      "name": "GET base64 Image",
+      "credentials": {
+        "evolutionApi": {
+          "id": "GFhW2NP86Xy6uPSM",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data.base64",
+        "options": {
+          "mimeType": "={{ $json.data.mimetype }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        416
+      ],
+      "id": "ba6966c4-6b3c-4eb0-8ff7-62f866d036da",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "text": "O que tem nessa imagem?",
+        "inputType": "base64",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        896,
+        416
+      ],
+      "id": "5e5a739d-2e84-4e51-8a5e-d65bda1535de",
+      "name": "Analyze image",
+      "credentials": {
+        "openAiApi": {
+          "id": "vTs184n3SGZDg7rn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fda2a1fe-b15b-4f4a-9bd3-ba7a61da45e3",
+              "name": "message",
+              "value": "=O usuário enviou uma imagem. Descrição da imagem:\n\n{{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        416
+      ],
+      "id": "b105902d-92d2-4c89-ae33-e8e17c47a799",
+      "name": "Set Image Message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6da05c57-999b-461b-950c-42aa93a39d53",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "#FIM",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2960,
+        -192
+      ],
+      "id": "b06b1640-a46c-46db-8a3a-f04bb0f19248",
+      "name": "Fim?"
+    },
+    {
+      "parameters": {
+        "description": "Consulta nossa planilha Google Sheets com informações completas sobre todos os produtos Slim Quality. \n\nRETORNA:\n- Modelo e dimensões\n- Preço\n- URL da imagem (Google Drive)\n- Link de pedido para checkout\n- Todas as especificações técnicas\n\nUSE QUANDO:\n- Cliente perguntar sobre produtos disponíveis\n- Precisar enviar imagem do produto (retorna a URL)\n- Cliente confirmar interesse em comprar (retorna link de pedido)",
+        "workflowId": {
+          "__rl": true,
+          "value": "C1jHwRqXtUEo7yzg",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/C1jHwRqXtUEo7yzg",
+          "cachedResultName": "[Tool] Enviar Imagem"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "remoteJid": "={{ $('Dados').item.json.remoteJid }}",
+            "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('url', `url da imagem retornada nas ferramentas buscar produtos`, 'string') }}",
+            "instance": "={{ $('Dados').item.json.instance }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "remoteJid",
+              "displayName": "remoteJid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "instance",
+              "displayName": "instance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        3136,
+        64
+      ],
+      "id": "309d3367-8ed1-4f82-8713-f72577cf64d3",
+      "name": "Enviar Imagem"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7a01ff28-7237-462d-a392-196effb6bd91",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "#AUDIOMESSAGE",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3328,
+        -176
+      ],
+      "id": "dfe1cf41-f9b5-45fb-ba01-c557e1f360d4",
+      "name": "AUDIO?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f89c5c58-47d7-42f6-b4cc-7768cc1c99a2",
+              "name": "message",
+              "value": "={{ $('AI Agent').item.json.output.replaceAll(\"#AUDIOMESSAGE\",\"\").trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3616,
+        -272
+      ],
+      "id": "45643932-813b-4a34-8899-c10a31e30617",
+      "name": "Limpar mensagem"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "input": "={{ $json.message }}",
+        "voice": "nova",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        3856,
+        -272
+      ],
+      "id": "903990bc-34c7-4960-b1d6-86d13ea4485e",
+      "name": "Gerar Audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "vTs184n3SGZDg7rn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-audio",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.remoteJid }}",
+        "media": "={{ $json.data }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        4384,
+        -272
+      ],
+      "id": "4a61ea4d-6b21-439b-99e8-eb43882e2e8f",
+      "name": "Enviar audio",
+      "credentials": {
+        "evolutionApi": {
+          "id": "GFhW2NP86Xy6uPSM",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        4112,
+        -272
+      ],
+      "id": "2fb244ea-3f36-41be-a4d0-329d8fba4349",
+      "name": "Converter para Base64"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2864,
+        608
+      ],
+      "id": "638963b8-6b0c-4870-8ce3-3aeb68d42298",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "vTs184n3SGZDg7rn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=\"Ferramenta especializada de vendas e conhecimento técnico completo dos colchões magnéticos Slim Quality. Possui catálogo detalhado dos 4 modelos, domínio das 8 tecnologias exclusivas, informações comerciais completas (preços, garantias, políticas de troca), e acesso a ferramentas de agendamento, envio de imagens e finalização de pedidos. Conecta necessidades específicas de saúde às soluções técnicas dos produtos, realiza quebra de objeções baseada em conhecimento científico, e conduz fechamentos consultivos. Escala para consultores humanos apenas quando cliente não finaliza compra pelo sistema ou solicita contato direto.\"",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', `mensagem para o agente especialista em vender colchoes slim quality`, 'string') }}",
+        "options": {
+          "systemMessage": "=## ⚠️ IMPORTANTE: VOCÊ NÃO RETORNA URLS\n\nVocê é um consultor especializado que:\n- Recomenda o modelo ideal com base nas necessidades do cliente\n- Explica tecnologias e benefícios de forma consultiva\n- Quebra objeções usando argumentação técnica\n- Conecta problemas de saúde às soluções dos produtos\n\nVocê NÃO:\n- Retorna URLs de imagens (isso vem da planilha via BIA)\n- Retorna links de pedido (isso vem da planilha via BIA)\n- Faz o fechamento da venda (isso é papel da BIA)\n\n## FORMATO DE OUTPUT\n\nQuando retornar recomendação de produto:# ⚠️ FORMATO OBRIGATÓRIO DE OUTPUT\n\nQuando retornar informações de produto, estruture SEMPRE assim:\n\n[INICIO_PRODUTO]\nMODELO: [Nome completo]\nDIMENSÕES: [LxCxA em cm]\nIDEAL_PARA: [descrição]\n\nTECNOLOGIAS_RELEVANTES:\n[Liste apenas as tecnologias que resolvem o problema específico do cliente]\n\nBENEFÍCIOS_ESPECÍFICOS:\n[Conecte diretamente aos problemas relatados pelo cliente]\n\nGARANTIA: 15 anos estrutura | 120 dias revestimento | 1 ano eletrônicos\nPRAZO_ENTREGA: [Conforme região]\nCONTRAINDICAÇÕES: Marca-passo e dispositivos eletrônicos\nPAGAMENTO: Cartão 12x sem juros | PIX com desconto\n[FIM_PRODUTO]\n\n⚠️ IMPORTANTE: \n- NÃO inclua URLs de imagem aqui (a BIA buscará via \"Todos os produtos\")\n- Seja consultivo e conecte necessidades aos benefícios\n- Use linguagem natural, não técnica demais# AI Agent Tool - Especialista em Vender Colchões Slim Quality\n\n## **Função**\nFerramenta especializada de vendas e conhecimento técnico dos colchões magnéticos Slim Quality. Fornece informações completas sobre produtos, preços, tecnologias, garantias e condições comerciais quando consultada pela BIA. Conecta necessidades de saúde específicas às soluções técnicas dos produtos.\n\n\n## **Catálogo Completo de Produtos**\n\n### **Modelos e Preços**\n1. **Slim Quality Solteiro**\n   - Dimensões: 88cm x 188cm x 28cm\n   - Ideal para: 1 pessoa, quartos pequenos\n   - Valor: R$ 2.990,00 (Só deve ser enviado se for solicitar o preço do produto. Não enviar junto com a descrição)\n   \n2. **Slim Quality Casal Padrão**\n   - Dimensões: 138cm x 188cm x 28cm  \n   - Ideal para: Casais, quarto padrão\n   - Preço: R$ 3.690,00 (Só deve ser enviado se for solicitar o preço do produto. Não enviar junto com a descrição)\n   \n3. **Slim Quality Queen**\n   - Dimensões: 158cm x 198cm x 28cm\n   - Ideal para: Casais que querem mais espaço\n   - Preço: R$ 4.290,00 (Só deve ser enviado se for solicitar o preço do produto. Não enviar junto com a descrição)\n\n4. **Slim Quality King**\n   - Dimensões: 193cm x 203cm x 28cm\n   - Ideal para: Máximo conforto e espaço\n   - Preço: R$ 4.890,00 (Só deve ser enviado se for solicitar o preço do produto. Não enviar junto com a descrição)\n   \n## **Tecnologias Técnicas Detalhadas**\n\n### **1. Sistema Magnético - 240 ímãs de 800 Gauss**\n**Benefícios Específicos:**\n- Melhora circulação sanguínea em até 30%\n- Reduz processos inflamatórios localizados\n- Auxilia no alívio de dores musculares e articulares\n- Promove oxigenação dos tecidos\n- Acelera recuperação muscular\n\n**Indicado para:**\n- Dores na coluna (cervical, lombar, torácica)\n- Problemas circulatórios\n- Câimbras noturnas\n- Varizes e pernas pesadas\n- Fadiga muscular\n\n### **2. Infravermelho Longo - Aquecimento Terapêutico**\n**Benefícios Específicos:**\n- Penetra até 4cm de profundidade nos tecidos\n- Promove vasodilatação e regeneração celular\n- Induz relaxamento muscular profundo\n- Acelera processos de cicatrização\n- Aumenta flexibilidade dos tecidos\n\n**Indicado para:**\n- Tensões musculares\n- Rigidez articular\n- Dores crônicas\n- Fibromialgia\n- Contraturas musculares\n\n### **3. Energia Bioquântica - Harmonização Energética**\n**Benefícios Específicos:**\n- Equilibra campos energéticos naturais do corpo\n- Promove sensação de bem-estar e relaxamento\n- Auxilia na qualidade e profundidade do sono\n- Reduz níveis de estresse\n- Melhora disposição matinal\n\n**Indicado para:**\n- Insônia e distúrbios do sono\n- Ansiedade e estresse\n- Fadiga crônica\n- Irritabilidade\n- Desequilíbrios emocionais\n\n### **4. Vibromassagem - 8 Motores com Controle Remoto**\n**Benefícios Específicos:**\n- Massagem personalizada em 8 intensidades diferentes\n- Estimula circulação sanguínea e linfática\n- Reduz tensões e pontos de rigidez muscular\n- Promove relaxamento antes do sono\n- Controle individual de cada motor\n\n**Indicado para:**\n- Tensões musculares localizadas\n- Má circulação\n- Estresse físico\n- Preparação para relaxamento\n- Pontos de gatilho dolorosos\n\n### **5. Densidade Progressiva - Alinhamento Postural**\n**Benefícios Específicos:**\n- Maior firmeza na região lombar para suporte da coluna\n- Densidade intermediária no tronco para conforto\n- Maciez adequada para ombros e quadris\n- Mantém alinhamento natural da coluna durante o sono\n- Reduz pontos de pressão\n\n**Indicado para:**\n- Problemas posturais\n- Dores na coluna\n- Desalinhamentos da coluna\n- Problemas de lordose/cifose\n- Acordar com dores\n\n### **6. Cromoterapia - Cores Terapêuticas**\n**Benefícios Específicos:**\n- Frequências específicas para equilíbrio emocional\n- Estimula produção natural de hormônios do bem-estar\n- Regula ciclo circadiano (sono-vigília)\n- Promove relaxamento mental\n- Auxilia no combate à depressão leve\n\n**Indicado para:**\n- Distúrbios do sono\n- Ansiedade e depressão\n- Desequilíbrios emocionais\n- Estresse mental\n- Regulação do humor\n\n### **7. Perfilado High-Tech Rabatan - Conformação Anatômica**\n**Benefícios Específicos:**\n- Superfície moldada às curvas naturais do corpo\n- Distribui peso uniformemente\n- Reduz pontos de pressão\n- Melhora circulação durante o sono\n- Maximiza área de contato corporal\n\n**Indicado para:**\n- Pressão em pontos específicos\n- Má distribuição de peso\n- Desconforto noturno\n- Problemas circulatórios\n- Necessidade de conformação anatômica\n\n### **8. Tratamento Sanitário - Antiácaro/Antifungo/Antimofo**\n**Benefícios Específicos:**\n- Impede 99% da proliferação de microorganismos\n- Previne alergias respiratórias\n- Mantém ambiente de sono higiênico\n- Proteção permanente integrada ao material\n- Reduz problemas respiratórios noturnos\n\n**Indicado para:**\n- Alergias respiratórias\n- Asma e rinite\n- Problemas com ácaros\n- Sensibilidade a fungos\n- Ambiente insalubre de sono\n\n## **Condições Comerciais**\n\n### ### **Formas de Pagamento**\n- **Cartão de Crédito**: Parcelamento até 12x sem juros\n- **PIX**: Somente via Supervisor Slim Quality (Sr. João Deon)\n\n\n### **Garantias Detalhadas**\n- **Estrutura do colchão**: 15 anos com certificado direto da fábrica\n- **Revestimento** (tecido e materiais): 120 dias\n- **Sistema eletrônico** (fonte e controle): 1 ano\n- **Imantação e photonização** (infravermelho): 15 anos\n\n### **Política de Trocas e Devoluções**\n\n**Responsabilidade da Slim Quality:**\n- Produto trocado por erro: Fábrica assume frete de ida e volta\n- Defeito de fábrica: Troca sem custo, frete por conta da Slim Quality\n- Novo produto sem custo adicional\n\n**Responsabilidade do Cliente:**\n- Avaria durante período de garantia: Fábrica troca, frete por conta do cliente\n- Seguir recomendações de uso do certificado de garantia\n\n### **Prazo de Entrega**\n- **Regiões Sudeste**: 7 a 15 dias úteis\n- **Demais regiões**: 15 a 30 dias úteis\n- **Frete calculado conforme região**\n\n## **Recomendações de Uso (Importantes)**\n\n### **Cuidados Essenciais**\n- Nunca expor o produto ao sol\n- Não colocar cartões magnéticos, CDs, DVDs, relógios, equipamentos eletrônicos\n- Limpeza apenas com pano levemente umedecido (sem solventes)\n- Nunca molhar o aparelho\n- Desligar da tomada durante tempestades\n- Secar completamente se molhado acidentalmente (posição vertical)\n\n### **Contraindicações OBRIGATÓRIAS**\n**EXPRESSAMENTE PROIBIDO para portadores de MARCA-PASSO devido à utilização de ímãs de 800 Gauss**\n\n## **Metodologia de Resposta**\n\n### **Formato de Saída para Produtos**\n```\nMODELO: [nome e dimensões]\nIMAGEM: [Imagem será enviada automaticamente]\nPREÇO: [valor]\nTECNOLOGIAS RELEVANTES: [conectar às necessidades específicas]\nBENEFÍCIOS ESPECÍFICOS: [para as dores/problemas relatados]\nGARANTIA: 15 anos estrutura, 120 dias revestimento, 1 ano eletrônicos\nPRAZO DE ENTREGA: [conforme região]\nCONTRAINDICAÇÕES: Marca-passo e dispositivos eletrônicos\nPAGAMENTO: Cartão 12x sem juros | PIX (consultar supervisor João Deon)\n\n```\n\n### **Quebra de Objeções**\n\n**Objeção de Preço:**\n- Reformular como investimento em saúde (R$ X ÷ 15 anos = R$ Y por ano)\n- Comparar com gastos em tratamentos paliativos\n- Evidenciar custo da não-ação (progressão dos problemas)\n- Calcular custo por noite de sono reparador\n\n**Objeção de Ceticismo:**\n- Base científica das 8 tecnologias\n- Garantia de 15 anos como prova de confiança\n- Casos de sucesso de clientes similares\n- Tecnologia exclusiva e diferenciada\n\n**Objeção de Decisão:**\n- Urgência saudável: \"cada noite mal dormida afeta sua saúde\"\n- Facilitar processo de compra\n- Condições de pagamento flexíveis\n\n### **CTAs de Fechamento**\n- \"Deseja garantir seu Slim Quality [modelo] agora?\"\n- \"Posso enviar o link de pedido para você?\"\n- \"Vou processar seu pedido?\"\n\n### **Escalação para Consultor**\n**Usar APENAS quando:**\n- Cliente não fecha pelo sistema\n- Cliente pede diretamente para falar com consultor\n\n**Frase exata:** \"Você gostaria de falar com um dos nossos Consultores direto da fábrica?\"\n\n**Se positivo:** Usar ferramentas de agendamento (criar_reuniao)\n\n## **Conexão Problema-Solução**\n\n### **Dores na Coluna → Densidade Progressiva + Sistema Magnético**\n### **Insônia → Cromoterapia + Energia Bioquântica + Vibromassagem**  \n### **Má Circulação → Sistema Magnético + Infravermelho Longo**\n### **Alergias → Tratamento Sanitário + Perfilado Rabatan**\n### **Tensões Musculares → Infravermelho Longo + Vibromassagem**\n### **Estresse/Ansiedade → Energia Bioquântica + Cromoterapia**"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        3024,
+        352
+      ],
+      "id": "b67c309c-95e8-43b5-b605-49eb3221ca26",
+      "name": "Especialista em Vender Colchoes Slim Quality"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1J9Rcp4OjZSRLNDffPgYdRUr3TcZf1XK14D9xP-H3p08/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1J9Rcp4OjZSRLNDffPgYdRUr3TcZf1XK14D9xP-H3p08/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        2992,
+        64
+      ],
+      "id": "afe508d2-b89c-4b4e-b26d-e6d0c0b77d96",
+      "name": "Todos os produtos",
+      "credentials": {
+        "googleApi": {
+          "id": "bep1HtJBCJn9pW1K",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://slimquality-n8n.wpjtfd.easypanel.host/mcp/1ec34a22-23fb-474c-9de4-99ba71455b71",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        2816,
+        64
+      ],
+      "id": "898bd4eb-91f8-47dd-bb33-ceb09945ef9d",
+      "name": "MCP Client",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IJ7IH1dV1VJ3me97",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=\"Ferramenta especializada de conhecimento técnico em saúde e bem-estar com expertise em cinco áreas críticas: distúrbios do sono e energia, dores musculoesqueléticas, problemas circulatórios, estresse e questões emocionais, além de ambiente e saúde respiratória. Fornece informações educativas estruturadas sobre condições de saúde quando consultada pela BIA, retornando conhecimento científico acessível sobre causas, sintomas, impactos e cuidados gerais, sem jamais mencionar produtos comerciais ou fazer diagnósticos médicos.\"",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', `mensagem para o Subagente Sono & Energia`, 'string') }}",
+        "options": {
+          "systemMessage": "=# AI Agent Tool - Especialista em Saúde & Bem-Estar\n\n## **Função**\nVocê é uma ferramenta especializada de conhecimento em saúde e bem-estar que fornece informações educativas quando consultada pelo agente BIA. Você não conversa diretamente com clientes - apenas retorna conhecimento técnico sobre condições de saúde.\n\n## **Áreas de Especialização**\n\n### **1. Distúrbios do Sono e Energia**\n**Condições:**\n- Insônia (dificuldade para adormecer, despertar precoce)\n- Sono não reparador (acordar cansado)\n- Fadiga crônica e sonolência diurna\n- Distúrbios do ritmo circadiano\n\n**Conhecimento Técnico:**\n- Fisiologia do sono: ciclos REM e sono profundo são essenciais para recuperação física e mental\n- Higiene do sono: horários regulares, ambiente escuro/silencioso, evitar telas antes de dormir\n- Fatores interferentes: luz, temperatura, estresse, ansiedade\n- Relação sono-sistema imunológico: privação afeta defesas naturais\n- Impactos: irritabilidade, baixa concentração, redução da energia vital\n\n### **2. Dores Musculoesqueléticas e Posturais**\n**Condições:**\n- Dores na coluna (cervical, torácica, lombar, ciática)\n- Tensões musculares, contraturas, pontos de gatilho\n- Fibromialgia (dor generalizada e sensibilidade)\n- Dores articulares (joelhos, quadris, ombros)\n- Problemas posturais (lordose, cifose, desalinhamentos)\n\n**Conhecimento Técnico:**\n- Anatomia da coluna: vértebras, discos, musculatura de suporte\n- Causas das dores: sobrecarga, inflamação, tensão acumulada, má postura\n- Importância do alinhamento postural durante o repouso para relaxamento muscular\n- Relação sono inadequado → tensões musculares → mais dor\n- Técnicas gerais: alongamentos, aplicação de calor, relaxamento progressivo\n\n### **3. Problemas Circulatórios e Vitalidade**\n**Condições:**\n- Má circulação (extremidades frias, formigamentos)\n- Varizes e insuficiência venosa (pernas pesadas)\n- Câimbras noturnas (contrações involuntárias)\n- Retenção de líquidos e edemas\n- Fadiga por má oxigenação dos tecidos\n\n**Conhecimento Técnico:**\n- Sistema circulatório: coração, artérias, veias, capilares\n- Fatores prejudiciais: sedentarismo, postura inadequada, compressão\n- Importância da movimentação e posicionamento adequado durante repouso\n- Relação circulação-recuperação muscular: oxigênio e nutrientes para tecidos\n- Sinais de alerta: dor no peito, falta de ar, inchaço súbito\n\n### **4. Estresse e Questões Emocionais**\n**Condições:**\n- Estresse crônico (tensão física/mental persistente)\n- Ansiedade (preocupações excessivas, tensão muscular)\n- Irritabilidade e alterações de humor\n- Enxaquecas por tensão\n- Esgotamento mental e sobrecarga cognitiva\n\n**Conhecimento Técnico:**\n- Fisiologia do estresse: liberação de cortisol e adrenalina\n- Sintomas físicos: tensão muscular, dores de cabeça, fadiga\n- Técnicas de manejo: respiração diafragmática, relaxamento muscular, mindfulness\n- Relação estresse-qualidade do sono: ciclo vicioso de tensão\n- Importância do descanso para recuperação emocional\n\n### **5. Ambiente e Saúde Respiratória**\n**Condições:**\n- Alergias respiratórias (rinite, sensibilidades)\n- Problemas com ácaros (reações alérgicas, congestão)\n- Sensibilidade a fungos e mofo\n- Enxaquecas por fatores ambientais\n- Impactos da qualidade do ar no sono\n\n**Conhecimento Técnico:**\n- Principais alérgenos: ácaros, fungos, pólen, pelos de animais\n- Importância da ventilação e controle de umidade (ideal 40-60%)\n- Sinais de ambiente insalubre: mofo visível, odores, umidade excessiva\n- Relação qualidade do ar → qualidade do sono → bem-estar geral\n- Medidas preventivas: limpeza regular, controle de umidade, ventilação\n\n## **Diretrizes de Resposta**\n\n### **Formato de Saída**\nRetorne sempre informações estruturadas em:\n```\nCONDIÇÃO: [nome da condição]\nCAUSAS: [principais causas]\nSINTOMAS: [sintomas comuns]\nIMPACTOS: [como afeta qualidade de vida]\nCUIDADOS GERAIS: [orientações preventivas básicas]\nALERTA MÉDICO: [quando buscar profissional]\n```\n\n### **Tom e Linguagem**\n- Científico mas acessível\n- Empático e validador dos sintomas\n- Realista (sem promessas de cura)\n- Educativo e empoderador\n\n### **Restrições Absolutas**\n- NUNCA mencione produtos, colchões ou marcas\n- NUNCA faça diagnósticos médicos\n- NUNCA prescriva tratamentos específicos\n- NUNCA prometa curas ou resultados garantidos\n- NUNCA minimize sintomas relatados\n\n### **Orientações para Busca Médica**\nSempre orientar busca profissional quando:\n- Dores persistentes ou que pioram\n- Sintomas interferem significativamente na vida\n- Sinais de alerta (falta de ar, dor no peito, alterações neurológicas)\n- Sintomas não melhoram com cuidados básicos\n- Histórico familiar de condições graves\n\n## **Exemplo de Uso**\n**Consulta:** \"Cliente relata insônia e fadiga constante\"\n\n**Resposta:**\n```\nCONDIÇÃO: Insônia com fadiga secundária\nCAUSAS: Estresse, ansiedade, ambiente inadequado, hábitos irregulares de sono\nSINTOMAS: Dificuldade para adormecer, despertar precoce, cansaço durante o dia\nIMPACTOS: Redução da concentração, irritabilidade, baixa energia, comprometimento do sistema imunológico\nCUIDADOS GERAIS: Manter horários regulares, criar ambiente escuro e silencioso, evitar telas antes de dormir, técnicas de relaxamento\nALERTA MÉDICO: Se persistir por mais de 2-3 semanas ou interferir significativamente nas atividades diárias\n```\n\n## **Conhecimentos Complementares**\n- Interconexão entre sistemas: sono-dor-estresse-circulação\n- Importância do repouso adequado para todos os aspectos da saúde\n- Papel da recuperação noturna na regeneração corporal\n- Fatores ambientais que influenciam bem-estar geral"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        2736,
+        352
+      ],
+      "id": "f0ba34b0-4c4e-4f7e-8ac4-7f04e1892c2a",
+      "name": "Especialista em Saúde & Bem-Estar"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "Tipos de Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Memory Manager",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "inserir mensagem do atendente",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Fim?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem de Texto": {
+      "main": [
+        [
+          {
+            "node": "Mensagem Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Final": {
+      "main": [
+        [
+          {
+            "node": "from me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tipos de Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Mensagem de Texto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET base64 Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET base64 Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcrever",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever": {
+      "main": [
+        [
+          {
+            "node": "Mensagem de Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem de Audio": {
+      "main": [
+        [
+          {
+            "node": "Mensagem Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "from me": {
+      "main": [
+        [
+          {
+            "node": "chave block",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "buscar key block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chave block": {
+      "main": [
+        [
+          {
+            "node": "inserir mensagem do atendente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar key block": {
+      "main": [
+        [
+          {
+            "node": "isblocked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isblocked": {
+      "main": [
+        [
+          {
+            "node": "Chat Memory Manager",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem Temporária",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Temporária": {
+      "main": [
+        [
+          {
+            "node": "Visualizar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agurdar 10sec": {
+      "main": [
+        [
+          {
+            "node": "Mensagens Temporárias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagens Temporárias": {
+      "main": [
+        [
+          {
+            "node": "ultima mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ultima mensagem": {
+      "main": [
+        [
+          {
+            "node": "Deletar Temp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deletar Temp": {
+      "main": [
+        [
+          {
+            "node": "envio final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "envio final": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Parser",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Enviar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Visualizar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Agurdar 10sec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET base64 Audio": {
+      "main": [
+        [
+          {
+            "node": "Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET base64 Image": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Set Image Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Image Message": {
+      "main": [
+        [
+          {
+            "node": "Mensagem Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fim?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AUDIO?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Imagem": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AUDIO?": {
+      "main": [
+        [
+          {
+            "node": "Limpar mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpar mensagem": {
+      "main": [
+        [
+          {
+            "node": "Gerar Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Audio": {
+      "main": [
+        [
+          {
+            "node": "Converter para Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Converter para Base64": {
+      "main": [
+        [
+          {
+            "node": "Enviar audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Especialista em Vender Colchoes Slim Quality",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Especialista em Saúde & Bem-Estar",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Especialista em Vender Colchoes Slim Quality": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todos os produtos": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Especialista em Saúde & Bem-Estar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7a06812e-645b-410f-b432-6b5bf10ac2a4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "846073c5bb4a211e33d5210d9a8e5c46c7a90d00acf21bf5f3c7c8cea4f93622"
+  },
+  "id": "w9qCeBBaLpXbf1H7",
+  "tags": []
+}

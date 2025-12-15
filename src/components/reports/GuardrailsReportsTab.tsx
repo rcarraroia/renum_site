@@ -1,7 +1,43 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, Shield, AlertTriangle, Lock, Clock, TrendingUp, TrendingDown, MessageSquare, Tag, Brain, CheckCircle } from 'lucide-react';
-import { MOCK_GUARDRAILS_METRICS, MOCK_INTERVENTION_BREAKDOWN, MOCK_VALIDATOR_BREAKDOWN, MOCK_LATENCY_DATA, MOCK_TOP_BLOCKED_KEYWORDS } from '@/data/mockReports';
+// Mock data (local fallback)
+const MOCK_GUARDRAILS_METRICS = {
+  totalChecks: 8420,
+  blocked: 156,
+  warnings: 89,
+  passed: 8175,
+  avgLatency: 45
+};
+
+const MOCK_INTERVENTION_BREAKDOWN = [
+  { name: 'Conteúdo Inapropriado', value: 45, color: '#FF6B35' },
+  { name: 'Informação Sensível', value: 30, color: '#4e4ea8' },
+  { name: 'Spam', value: 25, color: '#00D4AA' }
+];
+
+const MOCK_VALIDATOR_BREAKDOWN = [
+  { name: 'Filtro de Palavras', value: 40, color: '#4e4ea8' },
+  { name: 'IA Classifier', value: 35, color: '#FF6B35' },
+  { name: 'Regex Patterns', value: 25, color: '#00D4AA' }
+];
+
+const MOCK_LATENCY_DATA = [
+  { time: '00:00', latency: 42 },
+  { time: '04:00', latency: 38 },
+  { time: '08:00', latency: 52 },
+  { time: '12:00', latency: 48 },
+  { time: '16:00', latency: 45 },
+  { time: '20:00', latency: 41 }
+];
+
+const MOCK_TOP_BLOCKED_KEYWORDS = [
+  { keyword: 'senha', count: 45 },
+  { keyword: 'cpf', count: 32 },
+  { keyword: 'cartão', count: 28 },
+  { keyword: 'conta', count: 21 },
+  { keyword: 'dados', count: 18 }
+];
 import ReportChart from './ReportChart';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';

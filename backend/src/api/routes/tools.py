@@ -11,9 +11,21 @@ from uuid import UUID
 
 from src.models.tool import ToolCreate, ToolUpdate, ToolResponse
 from src.services.tool_service import ToolService
+from src.tools.registry import AVAILABLE_TOOLS_METADATA
 from src.api.middleware.auth_middleware import get_current_user, require_admin
 
 router = APIRouter(prefix="/tools", tags=["tools"])
+
+
+@router.get("/registry")
+async def list_registry_tools(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    List available native tools from code registry.
+    These are the tools that can be enabled in agent.config.tools.
+    """
+    return AVAILABLE_TOOLS_METADATA
 
 
 @router.get("/", response_model=List[ToolResponse])

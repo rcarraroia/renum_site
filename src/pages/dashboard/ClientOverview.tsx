@@ -1,17 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Briefcase, Clock, CheckCircle, FileText, MessageSquare } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { dashboardService, DashboardStats } from '@/services/dashboardService';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ClientOverview: React.FC = () => {
-  const projectStatus = {
-    name: 'Projeto Automação Vendas',
-    progress: 65,
-    stage: 'Desenvolvimento Backend',
-    nextMilestone: 'Revisão da API (2 semanas)',
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadClientMetrics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardService.getClientMetrics();
+      setStats(data);
+    } catch (err) {
+      setError('Erro ao carregar métricas. Tente novamente.');
+      console.error('Erro ao carregar métricas:', err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadClientMetrics();
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-[#0ca7d2]" />
+          <span className="ml-2 text-muted-foreground">Carregando métricas...</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={loadClientMetrics} variant="outline">
+            Tentar Novamente
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -26,20 +68,26 @@ const ClientOverview: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <h3 className="text-xl font-semibold mb-2">{projectStatus.name}</h3>
-            <p className="text-sm text-muted-foreground mb-4">Fase: {projectStatus.stage}</p>
+            <h3 className="text-xl font-semibold mb-2">Projeto Ativo</h3>
+            <p className="text-sm text-muted-foreground mb-4">Status: Em Desenvolvimento</p>
             
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-medium">
                 <span>Progresso Geral</span>
-                <span>{projectStatus.progress}%</span>
+                <span>{stats?.completion_rate ? Math.round(stats.completion_rate * 100) : 0}%</span>
               </div>
-              <Progress value={projectStatus.progress} className="h-3 bg-gray-200 dark:bg-gray-700 [&>div]:bg-[#FF6B35]" />
+              <Progress value={stats?.completion_rate ? stats.completion_rate * 100 : 0} className="h-3 bg-gray-200 dark:bg-gray-700 [&>div]:bg-[#FF6B35]" />
             </div>
             
-            <div className="mt-4 flex items-center space-x-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Próximo Marco: {projectStatus.nextMilestone}</span>
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Total Leads:</span>
+                <span className="ml-2 font-medium">{stats?.total_leads || 0}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Conversas:</span>
+                <span className="ml-2 font-medium">{stats?.total_conversations || 0}</span>
+              </div>
             </div>
           </CardContent>
         </Card>

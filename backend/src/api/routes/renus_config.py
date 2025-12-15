@@ -11,6 +11,7 @@ from ...api.middleware.auth_middleware import get_current_user
 router = APIRouter(prefix="/renus-config", tags=["renus-config"])
 
 
+@router.get("", response_model=RenusConfigResponse)
 @router.get("/", response_model=RenusConfigResponse)
 async def get_config(
     current_user: Dict[str, Any] = Depends(get_current_user)

@@ -54,8 +54,22 @@ class InterviewService:
             import math
             total_pages = math.ceil(total / limit) if limit > 0 else 0
             
+            # Converter items para InterviewListItem format
+            interview_items = []
+            for item in items:
+                interview_items.append({
+                    "id": item.get("id"),
+                    "contact_name": item.get("contact_name"),
+                    "email": item.get("email"),
+                    "status": item.get("status"),
+                    "started_at": item.get("started_at"),
+                    "completed_at": item.get("completed_at"),
+                    "created_at": item.get("created_at"),
+                    "duration_minutes": None  # TODO: Calculate if needed
+                })
+            
             return {
-                "interviews": items,
+                "interviews": interview_items,
                 "total": total,
                 "page": page,
                 "page_size": limit,
@@ -213,32 +227,93 @@ class InterviewService:
             # Buscar histórico de mensagens
             messages = self.get_messages(interview_id)
             
-            # Buscar sub-agente
-            from src.services.subagent_service import SubAgentService
-            subagent_service = SubAgentService()
-            subagent = subagent_service.get_subagent(subagent_id)
+            # Buscar sub-agente (Agora usando AgentService para compatibilidade unificada)
+            # from src.services.subagent_service import SubAgentService
+            from src.services.agent_service import get_agent_service
             
-            if not subagent:
-                raise Exception(f"SubAgent {subagent_id} not found")
+            agent_service = get_agent_service()
+            # O nome do parametro ainda é subagent_id por compatibilidade com a tabela interviews
+            agent = await agent_service.get_agent(subagent_id)
+            
+            if not agent:
+                raise Exception(f"Agent {subagent_id} not found")
             
             # Inicializar agente apropriado baseado no tipo
             from src.agents.discovery_agent import DiscoveryAgent
             from src.agents.mmn_discovery_agent import MMNDiscoveryAgent
             
             # Determinar qual agente usar
-            agent_type = subagent.get('type', 'discovery')
-            if agent_type == 'mmn' or 'mmn' in subagent.get('name', '').lower():
-                agent = MMNDiscoveryAgent()
-            else:
-                agent = DiscoveryAgent()
+            is_mmn = False
+            is_orchestrator = False
             
-            # Processar mensagem
-            response = await agent.process_message(
+            # Checar se é o Renus (Orchestrator)
+            if agent.slug == 'renus' or (agent.role and agent.role == 'system_orchestrator'):
+                 is_orchestrator = True
+            elif agent.slug and 'mmn' in agent.slug:
+                is_mmn = True
+            elif agent.name and 'mmn' in agent.name.lower():
+                is_mmn = True
+            
+            if is_orchestrator:
+                # Usa DiscoveryAgent como base pro Renus por enquanto
+                # Passamos todo o config para que o DiscoveryAgent possa ler identity.system_prompt
+                config = agent.config or {}
+                config['agent_id'] = str(agent.id)  # Inject agent ID for tools
+                agent_instance = DiscoveryAgent(
+                    model=config.get("model", "gpt-4o-mini"), 
+                    client_id=agent.client_id,
+                    **config
+                )
+            elif is_mmn:
+                config = agent.config or {}
+                agent_instance = MMNDiscoveryAgent(
+                    model=config.get("model", "gpt-4o-mini"),
+                    client_id=agent.client_id,
+                    **config
+                )
+            else:
+                config = agent.config or {}
+                agent_instance = DiscoveryAgent(
+                    model=config.get("model", "gpt-4o-mini"),
+                    client_id=agent.client_id,
+                    **config
+                )
+            
+            # --- GUARDRAILS LAYER 1: INPUT ---
+            from src.services.guardrail_service import guardrail_service
+            input_validation = guardrail_service.validate_input(user_message, agent.config or {})
+            if not input_validation['valid']:
+                logger.warning(f"Guardrail Input Violation: {input_validation['violation']}")
+                
+                # Salvar mensagem bloqueada mas com resposta de erro
+                self.add_message(interview_id, 'user', user_message)
+                error_msg = "Desculpe, não posso processar essa mensagem devido às políticas de segurança."
+                self.add_message(interview_id, 'assistant', error_msg, metadata={"violation": input_validation['violation']})
+                return {
+                   "message": error_msg,
+                   "metadata": {"violation": input_validation['violation']},
+                   "is_complete": False
+                }
+            # Use sanitized text if modified
+            processed_user_message = input_validation['modified_text']
+            # ---------------------------------
+
+            # Processar mensagem (com texto sanitizado)
+            response = await agent_instance.process_message(
                 interview_id=interview_id,
-                user_message=user_message,
+                user_message=processed_user_message,
                 message_history=messages,
                 interview_data=interview
             )
+            
+            # --- GUARDRAILS LAYER 2: OUTPUT ---
+            output_validation = guardrail_service.validate_output(response['message'], agent.config or {})
+            if not output_validation['valid']:
+                logger.warning(f"Guardrail Output Violation: {output_validation['violation']}")
+                response['message'] = "Desculpe, a resposta gerada foi bloqueada pelas políticas de segurança."
+                if 'metadata' not in response: response['metadata'] = {}
+                response['metadata']['violation'] = output_validation['violation']
+            # ----------------------------------
             
             # Salvar mensagem do usuário
             self.add_message(
@@ -255,6 +330,33 @@ class InterviewService:
                 metadata=response.get('metadata', {})
             )
             
+            # --- TRIGGER CHECK ---
+            try:
+                from src.services.trigger_service import trigger_service
+                trigger_context = {
+                    'interview_id': interview_id,
+                    'message': user_message, # User's last message content
+                    'agent_response': response['message'],
+                    'collected_data': response.get('metadata', {}).get('collected_data', {})
+                }
+                # Run triggers (fire and forget / await)
+                await trigger_service.evaluate_triggers(agent, trigger_context, event_type="on_message_received")
+            except Exception as trigger_error:
+                logger.error(f"Error evaluating triggers: {trigger_error}")
+            # ---------------------
+            
+            # CRITICAL FIX: Persist collected fields to DB so agent remembers them next turn
+            collected_data = response.get('metadata', {}).get('collected_data', {})
+            if collected_data:
+                valid_fields = ['contact_name', 'email', 'contact_phone', 'country', 'company', 'experience_level', 'operation_size']
+                updates = {k: v for k, v in collected_data.items() if k in valid_fields and v is not None}
+                
+                if updates:
+                    try:
+                        self.supabase.table('interviews').update(updates).eq('id', interview_id).execute()
+                    except Exception as db_err:
+                        logger.error(f"Failed to update interview fields: {db_err}")
+
             # Atualizar entrevista se completa
             if response.get('is_complete'):
                 self._complete_interview(interview_id, response.get('analysis'))
@@ -292,3 +394,110 @@ class InterviewService:
             
         except Exception as e:
             logger.error(f"Error completing interview {interview_id}: {e}")
+    
+    async def get_interview_details(self, interview_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Busca detalhes completos da entrevista com mensagens e progresso.
+        
+        Args:
+            interview_id: ID da entrevista
+        
+        Returns:
+            Dict com interview, messages e progress
+        """
+        try:
+            # Buscar entrevista
+            interview = self.get_interview(interview_id)
+            if not interview:
+                return None
+            
+            # Buscar mensagens
+            messages = self.get_messages(interview_id)
+            
+            # Calcular progresso
+            required_fields = ['contact_name', 'email', 'contact_phone', 'country', 'company', 'experience_level', 'operation_size']
+            collected = sum(1 for field in required_fields if interview.get(field))
+            total = len(required_fields)
+            percentage = int((collected / total) * 100) if total > 0 else 0
+            missing_fields = [field for field in required_fields if not interview.get(field)]
+            
+            progress = {
+                'collected': collected,
+                'total': total,
+                'percentage': percentage,
+                'missing_fields': missing_fields
+            }
+            
+            return {
+                'interview': interview,
+                'messages': messages,
+                'progress': progress
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting interview details {interview_id}: {e}")
+            raise
+    
+    async def process_user_message(self, interview_id: str, user_message: str) -> Dict[str, Any]:
+        """
+        Processa mensagem do usuário (versão simplificada sem agente).
+        
+        Args:
+            interview_id: ID da entrevista
+            user_message: Mensagem do usuário
+        
+        Returns:
+            Dict com user_message, agent_response, progress, is_complete
+        """
+        try:
+            # Buscar entrevista
+            interview = self.get_interview(interview_id)
+            if not interview:
+                raise Exception(f"Interview {interview_id} not found")
+            
+            if interview['status'] == 'completed':
+                raise Exception(f"Interview {interview_id} is already completed")
+            
+            # Salvar mensagem do usuário
+            user_msg = self.add_message(
+                interview_id=interview_id,
+                role='user',
+                content=user_message
+            )
+            
+            # Resposta simples do agente (sem IA real por enquanto)
+            agent_response_text = "Obrigado pela sua mensagem. Estou processando suas informações."
+            
+            agent_msg = self.add_message(
+                interview_id=interview_id,
+                role='assistant',
+                content=agent_response_text
+            )
+            
+            # Calcular progresso
+            required_fields = ['contact_name', 'email', 'contact_phone', 'country', 'company', 'experience_level', 'operation_size']
+            collected = sum(1 for field in required_fields if interview.get(field))
+            total = len(required_fields)
+            percentage = int((collected / total) * 100) if total > 0 else 0
+            missing_fields = [field for field in required_fields if not interview.get(field)]
+            
+            progress = {
+                'collected': collected,
+                'total': total,
+                'percentage': percentage,
+                'missing_fields': missing_fields
+            }
+            
+            is_complete = collected == total
+            
+            return {
+                'user_message': user_msg,
+                'agent_response': agent_msg,
+                'fields_updated': [],
+                'is_complete': is_complete,
+                'progress': progress
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing message for interview {interview_id}: {e}")
+            raise

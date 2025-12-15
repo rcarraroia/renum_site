@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Zap, Settings, MessageSquare, LayoutDashboard, Terminal, Save, ArrowLeft, Server, BarChart, RefreshCw, Edit, Pause, Play, Download, MoreVertical, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import PreviewChat from '@/components/agents/PreviewChat';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +22,13 @@ import AgentMetricsTab from '@/components/agents/AgentMetricsTab';
 import AgentLogsTab from '@/components/agents/AgentLogsTab';
 
 const AgentDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [activeMainTab, setActiveMainTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // Mock state
 
-  // Mock agent retrieval (using mock ID 100 for newly created agents from wizard)
-  const agent = mockAgents.find(a => a.id === id) || {
+  // Mock agent retrieval (using slug for lookup)
+  const agent = mockAgents.find(a => a.slug === slug) || {
     id: 'mock-100',
     name: 'Novo Agente (Mock)',
     description: 'Agente de fallback para testes.',
@@ -49,6 +50,7 @@ const AgentDetailsPage: React.FC = () => {
   const mainTabs = [
     { value: 'overview', label: 'Visão Geral', icon: LayoutDashboard, component: AgentOverviewTab },
     { value: 'config', label: 'Configuração', icon: Settings, component: ConfigRenusPanel },
+    { value: 'chat', label: 'Chat de Teste', icon: MessageSquare, component: PreviewChat },
     { value: 'users', label: 'Usuários/Instâncias', icon: Users, component: AgentUsersTab },
     { value: 'metrics', label: 'Métricas', icon: BarChart, component: AgentMetricsTab },
     { value: 'logs', label: 'Logs', icon: Terminal, component: AgentLogsTab },
@@ -145,7 +147,7 @@ const AgentDetailsPage: React.FC = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-gray-100 dark:bg-gray-800">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-gray-100 dark:bg-gray-800">
           {mainTabs.map(tab => (
             <TabsTrigger 
               key={tab.value} 
@@ -187,6 +189,26 @@ const AgentDetailsPage: React.FC = () => {
         {/* Tab Content: Metrics */}
         <TabsContent value="metrics" className="mt-6">
             <AgentMetricsTab />
+        </TabsContent>
+
+        {/* Tab Content: Chat de Teste */}
+        <TabsContent value="chat" className="mt-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-xl">Chat de Teste - {agent.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">Teste o agente em tempo real para validar comportamento e respostas.</p>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="h-[600px]">
+                        <PreviewChat 
+                            agentName={agent.name}
+                            agentSlug={agent.slug}
+                            systemPrompt="Você é um agente de teste. Responda de forma profissional e útil."
+                            useRealAgent={true}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
 
         {/* Tab Content: Logs */}

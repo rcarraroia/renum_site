@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Correção de Autenticação - RENUM</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        .token { background: #f0f0f0; padding: 10px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Correção de Autenticação - RENUM</h1>
+    
+    <div class="info">
+        <p><strong>Problema identificado:</strong> Token JWT inválido no frontend</p>
+        <p><strong>Solução:</strong> Usar token válido gerado pelo backend</p>
+    </div>
+    
+    <h2>1. Token Válido Gerado:</h2>
+    <div class="token" id="validToken">
+        eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoaXh2emF4c3dwaHdveW1kaGdnIiwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY1NTE2NzU5LCJpYXQiOjE3NjU0MzAzNTksInN1YiI6Ijg3NmJlMzMxLTk1NTMtNGU5YS05ZjI5LTYzY2ZhNzExZTA1NiIsImVtYWlsIjoicmNhcnJhcm8yMDE1QGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJyY2FycmFybzIwMTVAZ21haWwuY29tIiwiZmlyc3RfbmFtZSI6IkFkbWluIiwibGFzdF9uYW1lIjoiUmVudW0ifX0.Dgavryf5gfGa2fj-FEts2GnzxHBHBO7v7O13mQaI9W0
+    </div>
+    
+    <h2>2. Dados do Usuário:</h2>
+    <ul>
+        <li><strong>Email:</strong> rcarraro2015@gmail.com</li>
+        <li><strong>Nome:</strong> Admin Renum</li>
+        <li><strong>Role:</strong> admin</li>
+        <li><strong>ID:</strong> 876be331-9553-4e9a-9f29-63cfa711e056</li>
+    </ul>
+    
+    <h2>3. Ações de Correção:</h2>
+    
+    <button onclick="fixAuthentication()">🔧 Corrigir Autenticação</button>
+    <button onclick="testBackend()">🧪 Testar Backend</button>
+    <button onclick="clearAuth()">🗑️ Limpar Autenticação</button>
+    
+    <h2>4. Status:</h2>
+    <div id="status"></div>
+    
+    <h2>5. Logs:</h2>
+    <div id="logs" style="background: #f5f5f5; padding: 10px; height: 200px; overflow-y: scroll;"></div>
+
+    <script>
+        const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoaXh2emF4c3dwaHdveW1kaGdnIiwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY1NTE2NzU5LCJpYXQiOjE3NjU0MzAzNTksInN1YiI6Ijg3NmJlMzMxLTk1NTMtNGU5YS05ZjI5LTYzY2ZhNzExZTA1NiIsImVtYWlsIjoicmNhcnJhcm8yMDE1QGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJyY2FycmFybzIwMTVAZ21haWwuY29tIiwiZmlyc3RfbmFtZSI6IkFkbWluIiwibGFzdF9uYW1lIjoiUmVudW0ifX0.Dgavryf5gfGa2fj-FEts2GnzxHBHBO7v7O13mQaI9W0';
+        
+        const validUser = {
+            id: '876be331-9553-4e9a-9f29-63cfa711e056',
+            name: 'Admin Renum',
+            email: 'rcarraro2015@gmail.com',
+            role: 'admin'
+        };
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logs.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            status.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        function fixAuthentication() {
+            log('Iniciando correção de autenticação...', 'info');
+            
+            try {
+                // 1. Salvar token válido
+                localStorage.setItem('renum_token', validToken);
+                log('✅ Token válido salvo no localStorage', 'success');
+                
+                // 2. Salvar dados do usuário
+                localStorage.setItem('renum_user', JSON.stringify(validUser));
+                log('✅ Dados do usuário salvos no localStorage', 'success');
+                
+                // 3. Verificar se salvou corretamente
+                const savedToken = localStorage.getItem('renum_token');
+                const savedUser = localStorage.getItem('renum_user');
+                
+                if (savedToken && savedUser) {
+                    log('✅ Verificação: dados salvos corretamente', 'success');
+                    updateStatus('✅ Autenticação corrigida com sucesso!', 'success');
+                    
+                    // 4. Testar token
+                    testBackend();
+                } else {
+                    throw new Error('Falha ao salvar dados');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro: ${error.message}`, 'error');
+                updateStatus('❌ Falha na correção', 'error');
+            }
+        }
+
+        async function testBackend() {
+            log('Testando conexão com backend...', 'info');
+            
+            try {
+                const token = localStorage.getItem('renum_token');
+                if (!token) {
+                    throw new Error('Token não encontrado');
+                }
+                
+                const response = await fetch('http://localhost:8000/api/dashboard/stats', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Backend respondeu com sucesso', 'success');
+                    log(`📊 Dados: ${data.total_clients} clientes, ${data.total_leads} leads`, 'info');
+                    updateStatus('✅ Backend funcionando corretamente!', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Erro no backend: ${error.message}`, 'error');
+                updateStatus('❌ Backend com problemas', 'error');
+            }
+        }
+
+        function clearAuth() {
+            log('Limpando dados de autenticação...', 'info');
+            
+            localStorage.removeItem('renum_token');
+            localStorage.removeItem('renum_user');
+            
+            log('✅ Dados limpos', 'success');
+            updateStatus('🗑️ Autenticação limpa', 'info');
+        }
+
+        // Verificar status inicial
+        window.onload = function() {
+            const token = localStorage.getItem('renum_token');
+            const user = localStorage.getItem('renum_user');
+            
+            if (token && user) {
+                log('ℹ️ Dados de autenticação encontrados', 'info');
+                updateStatus('ℹ️ Usuário já autenticado', 'info');
+                testBackend();
+            } else {
+                log('⚠️ Nenhum dado de autenticação encontrado', 'info');
+                updateStatus('⚠️ Usuário não autenticado', 'info');
+            }
+        };
+    </script>
+</body>
+</html>

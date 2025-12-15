@@ -11,6 +11,7 @@ from src.api.middleware.auth_middleware import get_current_user
 router = APIRouter(prefix="/sub-agents", tags=["sub-agents"])
 
 
+@router.get("", response_model=List[SubAgentResponse])
 @router.get("/", response_model=List[SubAgentResponse])
 async def list_sub_agents(
     active_only: bool = False,

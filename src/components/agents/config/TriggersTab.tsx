@@ -1,164 +1,289 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Zap, Plus, Trash2, Clock, MessageSquare, Send, Bell, CheckCircle, Settings, Play } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { Zap, Plus, Trash2, Save, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import agentService from '@/services/agentService';
 
-interface Trigger {
-  id: number;
-  name: string;
-  status: 'active' | 'inactive';
-  when: string;
-  condition: string;
-  action: string;
+interface TriggerCondition {
+  field: string;
+  operator: 'equals' | 'contains' | 'not_contains';
+  value: string;
 }
 
-const MOCK_TRIGGERS: Trigger[] = [
-  {
-    id: 1,
-    name: 'Follow-up de Inatividade',
-    status: 'active',
-    when: '3 dias após a última mensagem do Renus',
-    condition: 'Status da conversa: Aberta',
-    action: 'Enviar mensagem de follow-up (Template 1)',
-  },
-  {
-    id: 2,
-    name: 'Alerta de Intenção Crítica',
-    status: 'active',
-    when: 'Intenção detectada: "Cancelamento" ou "Reclamação"',
-    condition: 'Role do usuário: Cliente',
-    action: 'Notificar Equipe de Sucesso do Cliente',
-  },
-  {
-    id: 3,
-    name: 'Geração Automática de Relatório',
-    status: 'inactive',
-    when: 'Conversa atinge 10 turnos',
-    condition: 'Tópico: Discovery',
-    action: 'Chamar ferramenta: generate_viability_report',
-  },
-];
+interface TriggerAction {
+  type: 'send_message' | 'add_tag';
+  params: {
+    message?: string;
+    tag?: string;
+  };
+}
+
+interface TriggerRule {
+  id: string;
+  name: string;
+  event: 'on_message_received' | 'on_idle';
+  conditions: TriggerCondition[];
+  actions: TriggerAction[];
+  enabled: boolean;
+}
 
 const TriggersTab: React.FC = () => {
-  const [triggers, setTriggers] = useState(MOCK_TRIGGERS);
-  const [isTesting, setIsTesting] = useState(false);
+  const [agent, setAgent] = useState<any>(null);
+  const [triggers, setTriggers] = useState<TriggerRule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleToggle = (id: number) => {
-    setTriggers(triggers.map(t => (t.id === id ? { ...t, status: t.status === 'active' ? 'inactive' : 'active' } : t)));
-    toast.info("Status do gatilho atualizado.");
+  // New Rule State
+  const [isCreating, setIsCreating] = useState(false);
+  const [newRule, setNewRule] = useState<TriggerRule>({
+    id: '',
+    name: 'Nova Regra',
+    event: 'on_message_received',
+    conditions: [{ field: 'message', operator: 'contains', value: '' }],
+    actions: [{ type: 'send_message', params: { message: '' } }],
+    enabled: true
+  });
+
+  useEffect(() => {
+    loadAgent();
+  }, []);
+
+  const loadAgent = async () => {
+    try {
+      setIsLoading(true);
+      const agents = await agentService.listAgents();
+      const foundAgent = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+
+      if (foundAgent) {
+        setAgent(foundAgent);
+        // Load triggers from config or init empty
+        const existingTriggers = foundAgent.config?.triggers || [];
+        setTriggers(existingTriggers);
+      }
+    } catch (error) {
+      toast.error("Erro ao carregar configurações de gatilhos.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleTestTrigger = (name: string) => {
-    setIsTesting(true);
-    toast.info(`Simulando gatilho: ${name}...`);
-    setTimeout(() => {
-      setIsTesting(false);
-      toast.success(`Gatilho '${name}' disparado com sucesso. Ação simulada: Notificação enviada.`);
-    }, 1500);
+  const handleSaveTriggers = async (updatedTriggers: TriggerRule[]) => {
+    if (!agent) return;
+    try {
+      const updatedConfig = {
+        ...agent.config,
+        triggers: updatedTriggers
+      };
+
+      await agentService.updateAgent(agent.id, { config: updatedConfig });
+
+      setTriggers(updatedTriggers);
+      setAgent({ ...agent, config: updatedConfig });
+      toast.success("Regras de automação salvas com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao salvar regras.");
+    }
   };
+
+  const handleAddRule = () => {
+    const ruleToAdd = { ...newRule, id: Date.now().toString() };
+    if (!ruleToAdd.name) {
+      toast.error("Dê um nome para a regra.");
+      return;
+    }
+    const updated = [...triggers, ruleToAdd];
+    handleSaveTriggers(updated);
+    setIsCreating(false);
+    // Reset new rule
+    setNewRule({
+      id: '',
+      name: 'Nova Regra',
+      event: 'on_message_received',
+      conditions: [{ field: 'message', operator: 'contains', value: '' }],
+      actions: [{ type: 'send_message', params: { message: '' } }],
+      enabled: true
+    });
+  };
+
+  const handleDeleteRule = (id: string) => {
+    const updated = triggers.filter(t => t.id !== id);
+    handleSaveTriggers(updated);
+  };
+
+  const handleToggleRule = (id: string) => {
+    const updated = triggers.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t);
+    handleSaveTriggers(updated);
+  };
+
+  if (isLoading) return <div>Carregando...</div>;
 
   return (
-    <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[#4e4ea8]">Gatilhos Ativos ({triggers.filter(t => t.status === 'active').length})</CardTitle>
-          <CardDescription>Automatize ações do Renus com base em eventos e condições específicas.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {triggers.map(trigger => (
-            <div key={trigger.id} className="p-4 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-lg flex items-center">
-                    <CheckCircle className={cn("h-5 w-5 mr-2", trigger.status === 'active' ? 'text-green-500' : 'text-red-500')} />
-                    {trigger.name}
-                </h4>
-                <div className="flex items-center space-x-3">
-                    <Button variant="outline" size="sm" onClick={() => handleTestTrigger(trigger.name)} disabled={isTesting}>
-                        <Play className="h-4 w-4" />
-                    </Button>
-                    <Switch
-                        checked={trigger.status === 'active'}
-                        onCheckedChange={() => handleToggle(trigger.id)}
-                        className={cn(trigger.status === 'active' ? 'data-[state=checked]:bg-[#FF6B35]' : '')}
-                    />
-                </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-medium text-primary">Automação e Gatilhos</h3>
+          <p className="text-sm text-muted-foreground">Configure o agente para reagir automaticamente a eventos.</p>
+        </div>
+        <Button onClick={() => setIsCreating(!isCreating)} className="gap-2">
+          <Plus className="h-4 w-4" /> Nova Regra
+        </Button>
+      </div>
+
+      {/* Configurar Nova Regra */}
+      {isCreating && (
+        <Card className="border-primary/50 bg-accent/5">
+          <CardHeader>
+            <CardTitle className="text-base">Criar Nova Automação</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Nome da Regra</label>
+              <Input
+                value={newRule.name}
+                onChange={e => setNewRule({ ...newRule, name: e.target.value })}
+                placeholder="Ex: Responder se mencionar preço"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Quando (Evento)</label>
+                <Select
+                  value={newRule.event}
+                  onValueChange={(val: any) => setNewRule({ ...newRule, event: val })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="on_message_received">Ao receber mensagem</SelectItem>
+                    <SelectItem value="on_idle">Se ficar inativo (Beta)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-2">
-                <div>
-                    <Label className="text-muted-foreground">QUANDO (Trigger)</Label>
-                    <p className="font-medium text-[#0ca7d2]">{trigger.when}</p>
-                </div>
-                <div>
-                    <Label className="text-muted-foreground">SE (Condition)</Label>
-                    <p className="font-medium">{trigger.condition}</p>
-                </div>
-                <div>
-                    <Label className="text-muted-foreground">ENTÃO (Action)</Label>
-                    <p className="font-medium text-[#FF6B35]">{trigger.action}</p>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Condição (Se...)</label>
+                <div className="flex gap-2">
+                  <Select
+                    value={newRule.conditions[0].operator}
+                    onValueChange={(val: any) => {
+                      const conds = [...newRule.conditions];
+                      conds[0].operator = val;
+                      setNewRule({ ...newRule, conditions: conds });
+                    }}
+                  >
+                    <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="contains">Mensagem contém</SelectItem>
+                      <SelectItem value="equals">Mensagem igual a</SelectItem>
+                      <SelectItem value="not_contains">Não contém</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={newRule.conditions[0].value}
+                    onChange={e => {
+                      const conds = [...newRule.conditions];
+                      conds[0].value = e.target.value;
+                      setNewRule({ ...newRule, conditions: conds });
+                    }}
+                    placeholder="Valor..."
+                  />
                 </div>
               </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
 
-      <Card className="border-2 border-dashed border-[#4e4ea8] dark:border-[#0ca7d2]">
-        <CardHeader>
-          <CardTitle className="flex items-center text-[#FF6B35]">
-            <Plus className="h-5 w-5 mr-2" /> Novo Gatilho de Automação
-          </CardTitle>
-          <CardDescription>Crie um novo fluxo de automação baseado em eventos.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
             <div className="space-y-2">
-                <Label>Nome do Gatilho</Label>
-                <Input placeholder="Ex: Alerta de Lead Quente" />
-            </div>
-            
-            <Separator />
-
-            <h5 className="font-semibold text-sm text-[#0ca7d2]">1. QUANDO (Trigger)</h5>
-            <div className="grid md:grid-cols-2 gap-4">
-                <Select>
-                    <SelectTrigger><SelectValue placeholder="Selecione o Evento..." /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="new_conv">Nova Conversa Iniciada</SelectItem>
-                        <SelectItem value="intent_detect">Intenção Específica Detectada</SelectItem>
-                        <SelectItem value="keyword">Palavra-chave Mencionada</SelectItem>
-                        <SelectItem value="time_delay">Atraso de Tempo (Ex: 24h)</SelectItem>
-                    </SelectContent>
+              <label className="text-sm font-medium">Ação (Então...)</label>
+              <div className="flex gap-2">
+                <Select
+                  value={newRule.actions[0].type}
+                  onValueChange={(val: any) => {
+                    const acts = [...newRule.actions];
+                    acts[0].type = val;
+                    setNewRule({ ...newRule, actions: acts });
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="send_message">Enviar Mensagem</SelectItem>
+                    <SelectItem value="add_tag">Adicionar Tag (CRM)</SelectItem>
+                  </SelectContent>
                 </Select>
-                <Input placeholder="Detalhe a condição (Ex: 'Intenção: Vendas')" />
+                {newRule.actions[0].type === 'send_message' ? (
+                  <Input
+                    value={newRule.actions[0].params.message}
+                    onChange={e => {
+                      const acts = [...newRule.actions];
+                      acts[0].params.message = e.target.value;
+                      setNewRule({ ...newRule, actions: acts });
+                    }}
+                    placeholder="Digitar mensagem de resposta..."
+                  />
+                ) : (
+                  <Input
+                    value={newRule.actions[0].params.tag}
+                    onChange={e => {
+                      const acts = [...newRule.actions];
+                      acts[0].params.tag = e.target.value;
+                      setNewRule({ ...newRule, actions: acts });
+                    }}
+                    placeholder="Ex: interessado, vip"
+                  />
+                )}
+              </div>
             </div>
 
-            <h5 className="font-semibold text-sm text-[#FF6B35]">2. ENTÃO (Action)</h5>
-            <div className="grid md:grid-cols-2 gap-4">
-                <Select>
-                    <SelectTrigger><SelectValue placeholder="Selecione a Ação..." /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="send_msg">Enviar Mensagem Específica</SelectItem>
-                        <SelectItem value="notify_team">Notificar Equipe</SelectItem>
-                        <SelectItem value="call_tool">Chamar Ferramenta Externa</SelectItem>
-                        <SelectItem value="change_status">Mudar Status da Conversa</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Input placeholder="Detalhe a ação (Ex: 'Enviar para Slack #vendas')" />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={() => setIsCreating(false)}>Cancelar</Button>
+              <Button onClick={handleAddRule} className="gap-2"><Save className="h-4 w-4" /> Salvar Regra</Button>
             </div>
+          </CardContent>
+        </Card>
+      )}
 
-            <Button className="w-full bg-[#4e4ea8] hover:bg-[#3a3a80]">
-                <Settings className="h-4 w-4 mr-2" /> Salvar Novo Gatilho
-            </Button>
-        </CardContent>
-      </Card>
+      {/* Lista de Regras */}
+      <div className="grid gap-4">
+        {triggers.length === 0 ? (
+          <div className="text-center py-10 border-2 border-dashed rounded-lg text-muted-foreground">
+            <Zap className="h-10 w-10 mx-auto mb-2 opacity-20" />
+            <p>Nenhuma regra de automação ativa.</p>
+          </div>
+        ) : (
+          triggers.map(rule => (
+            <Card key={rule.id} className={!rule.enabled ? "opacity-60 bg-muted/50" : ""}>
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold">{rule.name}</h4>
+                    <Badge variant={rule.enabled ? "default" : "secondary"} className="text-[10px] h-5">
+                      {rule.enabled ? "ATIVO" : "PAUSADO"}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
+                    <span>QUANDO {rule.event === 'on_message_received' ? 'receber msg' : 'ficar inativo'}</span>
+                    <span>→</span>
+                    <span>SE {rule.conditions[0].operator} "{rule.conditions[0].value}"</span>
+                    <span>→</span>
+                    <span className="text-primary font-medium">
+                      {rule.actions[0].type === 'send_message' ? `Enviar: "${rule.actions[0].params.message}"` : `Tag: ${rule.actions[0].params.tag}`}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleToggleRule(rule.id)}>
+                    {rule.enabled ? "Pausar" : "Ativar"}
+                  </Button>
+                  <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRule(rule.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };

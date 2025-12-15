@@ -64,6 +64,7 @@ class SubAgentBase(BaseModel):
 class SubAgentCreate(SubAgentBase):
     """Model for creating a new sub-agent"""
     
+    agent_id: Optional[UUID] = Field(None, description="Agent ID (parent agent)")
     config_id: Optional[int] = Field(None, description="Associated renus_config ID")
 
 
@@ -108,6 +109,7 @@ class SubAgentResponse(SubAgentBase):
     """Model for sub-agent responses (includes database fields)"""
     
     id: UUID = Field(..., description="Unique identifier")
+    agent_id: Optional[UUID] = Field(None, description="Agent ID (parent agent)")
     config_id: Optional[int] = Field(None, description="Associated renus_config ID")
     slug: Optional[str] = Field(None, description="URL-friendly identifier")
     public_url: Optional[str] = Field(None, description="Public URL for this agent")

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Project, ProjectType, TeamMember } from '@/types/project';
-import { getMockClients, getMockTeam } from '@/data/mockProjects';
+import { clientService } from '@/services/clientService';
 import { Zap, Save, Settings, DollarSign, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,12 +17,43 @@ interface ProjectCreationModalProps {
 }
 
 const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({ isOpen, onClose, onCreate }) => {
-  const mockClients = getMockClients();
-  const mockTeam = getMockTeam();
+  const [clients, setClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Mock team data (local fallback)
+  const mockTeam: TeamMember[] = [
+    { id: '1', name: 'João Silva', role: 'Tech Lead', avatar: '' },
+    { id: '2', name: 'Maria Santos', role: 'Developer', avatar: '' },
+    { id: '3', name: 'Pedro Costa', role: 'Designer', avatar: '' }
+  ];
+
+  // Load clients from backend
+  React.useEffect(() => {
+    const loadClients = async () => {
+      setLoading(true);
+      try {
+        const response = await clientService.getAll();
+        setClients(response.data || []);
+      } catch (error) {
+        console.error('Erro ao carregar clientes:', error);
+        // Fallback para dados mock se backend falhar
+        setClients([
+          { id: '1', company_name: 'Empresa Alpha', status: 'active' },
+          { id: '2', company_name: 'Beta Corp', status: 'active' }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      loadClients();
+    }
+  }, [isOpen]);
   
   const [formData, setFormData] = useState({
     name: '',
-    clientId: mockClients[0].id,
+    clientId: '',
     description: '',
     type: 'AI Native' as ProjectType,
     startDate: new Date().toISOString().split('T')[0],
@@ -31,6 +62,13 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({ isOpen, onC
     scope: '',
     budget: 0,
   });
+
+  // Update clientId when clients load
+  React.useEffect(() => {
+    if (clients.length > 0 && !formData.clientId) {
+      setFormData(prev => ({ ...prev, clientId: clients[0].id }));
+    }
+  }, [clients, formData.clientId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -48,7 +86,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({ isOpen, onC
     }
 
     const responsible = mockTeam.find(t => t.id === formData.responsibleId)!;
-    const clientName = mockClients.find(c => c.id === formData.clientId)?.name || 'Desconhecido';
+    const clientName = clients.find(c => c.id === formData.clientId)?.company_name || 'Desconhecido';
 
     const newProjectData = {
         ...formData,
@@ -92,9 +130,15 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({ isOpen, onC
                 <SelectValue placeholder="Selecione o Cliente" />
               </SelectTrigger>
               <SelectContent>
-                {mockClients.map(client => (
-                  <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                ))}
+                {loading ? (
+                  <SelectItem value="" disabled>Carregando clientes...</SelectItem>
+                ) : clients.length > 0 ? (
+                  clients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>{client.company_name}</SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>Nenhum cliente encontrado</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

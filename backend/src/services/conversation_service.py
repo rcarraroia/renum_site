@@ -328,5 +328,27 @@ class ConversationService:
             raise
 
 
+    # Aliases para consistência com outros services
+    async def create(self, data: ConversationCreate) -> ConversationResponse:
+        """Alias for create_conversation"""
+        return await self.create_conversation(data)
+    
+    async def get_all(self, **kwargs) -> dict:
+        """Alias for list_conversations"""
+        return await self.list_conversations(**kwargs)
+    
+    async def get_by_id(self, conversation_id: str) -> ConversationResponse:
+        """Alias for get_conversation_by_id"""
+        return await self.get_conversation_by_id(conversation_id)
+    
+    async def update(self, conversation_id: str, data: ConversationUpdate) -> ConversationResponse:
+        """Alias for update_conversation"""
+        return await self.update_conversation(conversation_id, data)
+    
+    async def delete(self, conversation_id: str) -> bool:
+        """Alias for delete_conversation"""
+        return await self.delete_conversation(conversation_id)
+
+
 # Global instance
 conversation_service = ConversationService()

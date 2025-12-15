@@ -241,6 +241,11 @@ class MessageService:
         except Exception as e:
             logger.error(f"Error decrementing unread count {conversation_id}: {str(e)}")
             # Don't raise, this is a non-critical operation
+    
+    # Aliases para consistência
+    async def create(self, data: MessageCreate) -> MessageResponse:
+        """Alias for send_message"""
+        return await self.send_message(data)
 
 
 # Global instance
