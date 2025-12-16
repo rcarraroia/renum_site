@@ -7,9 +7,9 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import WhatsappConfigModal from './modals/WhatsappConfigModal.tsx';
-import GoogleConfigModal from './modals/GoogleConfigModal.tsx';
-// ... imports
+import WhatsappConfigModal from './modals/WhatsappConfigModal';
+import GoogleConfigModal from './modals/GoogleConfigModal';
+import ChatwootConfigModal from './modals/ChatwootConfigModal';
 
 interface IntegrationConfig {
   name: string;
@@ -23,17 +23,7 @@ interface IntegrationConfig {
   configData: any;
 }
 //...
-// In renderModal
-      case 'google':
-return (
-  <GoogleConfigModal
-    isOpen={isModalOpen}
-    onClose={() => setIsModalOpen(false)}
-    initialConfig={selectedIntegration.configData}
-    onSave={handleSaveConfig}
-  />
-);
-//...
+// Removed accidental code block
 
 const SUPPORTED_INTEGRATIONS: IntegrationConfig[] = [
   {
@@ -177,6 +167,15 @@ const IntegrationsTab: React.FC = () => {
             initialConfig={selectedIntegration.configData}
             onSave={handleSaveConfig}
             agentSlug={agentSlug}
+          />
+        );
+      case 'google':
+        return (
+          <GoogleConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialConfig={selectedIntegration.configData}
+            onSave={handleSaveConfig}
           />
         );
       default:

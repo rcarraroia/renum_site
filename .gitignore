@@ -52,5 +52,11 @@ backend/.env
 docs/SUPABASE_CREDENTIALS.md
 docs/*_CREDENTIALS.md
 
+# Development folders (local only)
+.kiro/
+.vscode/
+docs/
+
 # Claude
 .claude/
+.vercel

@@ -53,3 +53,9 @@ htmlcov/
 *.pem
 *.key
 *.crt
+
+# Development folders (local only)
+../.kiro/
+../.vscode/
+../docs/
+
