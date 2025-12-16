@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploads
+uploads/
+!uploads/.gitkeep
+
+# Docker
+.dockerignore
+
+# Node (frontend)
+node_modules/
+dist/
+.cache/
+
+# Redis
+dump.rdb
+
+# Coverage
+.coverage
+htmlcov/
+*.cover
+.pytest_cache/
+
+# Certificates (nunca commitar)
+*.pem
+*.key
+*.crt
