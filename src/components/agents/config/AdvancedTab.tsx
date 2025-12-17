@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -6,15 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Zap, Info, DollarSign, Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Zap, Info, DollarSign, Activity, Save, Loader2 } from 'lucide-react';
 import { monitoringService, MonitoringStats } from '@/services/monitoringService';
-import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import agentService from '@/services/agentService';
 
 export const AdvancedTab = () => {
+  const [agent, setAgent] = useState<any>(null);
   const [config, setConfig] = useState({
-    provider: 'openrouter',
-    model: 'anthropic/claude-sonnet-4',
+    provider: 'openai',
+    model: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 4000,
     apiKey: ''
@@ -22,21 +25,79 @@ export const AdvancedTab = () => {
 
   const [monitoringStats, setMonitoringStats] = useState<MonitoringStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const loadStats = async () => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      // Load Agent
+      let agentData;
       try {
-        setLoadingStats(true);
+        agentData = await agentService.getAgentBySlug('renus');
+      } catch {
+        const agents = await agentService.listAgents();
+        agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+      }
+
+      if (agentData) {
+        setAgent(agentData);
+        // Load config from agent
+        setConfig({
+          provider: agentData.config?.provider || 'openai',
+          model: agentData.config?.model || 'gpt-4o',
+          temperature: agentData.config?.temperature || 0.7,
+          maxTokens: agentData.config?.max_tokens || 4000,
+          apiKey: '' // Never show API key
+        });
+      }
+
+      // Load monitoring stats
+      setLoadingStats(true);
+      try {
         const stats = await monitoringService.getStats();
         setMonitoringStats(stats);
       } catch (error) {
         console.error("Failed to load LangSmith stats", error);
-      } finally {
-        setLoadingStats(false);
       }
-    };
-    loadStats();
-  }, []);
+      setLoadingStats(false);
+    } catch (error) {
+      console.error("Error loading advanced config:", error);
+      toast.error("Erro ao carregar configurações avançadas.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!agent) return;
+    setIsSaving(true);
+    try {
+      const updatedConfig = {
+        ...agent.config,
+        provider: config.provider,
+        model: config.model,
+        temperature: config.temperature,
+        max_tokens: config.maxTokens
+      };
+
+      await agentService.updateAgent(agent.id, { config: updatedConfig });
+      setAgent({ ...agent, config: updatedConfig });
+      toast.success("Configurações avançadas salvas!");
+    } catch (error) {
+      toast.error("Erro ao salvar configurações.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+  }
 
   const modelOptions = [
     {
@@ -297,6 +358,14 @@ export const AdvancedTab = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Save Button */}
+      <div className="flex justify-end pt-4">
+        <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-[#FF6B35] hover:bg-[#e55f30]">
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {isSaving ? 'Salvando...' : 'Salvar Configurações'}
+        </Button>
+      </div>
 
     </div>
   );

@@ -78,29 +78,27 @@ class DiscoveryAgent(BaseAgent):
         'operation_size': 'Size of operation (team size, network size, revenue range)'
     }
     
-    def __init__(self, **kwargs):
+    def __init__(self, model: str = "gpt-4o-mini", tools: List[Any] = None, system_prompt: str = None, **kwargs):
         """Initialize Discovery Agent"""
-        model = kwargs.get("model", "gpt-4o-mini")
         
-        # Load tools from config (list of strings keys)
-        config_tools = kwargs.get("config", {}).get("tools", [])
-        if not config_tools and kwargs.get('tools'): 
-             # Fallback if tools passed directly as list of objects
-             tools = kwargs.get('tools')
-        else:
-             # Load from registry
-             client_id = kwargs.get("client_id") # Should be passed from service
-             agent_id = kwargs.get("config", {}).get("agent_id")
-             tools = get_tools_by_names(config_tools, client_id=client_id, agent_id=agent_id)
+        # Validate tools
+        # Since we use Dependency Injection now, tools should be a list of BaseTool objects
+        # We'll just log if it's empty, but we trust the Service to pass them correctly.
+        final_tools = tools if tools else []
         
-        # Extract config explicitly to use in prompt generation
-        # BaseAgent will also store it in self.config
-        config = kwargs
+        # Reconstruct config
+        config = kwargs.copy()
+        config['model'] = model
+        if system_prompt:
+             config['system_prompt'] = system_prompt
+        
+        # Use passed system_prompt or generate from config
+        final_system_prompt = system_prompt if system_prompt else self._get_system_prompt(config)
         
         super().__init__(
             model=model,
-            system_prompt=self._get_system_prompt(config),
-            tools=tools,
+            system_prompt=final_system_prompt,
+            tools=final_tools,
             **kwargs
         )
         self.channel = kwargs.get("channel", "web")
@@ -154,8 +152,11 @@ You will receive the current interview state showing what's been collected."""
             streaming=True,
             api_key=settings.OPENAI_API_KEY
         )
+        print(f"DEBUG: Initializing LLM. self.tools length: {len(self.tools)}")
         if self.tools:
+            print("DEBUG: Binding tools to LLM")
             return llm.bind_tools(self.tools)
+        print("DEBUG: No tools bound to LLM")
         return llm
     
     def _build_graph(self) -> StateGraph:
@@ -169,8 +170,12 @@ You will receive the current interview state showing what's been collected."""
         workflow.add_node("check_completion", self._check_completion_node)
         workflow.add_node("generate_response", self._generate_response_node)
         
+        print(f"DEBUG: DiscoveryAgent building graph. self.tools length: {len(self.tools)}")
         if self.tools:
+            print("DEBUG: Adding tools node")
             workflow.add_node("tools", ToolNode(self.tools))
+        else:
+            print("DEBUG: No tools node added")
         
         # Define edges
         workflow.set_entry_point("extract_fields")
@@ -192,17 +197,27 @@ You will receive the current interview state showing what's been collected."""
             messages = state['messages']
             last_message = messages[-1]
             if isinstance(last_message, AIMessage) and last_message.tool_calls:
-                return "tools"
+                # SAFETY PATCH: Only route to 'tools' if tools actually exist
+                if self.tools:
+                    return "tools"
+                else:
+                    # Log warning: LLM tried to use tools but none are loaded
+                    print(f"[DISCOVERY_AGENT WARNING] LLM requested tool_calls but self.tools is empty. Ignoring tool request.")
             return END
 
-        workflow.add_conditional_edges(
-            "generate_response",
-            should_continue,
-            {
-                "tools": "tools",
-                END: END
-            }
-        )
+        # Only add 'tools' route if tools exist
+        if self.tools:
+            workflow.add_conditional_edges(
+                "generate_response",
+                should_continue,
+                {
+                    "tools": "tools",
+                    END: END
+                }
+            )
+        else:
+            # No tools - always go to END after generate_response
+            workflow.add_edge("generate_response", END)
         
         if self.tools:
             workflow.add_edge("tools", "generate_response") # Loop back to generator

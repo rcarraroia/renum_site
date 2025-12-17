@@ -1,64 +1,53 @@
-# Web Framework
+# Core Framework
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
 python-multipart==0.0.20
 
+# AI Framework (Versões Travadas e Compatíveis)
+langchain==0.3.16
+langchain-core==0.3.32
+langchain-openai==0.2.14
+langgraph==0.2.62
+openai==1.58.1
+sentence-transformers>=2.2.2
+
 # Database
 supabase==2.11.0
 psycopg2-binary==2.9.10
 
-# Async
-httpx==0.28.1
-aiofiles==24.1.0
-
-# Celery + Redis
+# Async/Task Queue
 celery==5.4.0
 redis==5.2.1
+asyncio==3.4.3
+anyio==4.8.0
 
-# Email
-aiosmtplib==3.0.2
-sendgrid==6.11.0
+# HTTP Clients
+requests==2.32.3
+httpx==0.28.1
+aiosmtplib==3.0.1
 
-# Security
-cryptography==45.0.0
-
-# AI
-langchain==0.3.16
-langsmith>=0.1.0 # Monitoring
-langgraph==0.2.62
-openai==1.58.1
-
-# Utils
+# Utilities
 python-dotenv==1.0.1
+tenacity==9.0.0
+typing-extensions==4.12.2
+numpy<2.0.0
+loguru>=0.7.2
+email-validator>=2.1.0
 python-jose[cryptography]==3.3.0
+google-auth>=2.27.0
+google-api-python-client>=2.118.0
+google-auth-oauthlib>=1.2.0
 passlib[bcrypt]==1.7.4
-qrcode[pil]==8.0
+PyJWT>=2.8.0
 
-# SICC - Embeddings
-sentence-transformers==3.3.1
-tiktoken==0.8.0
+# Audio Processing (Heavy)
+librosa>=0.10.1
+soundfile>=0.12.1
+openai-whisper>=20231117
 
-# SICC - Vector operations
-numpy==1.26.4
-pgvector==0.3.6
-
-# SICC - Audio transcription
-openai-whisper==20240930
-librosa==0.10.2
-soundfile==0.12.1
-
-# Dev
-pytest==8.3.4
-pytest-asyncio==0.24.0
-pytest-cov==6.0.0
-pytest-mock==3.14.0
-black==24.10.0
-ruff==0.8.4
-mypy==1.13.0
-
-# Integrations
-google-api-python-client==2.111.0
-google-auth-httplib2==0.1.0
-google-auth-oauthlib==1.2.0
+# Monitoring & Serving
+langsmith>=0.1.0
+langserve>=0.0.51
+tiktoken>=0.7.0

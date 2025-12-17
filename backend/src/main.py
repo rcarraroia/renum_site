@@ -6,10 +6,28 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.config.settings import settings
-from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, monitoring, knowledge
+from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, monitoring, knowledge, auth_google
 from src.utils.logger import logger
 
-# ... (omitted)
+# Configuração da Aplicação
+app = FastAPI(
+    title="RENUM API",
+    version="1.0.0",
+    description="API do Sistema RENUM",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    debug=settings.DEBUG
+)
+
+# Middleware CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Registrar routers
 app.include_router(health.router)

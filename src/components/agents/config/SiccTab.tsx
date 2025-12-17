@@ -161,7 +161,7 @@ const SiccTab: React.FC = () => {
                         <Zap className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
+                        <div className="text-2xl font-bold">{stats?.new_patterns || 0}</div>
                         <p className="text-xs text-muted-foreground flex items-center mt-1">
                             Detectados na última semana
                         </p>

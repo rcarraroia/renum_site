@@ -83,12 +83,18 @@ class MMNDiscoveryAgent(BaseAgent):
         'investimento'
     ]
     
-    def __init__(self, **kwargs):
+    def __init__(self, model: str = "gpt-4o-mini", tools: List[Any] = None, system_prompt: str = None, **kwargs):
         """Initialize MMN Discovery Agent"""
+        
+        # Tools are injected by the service now
+        final_tools = tools or []
+        
+        final_system_prompt = system_prompt if system_prompt else self._get_system_prompt()
+        
         super().__init__(
-            model=kwargs.get("model", "gpt-4o-mini"),
-            system_prompt=self._get_system_prompt(),
-            tools=kwargs.get("tools", []),
+            model=model,
+            system_prompt=final_system_prompt,
+            tools=final_tools,
             **kwargs
         )
     

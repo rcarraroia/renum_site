@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import WhatsappConfigModal from './modals/WhatsappConfigModal';
 import GoogleConfigModal from './modals/GoogleConfigModal';
 import ChatwootConfigModal from './modals/ChatwootConfigModal';
+import { integrationService } from '@/services/integrationService';
 
 interface IntegrationConfig {
   name: string;

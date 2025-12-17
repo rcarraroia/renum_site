@@ -254,29 +254,69 @@ class InterviewService:
             elif agent.name and 'mmn' in agent.name.lower():
                 is_mmn = True
             
+            # Determinar ferramentas
+            config = agent.config or {}
+            config_tools = config.get("tools", [])
+            
+            # IMPORTER: Importar get_tools_by_names aqui para evitar ciclo no topo
+            from src.tools.registry import get_tools_by_names
+            
+            # RESOLVE TOOLS: Injeção de Dependência
+            # Passamos 'self' (InterviewService) para que o registry possa criar sub-agentes sem importar o Service
+            loaded_tools = get_tools_by_names(
+                config_tools, 
+                client_id=agent.client_id, 
+                agent_id=agent.id,
+                interview_service=self
+            )
+            
             if is_orchestrator:
                 # Usa DiscoveryAgent como base pro Renus por enquanto
                 # Passamos todo o config para que o DiscoveryAgent possa ler identity.system_prompt
-                config = agent.config or {}
                 config['agent_id'] = str(agent.id)  # Inject agent ID for tools
+                
+                # Garantir model no config se não existir
+                model_name = config.get("model", "gpt-4o-mini")
+                
+                # Remover chaves conflitantes de config antes de passar como kwargs
+                safe_config = config.copy()
+                safe_config.pop('model', None)
+                safe_config.pop('tools', None)
+                safe_config.pop('system_prompt', None)
+
                 agent_instance = DiscoveryAgent(
-                    model=config.get("model", "gpt-4o-mini"), 
+                    model=model_name,
+                    tools=loaded_tools, # Tools já carregadas!
                     client_id=agent.client_id,
-                    **config
+                    **safe_config
                 )
             elif is_mmn:
-                config = agent.config or {}
+                model_name = config.get("model", "gpt-4o-mini")
+                
+                safe_config = config.copy()
+                safe_config.pop('model', None)
+                safe_config.pop('tools', None)
+                safe_config.pop('system_prompt', None)
+                
                 agent_instance = MMNDiscoveryAgent(
-                    model=config.get("model", "gpt-4o-mini"),
+                    model=model_name,
+                    tools=loaded_tools,
                     client_id=agent.client_id,
-                    **config
+                    **safe_config
                 )
             else:
-                config = agent.config or {}
+                model_name = config.get("model", "gpt-4o-mini")
+                
+                safe_config = config.copy()
+                safe_config.pop('model', None)
+                safe_config.pop('tools', None)
+                safe_config.pop('system_prompt', None)
+                
                 agent_instance = DiscoveryAgent(
-                    model=config.get("model", "gpt-4o-mini"),
+                    model=model_name,
+                    tools=loaded_tools,
                     client_id=agent.client_id,
-                    **config
+                    **safe_config
                 )
             
             # --- GUARDRAILS LAYER 1: INPUT ---

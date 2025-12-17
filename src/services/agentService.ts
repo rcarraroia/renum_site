@@ -105,7 +105,7 @@ export async function listSubAgents(
     offset?: number;
   }
 ): Promise<SubAgent[]> {
-  const response = await apiClient.get(`/api/agents/${agentId}/sub-agents`, { params });
+  const response = await apiClient.get(`/api/agents/${agentId}/sub-agents`, params);
   return response.data;
 }
 

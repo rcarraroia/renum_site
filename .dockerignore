@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.git
+.env
+.vscode
+.idea
+backend/venv
+backend/__pycache__
+backend/downloads
+*.log
+.DS_Store
+docs
+logs

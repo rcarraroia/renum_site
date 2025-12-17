@@ -1,61 +1,17 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+__pycache__
+*.pyc
+*.pyo
+*.pyd
 .Python
-venv/
 env/
-ENV/
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Uploads
-uploads/
-!uploads/.gitkeep
-
-# Docker
-.dockerignore
-
-# Node (frontend)
-node_modules/
-dist/
-.cache/
-
-# Redis
-dump.rdb
-
-# Coverage
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 .coverage
-htmlcov/
-*.cover
+.tox/
 .pytest_cache/
-
-# Certificates (nunca commitar)
-*.pem
-*.key
-*.crt
-
-# Development folders (local only)
-../.kiro/
-../.vscode/
-../docs/
-
+.mypy_cache/
+debug_start.py
+backend_start*.log
+debug_output*.log

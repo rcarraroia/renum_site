@@ -77,7 +77,7 @@ def _fetch_subagents(client_id: str) -> List[Dict]:
         print(f"Error fetching subagents: {e}")
         return []
 
-def get_tools_by_names(names: List[str], client_id: Any = None, agent_id: Any = None) -> List[BaseTool]:
+def get_tools_by_names(names: List[str], client_id: Any = None, agent_id: Any = None, interview_service: Any = None) -> List[BaseTool]:
     """
     Returns a flattened list of tools based on the requested names (keys).
     
@@ -85,6 +85,7 @@ def get_tools_by_names(names: List[str], client_id: Any = None, agent_id: Any = 
         names: List of tool keys
         client_id: Client ID (UUID)
         agent_id: Agent ID (UUID) for agent-specific tools (like RAG)
+        interview_service: Optional instance of InterviewService (for subagents)
         
     Returns:
         List of initialized LangChain tools
@@ -102,24 +103,16 @@ def get_tools_by_names(names: List[str], client_id: Any = None, agent_id: Any = 
                 else:
                     tools.append(result)
             except Exception as e:
-                print(f"Error initializing tool {name}: {e}")
-                pass
+                # ENHANCED LOGGING: Show exactly which tool failed and why
+                print(f"[REGISTRY ERROR] Failed to load tool '{name}': {type(e).__name__}: {e}")
+                # Continue to next tool (graceful degradation)
+                continue
     
     # 2. Dynamic Sub-Agent Tools (Automatically added if client_id is present)
-    if client_id:
-        from src.services.interview_service import InterviewService
-        # We need an instance to pass to the tool
-        interview_service_instance = InterviewService()
-        
+    # Only if interview_service is provided to avoid circular imports
+    if client_id and interview_service:
         subagents = _fetch_subagents(str(client_id))
         
-        # We extract interview_id from kwargs if provided (passed from InterviewService -> Agent -> Tool Factory)
-        # Note: DiscoveryAgent currently assumes tool factory only takes (client_id, agent_id).
-        # We'll rely on the tool handling a missing interview_id gracefully or we update DiscoveryAgent.
-        # For now, let's assume it might be missing and handling it in the tool is better?
-        # No, let's look at how we call get_tools_by_names.
-        # We will assume 'interview_id' *might* be passed in 'kwargs' if we update the call site.
-        # But to be safe, we assign a placeholder if missing.
         current_interview_id = "UNKNOWN_INTERVIEW_ID" 
         
         for sub in subagents:
@@ -129,13 +122,11 @@ def get_tools_by_names(names: List[str], client_id: Any = None, agent_id: Any = 
                     subagent_id=str(sub['id']),
                     subagent_name=sub['name'],
                     subagent_description=sub.get('description', ''),
-                    interview_service=interview_service_instance,
+                    interview_service=interview_service,
                     interview_id=current_interview_id 
                 )
                 tools.append(tool)
             except Exception as e:
                 print(f"Error creating tool for subagent {sub['name']}: {e}")
     
-    return tools
-
     return tools

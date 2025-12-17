@@ -1,38 +1,33 @@
-# ==================================
-# RENUM Backend - Dockerfile
-# ==================================
+# Usar imagem base leve do Python 3.10
+FROM python:3.10-slim
 
-FROM python:3.12-slim
-
-# Instalar dependências do sistema
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Criar diretório de trabalho
+# Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar requirements primeiro (cache eficiente)
+# Variáveis de ambiente para Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# Instalar dependências do sistema necessárias para compilação e libs
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar apenas requirements.txt primeiro (para cache do Docker)
 COPY requirements.txt .
 
-# Instalar dependências Python
-RUN pip install --no-cache-dir --upgrade pip && \
+# Atualizar pip e instalar dependências
+RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copiar código da aplicação
+# Copiar todo o código fonte
 COPY . .
 
-# Criar diretório para uploads
-RUN mkdir -p /app/uploads /app/logs
-
-# Expor porta
+# Expor a porta 8000
 EXPOSE 8000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Comando para iniciar
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Comando de execução (substitui o script manual)
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
