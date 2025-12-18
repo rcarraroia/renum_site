@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Sparkles, Download, Copy, RefreshCw, Loader2, AlertCircle, TrendingUp, Target, Lightbulb, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -40,10 +40,10 @@ const PesquisasAnalisePage = () => {
       console.error('Erro ao carregar analytics:', err);
       // Usar dados mock em caso de erro
       setAnalytics({
-        total_interviews: 50,
-        completed_interviews: 42,
-        completion_rate: 84,
-        avg_duration: 8.5
+        total_interviews: analytics?.total_interviews || 0,
+        completed_interviews: analytics?.completed_interviews || 0,
+        completion_rate: analytics?.completion_rate || 0,
+        avg_duration: analytics?.avg_duration || 0
       });
     } finally {
       setIsLoading(false);
@@ -207,8 +207,8 @@ Focar em **ROI tangível**: "Economize 3 horas/dia e aumente suas vendas em 40%"
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center">
-            <ClipboardList className="h-7 w-7 mr-3 text-[#4e4ea8]" />
-            <h1 className="text-3xl font-bold text-[#4e4ea8]">Análise com IA</h1>
+          <ClipboardList className="h-7 w-7 mr-3 text-[#4e4ea8]" />
+          <h1 className="text-3xl font-bold text-[#4e4ea8]">Análise com IA</h1>
         </div>
         <p className="text-muted-foreground mt-1">
           Gere insights automáticos usando inteligência artificial
@@ -254,7 +254,7 @@ Focar em **ROI tangível**: "Economize 3 horas/dia e aumente suas vendas em 40%"
             </div>
 
             <div className="flex gap-2">
-              <Button 
+              <Button
                 onClick={handleGenerate}
                 disabled={isGenerating}
                 className="bg-[#0ca7d2] hover:bg-[#0987a8]"
@@ -281,8 +281,8 @@ Focar em **ROI tangível**: "Economize 3 horas/dia e aumente suas vendas em 40%"
                     <Download className="h-4 w-4 mr-2" />
                     Download MD
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setAnalysis(null)}
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
@@ -296,8 +296,8 @@ Focar em **ROI tangível**: "Economize 3 horas/dia e aumente suas vendas em 40%"
               <div className="flex items-start gap-2 p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
                 <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Como funciona:</strong> A IA analisa todas as respostas coletadas, 
-                  identifica padrões, dores principais, funcionalidades mais desejadas e gera 
+                  <strong>Como funciona:</strong> A IA analisa todas as respostas coletadas,
+                  identifica padrões, dores principais, funcionalidades mais desejadas e gera
                   recomendações estratégicas automaticamente. Leva ~30 segundos.
                 </div>
               </div>

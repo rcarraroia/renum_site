@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Mail, MessageSquare, Phone, Wrench, CheckCircle, XCircle, RefreshCw, Settings, Clock, Globe } from 'lucide-react';
+import { Zap, Mail, MessageSquare, Phone, Wrench, CheckCircle, XCircle, RefreshCw, Settings, Clock, Globe, Database } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import WhatsappConfigModal from './modals/WhatsappConfigModal';
 import GoogleConfigModal from './modals/GoogleConfigModal';
 import ChatwootConfigModal from './modals/ChatwootConfigModal';
+import SupabaseConfigModal from './modals/SupabaseConfigModal';
 import { integrationService } from '@/services/integrationService';
 
 interface IntegrationConfig {
@@ -20,7 +21,7 @@ interface IntegrationConfig {
   provider: string;
   displayProvider: string;
   details: string[];
-  modalType: 'whatsapp' | 'chatwoot' | 'google';
+  modalType: 'whatsapp' | 'chatwoot' | 'google' | 'supabase';
   configData: any;
 }
 //...
@@ -60,10 +61,20 @@ const SUPPORTED_INTEGRATIONS: IntegrationConfig[] = [
     modalType: 'google',
     configData: { isConnected: false },
   },
+  {
+    name: 'Supabase Externo',
+    icon: Database,
+    status: 'disconnected',
+    color: 'text-emerald-500',
+    provider: 'supabase_external',
+    displayProvider: 'Supabase',
+    details: ['Permite: Leitura/Escrita de dados em banco próprio', 'Suporta: Tabelas, RPC e Edge Functions'],
+    modalType: 'supabase',
+    configData: { url: '', anon_key: '', service_role_key: '', isConnected: false },
+  },
 ];
 
 const FUTURE_INTEGRATIONS = [
-  { name: 'Gmail / Email', icon: Mail, color: 'text-red-600' },
   { name: 'Telegram', icon: MessageSquare, color: 'text-blue-400' },
   { name: 'SMS (Twilio)', icon: MessageSquare, color: 'text-orange-400' },
   { name: 'Zapier', icon: Zap, color: 'text-red-400' },
@@ -173,6 +184,15 @@ const IntegrationsTab: React.FC = () => {
       case 'google':
         return (
           <GoogleConfigModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialConfig={selectedIntegration.configData}
+            onSave={handleSaveConfig}
+          />
+        );
+      case 'supabase':
+        return (
+          <SupabaseConfigModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             initialConfig={selectedIntegration.configData}

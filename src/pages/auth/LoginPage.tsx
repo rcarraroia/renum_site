@@ -10,8 +10,8 @@ import { Zap } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const { isAuthenticated, role, login, isLoading } = useAuth();
-  const [email, setEmail] = useState('admin@renum.tech');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   if (isAuthenticated) {
     const redirectPath = role === 'admin' ? '/dashboard/admin' : '/dashboard/client';
@@ -63,10 +63,6 @@ const LoginPage: React.FC = () => {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Use: admin@renum.tech ou client@alpha.com</p>
-            <p>Senha: password</p>
-          </div>
         </CardContent>
       </Card>
     </div>

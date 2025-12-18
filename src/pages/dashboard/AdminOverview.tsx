@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Zap, Users, Briefcase, MessageSquare } from 'lucide-react';
 import { dashboardService, DashboardStats } from '@/services/dashboardService';
 import { Loader2 } from 'lucide-react';
+import ReportChart from '@/components/reports/ReportChart';
 
 const AdminOverview: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -49,16 +50,16 @@ const AdminOverview: React.FC = () => {
   }
 
   const metrics = [
-    { title: 'Projetos Ativos', value: stats.total_clients.toString(), icon: Briefcase, color: 'text-[#4e4ea8]' },
-    { title: 'Novos Leads', value: stats.total_leads.toString(), icon: Users, color: 'text-[#FF6B35]' },
+    { title: 'Total de Clientes', value: stats.total_clients.toString(), icon: Users, color: 'text-[#4e4ea8]' },
+    { title: 'Projetos Iniciais', value: stats.active_interviews.toString(), icon: Briefcase, color: 'text-[#FF6B35]' },
     { title: 'Conversas Ativas', value: stats.total_conversations.toString(), icon: MessageSquare, color: 'text-[#0ca7d2]' },
-    { title: 'ROI Médio', value: `${stats.completion_rate.toFixed(0)}%`, icon: Zap, color: 'text-green-500' },
+    { title: 'Taxa de Sucesso', value: `${stats.completion_rate.toFixed(0)}%`, icon: Zap, color: 'text-green-500' },
   ];
 
   return (
     <DashboardLayout>
       <h2 className="text-3xl font-bold mb-6">Visão Geral do Administrador</h2>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         {metrics.map((metric, index) => (
           <Card key={index}>
@@ -73,18 +74,16 @@ const AdminOverview: React.FC = () => {
           </Card>
         ))}
       </div>
-
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Status dos Projetos (Mock Chart)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              Gráfico de Status de Projetos
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2">
+          <ReportChart
+            title="Status dos Projetos"
+            description="Distribuição atual de todos os fluxos de prospecção"
+            data={stats.project_status_distribution}
+            type="donut"
+            dataKeys={[]}
+          />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Atividades Recentes</CardTitle>

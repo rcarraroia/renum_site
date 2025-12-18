@@ -13,6 +13,7 @@ export interface DashboardStats {
   completed_interviews: number;
   completion_rate: number;
   recent_activities: RecentActivity[];
+  project_status_distribution: { name: string; value: number }[];
 }
 
 export interface RecentActivity {

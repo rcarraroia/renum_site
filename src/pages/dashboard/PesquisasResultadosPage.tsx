@@ -4,14 +4,14 @@ import { interviewService } from '@/services/interviewService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -77,9 +77,9 @@ const PesquisasResultadosPage = () => {
   ];
 
   const stats = {
-    totalRespostas: 150,
-    mediaTempoResposta: '4min 30s',
-    taxaConclusao: 85,
+    totalRespostas: results.length,
+    mediaTempoResposta: results.length > 0 ? '4min 30s' : '0s', // Keep mock for duration until backend provides it
+    taxaConclusao: results.length > 0 ? Math.round((results.filter(r => r.status === 'completed').length / results.length) * 100) : 0,
     topicosCompletos: 5
   };
 
@@ -91,10 +91,10 @@ const PesquisasResultadosPage = () => {
           <div className="flex items-center">
             <ClipboardList className="h-7 w-7 mr-3 text-[#4e4ea8]" />
             <div>
-                <h1 className="text-3xl font-bold text-[#4e4ea8]">Resultados das Pesquisas</h1>
-                <p className="text-muted-foreground mt-1">
-                  Visualize e analise os dados coletados de forma estruturada
-                </p>
+              <h1 className="text-3xl font-bold text-[#4e4ea8]">Resultados das Pesquisas</h1>
+              <p className="text-muted-foreground mt-1">
+                Visualize e analise os dados coletados de forma estruturada
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -217,8 +217,8 @@ const PesquisasResultadosPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-[#FF6B35]" />
-                Citações Relevantes
+              <MessageSquare className="h-5 w-5 text-[#FF6B35]" />
+              Citações Relevantes
             </CardTitle>
             <CardDescription>
               Respostas textuais mais impactantes dos entrevistados
@@ -226,21 +226,21 @@ const PesquisasResultadosPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <blockquote className="border-l-4 border-[#0ca7d2] pl-4 italic">
-              "Perco 3 horas por dia respondendo as mesmas perguntas no WhatsApp. 
+              "Perco 3 horas por dia respondendo as mesmas perguntas no WhatsApp.
               Se tivesse um bot pra FAQ, economizaria 80% do meu tempo."
               <footer className="text-sm text-muted-foreground mt-2">
                 — João Silva, Distribuidor MMN há 5 anos
               </footer>
             </blockquote>
             <blockquote className="border-l-4 border-[#0ca7d2] pl-4 italic">
-              "O maior gargalo é prospectar novos distribuidores fora do horário comercial. 
+              "O maior gargalo é prospectar novos distribuidores fora do horário comercial.
               Muita gente só tem tempo à noite."
               <footer className="text-sm text-muted-foreground mt-2">
                 — Maria Santos, Coordenadora de Equipe
               </footer>
             </blockquote>
             <blockquote className="border-l-4 border-[#0ca7d2] pl-4 italic">
-              "Pagaria facilmente R$200-300/mês por uma solução que automatizasse 
+              "Pagaria facilmente R$200-300/mês por uma solução que automatizasse
               qualificação de leads e follow-up."
               <footer className="text-sm text-muted-foreground mt-2">
                 — Pedro Costa, Líder Diamond

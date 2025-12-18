@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus, Bot, Brain, TrendingUp, Database, Clock } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, Settings, FileText, MessageSquare, Briefcase, Calendar, BarChart, Wrench, ChevronLeft, ChevronRight, ClipboardList, UserPlus, Sparkles, Plus, Bot, Brain, TrendingUp, Database, Clock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import RenumLogo from '@/components/RenumLogo';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge'; // Importando Badge
+import { agentService } from '@/services/agentService';
 
 interface NavItem {
   title: string;
@@ -38,12 +39,14 @@ const adminSiccItems: NavItem[] = [
   { title: 'Evolução do Agente', href: '/intelligence/evolution', icon: TrendingUp, roles: ['admin'] },
   { title: 'Memórias', href: '/intelligence/memories', icon: Brain, roles: ['admin'] },
   { title: 'Fila de Aprendizados', href: '/intelligence/queue', icon: Clock, roles: ['admin'] },
+  { title: 'Integrações (Radar)', href: '/dashboard/admin/integrations', icon: RefreshCw, roles: ['admin'] },
   { title: 'Configurações IA', href: '/intelligence/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const clientNavItems: NavItem[] = [
   { title: 'Overview', href: '/dashboard/client', icon: LayoutDashboard, roles: ['client'] },
   { title: 'Meus Projetos', href: '/dashboard/client/projects', icon: Briefcase, roles: ['client'] },
+  { title: 'Integrações', href: '/dashboard/client/integrations', icon: RefreshCw, roles: ['client'] },
   { title: 'Conversas Renus', href: '/dashboard/client/conversations', icon: MessageSquare, roles: ['client'] },
   { title: 'Documentos', href: '/dashboard/client/documents', icon: FileText, roles: ['client'] },
   { title: 'Calendário', href: '/dashboard/client/calendar', icon: Calendar, roles: ['client'] },
@@ -57,9 +60,22 @@ const commonNavItems: NavItem[] = [
 const Sidebar: React.FC = () => {
   const { role } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
-  // Mock data for active agents count
-  const activeAgentsCount = 3; 
+  const [activeAgentsCount, setActiveAgentsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const agents = await agentService.listAgents();
+        setActiveAgentsCount(agents.length);
+      } catch (error) {
+        console.error('Error fetching agents count:', error);
+      }
+    };
+
+    if (role === 'admin') {
+      fetchAgents();
+    }
+  }, [role]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
@@ -82,7 +98,7 @@ const Sidebar: React.FC = () => {
       ))}
     </div>
   );
-  
+
   const renderAgentGroup = () => (
     <div className="space-y-1">
       {!isCollapsed && (
@@ -111,7 +127,7 @@ const Sidebar: React.FC = () => {
   );
 
   return (
-    <div 
+    <div
       className={cn(
         "flex flex-col h-full bg-sidebar dark:bg-gray-950 border-r border-sidebar-border dark:border-gray-800 transition-all duration-300",
         isCollapsed ? "w-20" : "w-64"
@@ -119,9 +135,9 @@ const Sidebar: React.FC = () => {
     >
       <div className="flex items-center justify-between p-4 h-16">
         {!isCollapsed && <RenumLogo />}
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={toggleCollapse}
           className="text-sidebar-foreground hover:bg-sidebar-accent"
         >
@@ -135,35 +151,35 @@ const Sidebar: React.FC = () => {
         {role === 'admin' ? (
           <>
             {renderNavGroup(adminNavItems, 'Geral')}
-            
+
             {/* Novo Grupo de Agentes */}
             {renderAgentGroup()}
-            
+
             {renderNavGroup([{ title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] }], 'Comunicação')}
-            
+
             {renderNavGroup(adminPesquisaItems, 'Pesquisas')}
-            
+
             {/* NOVA SEÇÃO: INTELIGÊNCIA */}
             {renderNavGroup(adminSiccItems, 'Inteligência')}
-            
+
             {renderNavGroup([{ title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] }], 'Análise')}
-            
+
             {renderNavGroup([{ title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] }], 'Ferramentas')}
             {renderNavGroup([{ title: 'Config. Global', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] }], 'Sistema')}
           </>
         ) : (
           renderNavGroup(clientNavItems, 'Geral')
         )}
-        
+
         <Separator className="bg-sidebar-border dark:bg-gray-800" />
-        
+
         {renderNavGroup(commonNavItems, 'Conta')}
       </nav>
 
       <div className="p-4 mt-auto">
         <Link to="/" className="flex items-center text-xs text-muted-foreground hover:text-primary transition-colors">
-            <Zap className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-            {!isCollapsed && "Voltar ao Site"}
+          <Zap className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+          {!isCollapsed && "Voltar ao Site"}
         </Link>
       </div>
     </div>

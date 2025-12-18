@@ -14,7 +14,8 @@ interface ConversationListItemProps {
 }
 
 const ConversationListItem: React.FC<ConversationListItemProps> = ({ conversation, isSelected, onClick }) => {
-  const lastMessage = conversation.messages[conversation.messages.length - 1];
+  const messages = conversation.messages || [];
+  const lastMessage = messages[messages.length - 1];
   const lastMessageContent = lastMessage?.content || 'Nenhuma mensagem.';
   const isUnread = conversation.unreadCount > 0;
 
@@ -38,7 +39,7 @@ const ConversationListItem: React.FC<ConversationListItemProps> = ({ conversatio
           </AvatarFallback>
         </Avatar>
         <div className="absolute bottom-0 right-0 p-1 bg-background rounded-full border">
-            <ChannelIcon channel={conversation.channel} />
+          <ChannelIcon channel={conversation.channel} />
         </div>
       </div>
 
@@ -51,17 +52,17 @@ const ConversationListItem: React.FC<ConversationListItemProps> = ({ conversatio
             {formatDistanceToNow(conversation.lastUpdate, { addSuffix: true, locale: ptBR })}
           </span>
         </div>
-        
+
         <p className={cn("text-sm truncate mt-1", isUnread ? "text-primary dark:text-white" : "text-muted-foreground")}>
           {lastMessageContent}
         </p>
-        
+
         <div className="flex items-center justify-between mt-1">
-            <ConversationStatusBadge status={conversation.status} />
-            {conversation.priority === 'High' && <AlertTriangle className="h-4 w-4 text-red-500" />}
+          <ConversationStatusBadge status={conversation.status} />
+          {conversation.priority === 'High' && <AlertTriangle className="h-4 w-4 text-red-500" />}
         </div>
       </div>
-      
+
       {isUnread && (
         <div className="flex-shrink-0 ml-2">
           <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-[#FF6B35] text-xs text-white">

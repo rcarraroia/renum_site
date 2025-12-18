@@ -5,20 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { interviewService, Interview, InterviewList } from '@/services/interviewService';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,10 +26,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { 
-  Search, 
-  Filter, 
-  Eye, 
+import {
+  Search,
+  Filter,
+  Eye,
   Download,
   MessageSquare,
   Clock,
@@ -79,106 +79,52 @@ const PesquisasEntrevistasPage = () => {
       setLoading(false);
     }
   };
-
-  // Mock data para fallback
-  const [entrevistas] = useState<Entrevista[]>([
-    {
-      id: '1',
-      contactName: 'João Silva',
-      contactPhone: '+55 11 99999-8888',
-      subagentName: 'Pesquisa MMN',
-      status: 'completed',
-      startedAt: '2025-01-18T10:30:00',
-      completedAt: '2025-01-18T10:45:00',
-      messagesCount: 12,
-      topicsCovered: ['Prospecção', 'Atendimento', 'Treinamento', 'Automação', 'Investimento']
-    },
-    {
-      id: '2',
-      contactName: 'Maria Santos',
-      contactPhone: '+55 11 98888-7777',
-      subagentName: 'Pesquisa MMN',
-      status: 'in_progress',
-      startedAt: '2025-01-18T14:20:00',
-      messagesCount: 7,
-      topicsCovered: ['Prospecção', 'Atendimento']
-    },
-    {
-      id: '3',
-      contactName: 'Pedro Costa',
-      contactPhone: '+55 21 97777-6666',
-      subagentName: 'Pesquisa Vereadores',
-      status: 'pending',
-      startedAt: '2025-01-18T15:00:00',
-      messagesCount: 1,
-      topicsCovered: []
-    },
-    {
-      id: '4',
-      contactName: 'Ana Oliveira',
-      contactPhone: '+55 11 96666-5555',
-      subagentName: 'Pesquisa MMN',
-      status: 'abandoned',
-      startedAt: '2025-01-17T16:30:00',
-      messagesCount: 4,
-      topicsCovered: ['Prospecção']
-    }
-  ]);
-
-  const [selectedEntrevista, setSelectedEntrevista] = useState<Entrevista | null>(null);
+  const [selectedEntrevista, setSelectedEntrevista] = useState<Interview | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterSubagent, setFilterSubagent] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock messages
-  const mockMessages: Message[] = [
-    { role: 'assistant', content: 'Olá João! Obrigado por aceitar participar. São 5 perguntas rápidas (3 min). Topa?', timestamp: '10:30' },
-    { role: 'user', content: 'Sim, topo!', timestamp: '10:31' },
-    { role: 'assistant', content: 'Ótimo! Qual sua maior dificuldade hoje no recrutamento de distribuidores?', timestamp: '10:31' },
-    { role: 'user', content: 'Ah, o tempo né... passo o dia respondendo as mesmas perguntas', timestamp: '10:32' },
-    { role: 'assistant', content: 'Entendo perfeitamente! E quais são as 3 perguntas mais frequentes?', timestamp: '10:33' },
-  ];
-
-  const getStatusBadge = (status: Entrevista['status']) => {
-    const variants = {
-      pending: { label: 'Pendente', class: 'bg-yellow-500 hover:bg-yellow-500/80 text-white' },
-      in_progress: { label: 'Em Andamento', class: 'bg-[#4e4ea8] hover:bg-[#4e4ea8]/80 text-white' },
-      completed: { label: 'Concluída', class: 'bg-green-600 hover:bg-green-600/80 text-white' },
-      abandoned: { label: 'Abandonada', class: 'bg-red-600 hover:bg-red-600/80 text-white' }
-    };
-    const variant = variants[status];
-    return <Badge className={cn("capitalize", variant.class)}>{variant.label}</Badge>;
-  };
-
-  const getStatusIcon = (status: Entrevista['status']) => {
-    const icons = {
-      pending: <Clock className="h-4 w-4 text-yellow-600" />,
-      in_progress: <MessageSquare className="h-4 w-4 text-[#4e4ea8]" />,
-      completed: <CheckCircle className="h-4 w-4 text-green-600" />,
-      abandoned: <XCircle className="h-4 w-4 text-red-600" />
-    };
-    return icons[status];
-  };
-
-  const filteredEntrevistas = entrevistas.filter(e => {
+  const filteredEntrevistas = interviews.filter(e => {
     const matchStatus = filterStatus === 'all' || e.status === filterStatus;
-    const matchSubagent = filterSubagent === 'all' || e.subagentName === filterSubagent;
-    const matchSearch = e.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        e.contactPhone.includes(searchTerm);
-    return matchStatus && matchSubagent && matchSearch;
+    const contactName = (e as any).lead?.name || 'Cliente';
+    const matchSearch = contactName.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchStatus && matchSearch;
   });
 
-  const handleViewConversation = (entrevista: Entrevista) => {
+  const handleViewConversation = (entrevista: Interview) => {
     setSelectedEntrevista(entrevista);
     setIsDialogOpen(true);
   };
 
+  const getStatusBadge = (status: Interview['status']) => {
+    const variants = {
+      pending: { label: 'Pendente', class: 'bg-yellow-500 hover:bg-yellow-500/80 text-white' },
+      in_progress: { label: 'Em Andamento', class: 'bg-[#4e4ea8] hover:bg-[#4e4ea8]/80 text-white' },
+      completed: { label: 'Concluída', class: 'bg-green-600 hover:bg-green-600/80 text-white' },
+      cancelled: { label: 'Cancelada', class: 'bg-red-600 hover:bg-red-600/80 text-white' },
+      abandoned: { label: 'Abandonada', class: 'bg-red-600 hover:bg-red-600/80 text-white' }
+    };
+    const variant = (variants as any)[status] || variants.pending;
+    return <Badge className={cn("capitalize", variant.class)}>{variant.label}</Badge>;
+  };
+
+  const getStatusIcon = (status: Interview['status']) => {
+    const icons = {
+      pending: <Clock className="h-4 w-4 text-yellow-600" />,
+      in_progress: <MessageSquare className="h-4 w-4 text-[#4e4ea8]" />,
+      completed: <CheckCircle className="h-4 w-4 text-green-600" />,
+      cancelled: <XCircle className="h-4 w-4 text-red-600" />,
+      abandoned: <XCircle className="h-4 w-4 text-red-600" />
+    };
+    return (icons as any)[status] || <Clock className="h-4 w-4 text-yellow-600" />;
+  };
+
   const stats = {
-    total: entrevistas.length,
-    completed: entrevistas.filter(e => e.status === 'completed').length,
-    inProgress: entrevistas.filter(e => e.status === 'in_progress').length,
-    abandoned: entrevistas.filter(e => e.status === 'abandoned').length
+    total: interviews.length,
+    completed: interviews.filter(e => e.status === 'completed').length,
+    inProgress: interviews.filter(e => e.status === 'in_progress').length,
+    abandoned: interviews.filter(e => e.status === 'cancelled' || e.status === 'abandoned' as any).length
   };
 
   return (
@@ -186,8 +132,8 @@ const PesquisasEntrevistasPage = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center">
-            <ClipboardList className="h-7 w-7 mr-3 text-[#4e4ea8]" />
-            <h1 className="text-3xl font-bold text-[#4e4ea8]">Entrevistas Ativas</h1>
+          <ClipboardList className="h-7 w-7 mr-3 text-[#4e4ea8]" />
+          <h1 className="text-3xl font-bold text-[#4e4ea8]">Entrevistas Ativas</h1>
         </div>
         <p className="text-muted-foreground mt-1">
           Acompanhe em tempo real todas as entrevistas realizadas pelos sub-agentes
@@ -330,7 +276,7 @@ const PesquisasEntrevistasPage = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {entrevista.topicsCovered.length > 0 
+                        {entrevista.topicsCovered.length > 0
                           ? `${entrevista.topicsCovered.length} tópicos`
                           : 'Nenhum'
                         }
@@ -362,7 +308,7 @@ const PesquisasEntrevistasPage = () => {
                 Conversa com {selectedEntrevista?.contactName}
               </DialogTitle>
             </DialogHeader>
-            
+
             {selectedEntrevista && (
               <div className="space-y-4">
                 {/* Info Header */}
@@ -382,7 +328,7 @@ const PesquisasEntrevistasPage = () => {
                   <div>
                     <div className="text-sm text-muted-foreground">Duração</div>
                     <div className="font-medium">
-                      {selectedEntrevista.completedAt 
+                      {selectedEntrevista.completedAt
                         ? `${Math.floor((new Date(selectedEntrevista.completedAt).getTime() - new Date(selectedEntrevista.startedAt).getTime()) / 60000)} min`
                         : 'Em andamento'
                       }

@@ -24,12 +24,42 @@ def convert_n8n_to_agent_config(n8n_json: Dict[str, Any]) -> Dict[str, Any]:
     description_parts = []
     system_prompt_parts = []
     
+    # Supported tools/integrations keywords
+    SUPPORTED_NODES = {
+        'whatsapp': ['whatsapp', 'message', 'chat'],
+        'email': ['gmail', 'email', 'mail', 'outlook'],
+        'google': ['google', 'drive', 'sheets', 'calendar'],
+        'supabase': ['supabase', 'database', 'sql', 'postgres'],
+        'chatwoot': ['chatwoot', 'human', 'handoff']
+    }
+    
+    detected_supported = set()
+    requested_tools = []
+    
     for node in nodes:
-        node_type = node.get('type')
+        node_type = node.get('type', '').lower()
         node_name = node.get('name')
         
-        # Extract keywords or purposes
-        if 'chat' in node_type.lower() or 'ai' in node_type.lower():
+        # Check if node is supported
+        is_supported = False
+        for category, keywords in SUPPORTED_NODES.items():
+            if any(kw in node_type for kw in keywords):
+                detected_supported.add(category)
+                is_supported = True
+                break
+        
+        # If not supported and not a utility node, add to requested
+        utility_keywords = ['filter', 'set', 'code', 'merge', 'webhook', 'schedule', 'cron', 'limit', 'execute']
+        if not is_supported and not any(kw in node_type for kw in utility_keywords):
+            if node_type not in requested_tools:
+                requested_tools.append({
+                    "name": node_name,
+                    "type": node_type,
+                    "status": "requested_via_n8n"
+                })
+        
+        # Extract keywords or purposes for prompt
+        if 'chat' in node_type or 'ai' in node_type:
             parameters = node.get('parameters', {})
             prompt = parameters.get('systemMessage', '') or parameters.get('prompt', '')
             if prompt:
@@ -45,5 +75,7 @@ def convert_n8n_to_agent_config(n8n_json: Dict[str, Any]) -> Dict[str, Any]:
         "name": name,
         "description": full_description,
         "system_prompt_hint": "\n\n".join(system_prompt_parts),
-        "node_count": len(nodes)
+        "node_count": len(nodes),
+        "detected_integrations": list(detected_supported),
+        "requested_tools": requested_tools
     }

@@ -3,45 +3,48 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, Briefcase, Users, MessageSquare, Clock, CheckCircle, TrendingUp, TrendingDown, Shield, AlertTriangle } from 'lucide-react';
 // Mock data (local fallback)
 const MOCK_KPI_DATA = {
-  totalProjects: 24,
-  activeClients: 18,
-  totalConversations: 1542,
-  avgResponseTime: 1.8
+    totalProjects: { value: 24, change: 12 },
+    activeClients: { value: 18, change: 8 },
+    totalConversations: { value: 1542, change: 25 },
+    avgResponseTime: { value: 1.8, change: -5 },
+    newLeads: { value: 45, change: 15 },
+    conversationVolume: { value: 2840, change: 18 },
+    completionRate: { value: 85, change: 2 }
 };
 
 const MOCK_PROJECT_STATUS_DATA = [
-  { name: 'Ativo', value: 45, color: '#00D4AA' },
-  { name: 'Em Desenvolvimento', value: 30, color: '#FF6B35' },
-  { name: 'Pausado', value: 15, color: '#FFA500' },
-  { name: 'Concluído', value: 10, color: '#4e4ea8' }
+    { name: 'Ativo', value: 45, color: '#00D4AA' },
+    { name: 'Em Desenvolvimento', value: 30, color: '#FF6B35' },
+    { name: 'Pausado', value: 15, color: '#FFA500' },
+    { name: 'Concluído', value: 10, color: '#4e4ea8' }
 ];
 
 const MOCK_PROJECT_TYPE_DATA = [
-  { name: 'AI Native', value: 45, color: '#4e4ea8' },
-  { name: 'Workflow', value: 30, color: '#FF6B35' },
-  { name: 'Agente Solo', value: 25, color: '#00D4AA' }
+    { name: 'AI Native', value: 45, color: '#4e4ea8' },
+    { name: 'Workflow', value: 30, color: '#FF6B35' },
+    { name: 'Agente Solo', value: 25, color: '#00D4AA' }
 ];
 
 const MOCK_CONVERSATION_CHANNEL_DATA = [
-  { name: 'WhatsApp', value: 60, color: '#25D366' },
-  { name: 'SMS', value: 25, color: '#FF6B35' },
-  { name: 'Email', value: 15, color: '#4e4ea8' }
+    { name: 'WhatsApp', value: 60, color: '#25D366' },
+    { name: 'SMS', value: 25, color: '#FF6B35' },
+    { name: 'Email', value: 15, color: '#4e4ea8' }
 ];
 
 const MOCK_ACTIVITY_TIMELINE = [
-  { time: '00:00', messages: 45 },
-  { time: '04:00', messages: 12 },
-  { time: '08:00', messages: 89 },
-  { time: '12:00', messages: 156 },
-  { time: '16:00', messages: 134 },
-  { time: '20:00', messages: 98 }
+    { time: '00:00', messages: 45 },
+    { time: '04:00', messages: 12 },
+    { time: '08:00', messages: 89 },
+    { time: '12:00', messages: 156 },
+    { time: '16:00', messages: 134 },
+    { time: '20:00', messages: 98 }
 ];
 
 const MOCK_GUARDRAILS_METRICS = {
-  totalChecks: 8420,
-  blocked: 156,
-  warnings: 89,
-  passed: 8175
+    totalChecks: 8420,
+    blocked: 156,
+    warnings: 89,
+    passed: 8175
 };
 import ReportChart from './ReportChart';
 import { cn } from '@/lib/utils';

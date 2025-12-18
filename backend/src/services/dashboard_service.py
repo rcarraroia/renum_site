@@ -67,6 +67,27 @@ class DashboardService:
             # Get recent activities
             recent_activities = self._get_recent_activities(client_id)
             
+            # Aggregated project status for chart
+            status_dist_query = self.client.table('interviews').select('status')
+            status_data = status_dist_query.execute().data or []
+            
+            # Map statuses to Chart expectations
+            status_map = {
+                'in_progress': 'Ativo',
+                'completed': 'Concluído',
+                'pending': 'Pendente',
+                'cancelled': 'Pausado'  # Mapping cancelled to 'Pausado' for the donut chart
+            }
+            
+            distribution = {}
+            for item in status_data:
+                label = status_map.get(item['status'], 'Outros')
+                distribution[label] = distribution.get(label, 0) + 1
+            
+            project_status_distribution = [
+                {"name": k, "value": v} for k, v in distribution.items()
+            ]
+
             return {
                 "total_clients": clients_count,
                 "total_leads": leads_count,
@@ -74,7 +95,8 @@ class DashboardService:
                 "active_interviews": active_interviews,
                 "completed_interviews": completed_interviews,
                 "completion_rate": round(completion_rate, 2),
-                "recent_activities": recent_activities
+                "recent_activities": recent_activities,
+                "project_status_distribution": project_status_distribution
             }
             
         except Exception as e:
@@ -86,9 +108,9 @@ class DashboardService:
         activities = []
         
         try:
-            # Recent conversations
+            # Recent conversations with details
             conversations_query = self.client.table('conversations')\
-                .select('id, created_at, status')\
+                .select('id, created_at, status, channel, clients(company_name)')\
                 .order('created_at', desc=True)\
                 .limit(5)
             if client_id:
@@ -97,26 +119,36 @@ class DashboardService:
             conversations = conversations_query.execute().data or []
             
             for conv in conversations:
+                company = conv.get('clients', {}).get('company_name', 'Cliente')
                 activities.append({
                     "type": "conversation",
                     "action": "created",
                     "timestamp": conv["created_at"],
-                    "details": f"Conversa {conv['status']}"
+                    "details": f"Nova conversa via {conv['channel']} com {company}"
                 })
             
-            # Recent interviews
-            interviews = self.client.table('interviews')\
-                .select('id, created_at, status')\
+            # Recent interviews with details
+            interviews_query = self.client.table('interviews')\
+                .select('id, created_at, status, leads(name)')\
                 .order('created_at', desc=True)\
-                .limit(5)\
-                .execute().data or []
+                .limit(5)
             
-            for interview in interviews:
+            interviews_data = interviews_query.execute().data or []
+            
+            for interview in interviews_data:
+                lead_name = interview.get('leads', {}).get('name', 'Lead')
+                status_traduzido = {
+                    'in_progress': 'em andamento',
+                    'completed': 'concluída',
+                    'pending': 'pendente',
+                    'cancelled': 'cancelada'
+                }.get(interview['status'], interview['status'])
+                
                 activities.append({
                     "type": "interview",
                     "action": "created",
                     "timestamp": interview["created_at"],
-                    "details": f"Entrevista {interview['status']}"
+                    "details": f"Entrevista {status_traduzido} com {lead_name}"
                 })
             
             # Sort by timestamp and return top N
