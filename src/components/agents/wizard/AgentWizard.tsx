@@ -3,42 +3,52 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Zap, Save, CheckCircle } from 'lucide-react';
 import Stepper from './Stepper';
-import Step1Objective from './Step1Objective';
-import Step2Personality from './Step2Personality';
-import Step3Fields from './Step3Fields';
-import Step4Integrations from './Step4Integrations';
+import Step1Context from './Step1Context';
+import Step2Identity from './Step2Identity';
+import Step3Technical from './Step3Technical';
+import Step4Behavior from './Step4Behavior';
+import Step5Tools from './Step5Tools';
 import Step5TestPublish from './Step5TestPublish';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
 import { wizardService } from '@/services/wizardService';
 
 const steps = [
-  'Objetivo do Agente',
-  'Personalidade e Tom',
-  'Informações a Coletar',
-  'Integrações',
-  'Teste e Publicação',
+  'Contexto',
+  'Identidade',
+  'Config. Técnica',
+  'Comportamento',
+  'Ferramentas',
+  'Publicação',
 ];
 
 const initialFormData = {
-    // Step 1: Objetivo
-    template_type: 'custom',
-    name: '',
-    description: '',
-    niche: 'generico',
-    
-    // Step 2: Personalidade
-    personality: 'professional',
-    tone_formal: 50,
-    tone_direct: 50,
-    custom_instructions: '',
-    
-    // Step 3: Campos
-    standard_fields: {},
-    custom_fields: [],
-    
-    // Step 4: Integrações
-    integrations: {},
+  // Step 1: Contexto
+  project_id: '',
+  client_id: '',
+  contract_type: 'b2b_empresa',
+
+  // Step 2: Identidade
+  name: '',
+  description: '',
+  niche: 'generico',
+  template_type: 'custom',
+
+  // Step 3: Técnica
+  channels: ['web'],
+  model: 'gpt-4o-mini',
+
+  // Step 4: Comportamento
+  personality: 'professional',
+  tone_formal: 50,
+  tone_direct: 50,
+  system_prompt: '',
+  custom_instructions: '',
+
+  // Step 5: Ferramentas & Integrações
+  standard_fields: {},
+  custom_fields: [],
+  integrations: {},
 };
 
 const AgentWizard: React.FC = () => {
@@ -64,24 +74,28 @@ const AgentWizard: React.FC = () => {
   const loadWizard = async (id: string) => {
     try {
       const wizard = await wizardService.getWizard(id);
-      
-      // Reconstruct form data from wizard config
-      const config = wizard.config || {};
+
       setFormData({
-        template_type: config.step_1_data?.template_type || 'custom',
-        name: config.step_1_data?.name || '',
-        description: config.step_1_data?.description || '',
-        niche: config.step_1_data?.niche || 'generico',
-        personality: config.step_2_data?.personality || 'professional',
-        tone_formal: config.step_2_data?.tone_formal || 50,
-        tone_direct: config.step_2_data?.tone_direct || 50,
-        custom_instructions: config.step_2_data?.custom_instructions || '',
-        standard_fields: config.step_3_data?.standard_fields || {},
-        custom_fields: config.step_3_data?.custom_fields || [],
-        integrations: config.step_4_data?.integrations || {},
+        project_id: wizard.step_1_data?.project_id || '',
+        client_id: wizard.step_1_data?.client_id || '',
+        contract_type: wizard.step_1_data?.contract_type || 'b2b_empresa',
+        name: wizard.step_2_data?.name || '',
+        description: wizard.step_2_data?.description || '',
+        niche: wizard.step_2_data?.niche || 'generico',
+        template_type: wizard.step_2_data?.template_type || 'custom',
+        channels: wizard.step_3_data?.channels || ['web'],
+        model: wizard.step_3_data?.model || 'gpt-4o-mini',
+        personality: wizard.step_4_data?.personality || 'professional',
+        tone_formal: wizard.step_4_data?.tone_formal || 50,
+        tone_direct: wizard.step_4_data?.tone_direct || 50,
+        system_prompt: wizard.step_4_data?.system_prompt || '',
+        custom_instructions: wizard.step_4_data?.custom_instructions || '',
+        standard_fields: wizard.step_5_data?.standard_fields || {},
+        custom_fields: wizard.step_5_data?.custom_fields || [],
+        integrations: wizard.step_5_data?.integrations || {},
       });
-      
-      setCurrentStep(config.current_step || 1);
+
+      setCurrentStep(wizard.current_step || 1);
       setCurrentWizardId(id);
       toast.success('Wizard carregado com sucesso');
     } catch (error) {
@@ -92,12 +106,12 @@ const AgentWizard: React.FC = () => {
 
   const createWizard = async () => {
     try {
-      const wizard = await wizardService.startWizard({
-        template_type: 'custom',
-        name: '',
-      });
+      // We need a client_id to start. For now, let's use a default or ask? 
+      // Actually, startWizard on backend expects a UUID. 
+      // Mocking a default client ID for internal use if not selected yet
+      const defaultClientId = "00000000-0000-0000-0000-000000000000";
+      const wizard = await wizardService.startWizard(defaultClientId);
       setCurrentWizardId(wizard.id);
-      // Update URL without reload
       window.history.replaceState(null, '', `/dashboard/admin/agents/wizard/${wizard.id}`);
     } catch (error) {
       console.error('Error creating wizard:', error);
@@ -114,39 +128,49 @@ const AgentWizard: React.FC = () => {
     try {
       // Prepare step data based on current step
       let stepData: any = {};
-      
+
       switch (stepNumber) {
         case 1:
           stepData = {
-            template_type: formData.template_type,
-            name: formData.name,
-            description: formData.description,
-            niche: formData.niche,
+            project_id: formData.project_id,
+            client_id: formData.client_id,
+            contract_type: formData.contract_type,
           };
           break;
         case 2:
           stepData = {
-            personality: formData.personality,
-            tone_formal: formData.tone_formal,
-            tone_direct: formData.tone_direct,
-            custom_instructions: formData.custom_instructions,
+            name: formData.name,
+            description: formData.description,
+            niche: formData.niche,
+            template_type: formData.template_type,
           };
           break;
         case 3:
           stepData = {
-            standard_fields: formData.standard_fields,
-            custom_fields: formData.custom_fields,
+            channels: formData.channels,
+            model: formData.model,
           };
           break;
         case 4:
           stepData = {
+            personality: formData.personality,
+            tone_formal: formData.tone_formal,
+            tone_direct: formData.tone_direct,
+            system_prompt: formData.system_prompt,
+            custom_instructions: formData.custom_instructions,
+          };
+          break;
+        case 5:
+          stepData = {
+            standard_fields: formData.standard_fields,
+            custom_fields: formData.custom_fields,
             integrations: formData.integrations,
           };
           break;
       }
 
       await wizardService.saveStep(currentWizardId, stepNumber, stepData);
-      
+
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
@@ -165,14 +189,16 @@ const AgentWizard: React.FC = () => {
   const CurrentStepComponent = useMemo(() => {
     switch (currentStep) {
       case 1:
-        return <Step1Objective formData={formData} setFormData={setFormData} onValidate={() => true} />;
+        return <Step1Context formData={formData} setFormData={setFormData} onValidate={() => true} />;
       case 2:
-        return <Step2Personality formData={formData} setFormData={setFormData} onValidate={() => true} />;
+        return <Step2Identity formData={formData} setFormData={setFormData} />;
       case 3:
-        return <Step3Fields formData={formData} setFormData={setFormData} onValidate={() => true} />;
+        return <Step3Technical formData={formData} setFormData={setFormData} />;
       case 4:
-        return <Step4Integrations formData={formData} setFormData={setFormData} onValidate={() => true} />;
+        return <Step4Behavior formData={formData} setFormData={setFormData} />;
       case 5:
+        return <Step5Tools formData={formData} setFormData={setFormData} />;
+      case 6:
         return <Step5TestPublish formData={formData} onPublish={handleDeploy} />;
       default:
         return null;
@@ -182,38 +208,31 @@ const AgentWizard: React.FC = () => {
   const validateStep = () => {
     switch (currentStep) {
       case 1:
-        if (!formData.template_type) {
-          toast.error("Selecione um template.");
-          return false;
-        }
-        if (!formData.name || formData.name.length < 3) {
-          toast.error("Nome do agente deve ter no mínimo 3 caracteres.");
-          return false;
-        }
-        if (!formData.niche) {
-          toast.error("Selecione um nicho de negócio.");
+        if (!formData.client_id || !formData.project_id) {
+          toast.error("Selecione um Cliente e um Projeto.");
           return false;
         }
         return true;
       case 2:
-        if (!formData.personality) {
-          toast.error("Selecione uma personalidade.");
+        if (!formData.name || formData.name.length < 3) {
+          toast.error("Nome do agente deve ter no mínimo 3 caracteres.");
           return false;
         }
         return true;
       case 3:
-        const enabledStandard = Object.values(formData.standard_fields || {}).filter((f: any) => f.enabled).length;
-        const customCount = (formData.custom_fields || []).length;
-        if (enabledStandard === 0 && customCount === 0) {
-          toast.error("Selecione pelo menos um campo para coletar.");
+        if (!formData.channels || formData.channels.length === 0) {
+          toast.error("Selecione pelo menos um canal.");
           return false;
         }
         return true;
       case 4:
-        // Integrations are optional
+        if (!formData.system_prompt) {
+          toast.error("Defina o System Prompt do agente.");
+          return false;
+        }
         return true;
       case 5:
-        // Final step, no validation needed
+        // Tools/Integrations are optional but usually recommended
         return true;
       default:
         return true;
@@ -229,17 +248,23 @@ const AgentWizard: React.FC = () => {
   };
 
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
+    if (!currentWizardId) return;
+
     setIsDeploying(true);
-    toast.info("Iniciando implantação do agente...");
-    
-    // Mock deployment process
-    setTimeout(() => {
-        setIsDeploying(false);
-        toast.success(`Agente '${formData.name}' implantado com sucesso!`);
-        // Redirect to the new agent's detail page (mock ID 100)
-        navigate('/dashboard/admin/agents/100');
-    }, 2500);
+    toast.info("Publicando e implantando agente...");
+
+    try {
+      const result = await wizardService.publishAgent(currentWizardId);
+      toast.success(`Agente '${formData.name}' implantado com sucesso!`);
+      // Redirect to details page
+      navigate(`/dashboard/admin/agents/${result.slug}`);
+    } catch (error) {
+      console.error('Error publishing agent:', error);
+      toast.error('Erro ao implantar agente. Verifique os logs.');
+    } finally {
+      setIsDeploying(false);
+    }
   };
 
   return (
@@ -265,7 +290,7 @@ const AgentWizard: React.FC = () => {
             >
               <ArrowLeft className="h-4 w-4 mr-2" /> Anterior
             </Button>
-            
+
             {/* Save status indicator */}
             {saveStatus !== 'idle' && (
               <div className="flex items-center text-sm">
@@ -287,7 +312,7 @@ const AgentWizard: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {currentStep < steps.length && (
             <Button
               onClick={handleNext}
@@ -297,7 +322,7 @@ const AgentWizard: React.FC = () => {
               {isSaving ? 'Salvando...' : 'Próximo'} <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}
-          
+
           {currentStep === steps.length && (
             <Button
               onClick={handleDeploy}

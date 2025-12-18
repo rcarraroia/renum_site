@@ -347,3 +347,25 @@ async def publish_agent(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to publish agent: {str(e)}"
         )
+
+
+@router.post("/n8n-convert", response_model=dict)
+async def convert_n8n_workflow(
+    workflow: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Convert n8n workflow to agent config
+    
+    Parses n8n JSON and returns suggested name, description and prompt
+    """
+    from src.utils.n8n_converter import convert_n8n_to_agent_config
+    
+    try:
+        config = convert_n8n_to_agent_config(workflow)
+        return config
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to convert n8n workflow: {str(e)}"
+        )

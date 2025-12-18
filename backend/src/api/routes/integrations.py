@@ -23,8 +23,10 @@ async def list_integrations(
     List all configured integrations for the current client.
     """
     client_id = current_user.get('client_id')
+    client_id = current_user.get('client_id')
     if not client_id:
-        raise HTTPException(status_code=400, detail="Client ID required")
+        # Se não tiver client_id (ex: superadmin global), retornar lista vazia para não quebrar UI
+        return []
         
     service = IntegrationService(client_id=client_id)
     try:

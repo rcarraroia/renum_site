@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.config.settings import settings
-from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, monitoring, knowledge, auth_google
+from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, knowledge, auth_google
 from src.utils.logger import logger
 
 # Configuração da Aplicação
@@ -57,7 +57,8 @@ app.include_router(sicc_learning.router, prefix="/api")  # Sprint 10 - SICC Lear
 app.include_router(sicc_stats.router, prefix="/api")  # Sprint 10 - SICC Stats
 app.include_router(sicc_patterns.router, prefix="/api")  # Sprint 10 - SICC Patterns
 app.include_router(sicc_audio.router)  # Sprint 10 - SICC Audio Processing
-app.include_router(monitoring.router, prefix="/api")  # Monitoring & Observability
+app.include_router(sicc_settings.router, prefix="/api/sicc")  # SICC Settings
+app.include_router(monitoring.router, prefix="/api/monitoring")  # Monitoring & Observability
 app.include_router(websocket.router)  # WebSocket endpoint
 
 

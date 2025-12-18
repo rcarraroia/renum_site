@@ -19,6 +19,17 @@ export type Channel = 'whatsapp' | 'web' | 'sms' | 'email';
 export type TemplateType = 'custom' | 'mmn' | 'vereador' | 'clinica' | 'pesquisa';
 
 /**
+ * Agent Categories
+ */
+export type AgentCategory = 'discovery' | 'vendas' | 'suporte' | 'mmn' | 'clinica' | 'vereador' | 'custom';
+
+export interface CategoryMock {
+  id: AgentCategory;
+  name: string;
+  icon: string;
+}
+
+/**
  * LLM model
  */
 export type Model = 'gpt-4' | 'gpt-4-turbo-preview' | 'gpt-4o-mini' | 'claude-3-5-sonnet-20241022' | 'claude-3-opus';

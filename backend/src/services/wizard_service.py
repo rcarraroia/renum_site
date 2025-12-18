@@ -14,6 +14,7 @@ from src.models.wizard import (
     WizardStep2Data,
     WizardStep3Data,
     WizardStep4Data,
+    WizardStep5Data,
 )
 
 
@@ -63,6 +64,7 @@ class WizardService:
                 'step_2_data': None,
                 'step_3_data': None,
                 'step_4_data': None,
+                'step_5_data': None,
             },
             'created_at': now.isoformat(),
             'updated_at': now.isoformat(),
@@ -116,11 +118,25 @@ class WizardService:
             'updated_at': datetime.utcnow().isoformat(),
         }
         
-        # If step 1, update name and template_type
-        if step_number == 1 and 'name' in data:
-            update_data['name'] = data['name']
+        # Sync specific fields to main columns for visibility
+        if step_number == 1:
+            if 'client_id' in data:
+                update_data['client_id'] = data['client_id']
+        
+        if step_number == 2:
+            if 'name' in data:
+                update_data['name'] = data['name']
+            if 'description' in data:
+                update_data['description'] = data['description']
             if 'template_type' in data:
                 update_data['template_type'] = data['template_type']
+
+        if step_number == 3:
+            if 'channels' in data and data['channels']:
+                # For now take the first channel as primary or store as string
+                update_data['channel'] = data['channels'][0] 
+            if 'model' in data:
+                update_data['model'] = data['model']
         
         result = self.supabase.table('agents')\
             .update(update_data)\
@@ -268,10 +284,10 @@ class WizardService:
             except Exception:
                 pass
         
-        step_4_data = None
-        if config.get('step_4_data'):
+        step_5_data = None
+        if config.get('step_5_data'):
             try:
-                step_4_data = WizardStep4Data(**config['step_4_data'])
+                step_5_data = WizardStep5Data(**config['step_5_data'])
             except Exception:
                 pass
         
@@ -283,6 +299,7 @@ class WizardService:
             step_2_data=step_2_data,
             step_3_data=step_3_data,
             step_4_data=step_4_data,
+            step_5_data=step_5_data,
             created_at=datetime.fromisoformat(data['created_at'].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00')),
         )
@@ -309,6 +326,11 @@ class WizardService:
                 WizardStep3Data(**data)
             elif step_number == 4:
                 WizardStep4Data(**data)
+            elif step_number == 5:
+                WizardStep5Data(**data)
+            elif step_number == 6:
+                # Step 6 is review, no specific model but we allow it
+                pass
             else:
                 errors.append(f"Invalid step number: {step_number}")
         except Exception as e:

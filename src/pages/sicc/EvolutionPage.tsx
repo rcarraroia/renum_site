@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { siccService } from '@/services/siccService';
+import { agentService } from '@/services/agentService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Brain, Activity, Zap } from 'lucide-react';
@@ -8,16 +9,31 @@ import { TrendingUp, Brain, Activity, Zap } from 'lucide-react';
 export default function EvolutionPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedAgent] = useState('37ae9902-24bf-42b1-9d01-88c201ee0a6c');
+  const [agentId, setAgentId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadStats();
-  }, [selectedAgent]);
+    const init = async () => {
+      try {
+        const agent = await agentService.getSystemAgent('system_orchestrator');
+        if (agent) {
+          setAgentId(agent.id);
+          loadStats(agent.id);
+        } else {
+          console.error('System agent not found');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching system agent:', error);
+        setLoading(false);
+      }
+    };
+    init();
+  }, []);
 
-  const loadStats = async () => {
+  const loadStats = async (id: string) => {
     try {
       setLoading(true);
-      const data = await siccService.getEvolutionStats(selectedAgent);
+      const data = await siccService.getEvolutionStats(id);
       setStats(data);
     } catch (error) {
       console.error('Erro ao carregar stats:', error);
@@ -42,7 +58,7 @@ export default function EvolutionPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">📈 Evolução do Agente</h1>
           <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-            SICC v1.0
+            SICC v1.0 {agentId ? '(Conectado)' : '(Desconectado)'}
           </Badge>
         </div>
 
@@ -56,7 +72,7 @@ export default function EvolutionPage() {
               <div className="text-2xl font-bold">{stats?.total_memories || 0}</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
-                +{stats?.total_memories_change || 0}% este mês
+                {stats?.total_memories_change > 0 ? '+' : ''}{stats?.total_memories_change || 0}% este mês
               </p>
             </CardContent>
           </Card>
@@ -67,10 +83,10 @@ export default function EvolutionPage() {
               <Activity className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">89%</div>
+              <div className="text-2xl font-bold">{stats?.auto_approved_rate || 0}%</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
-                +5% este mês
+                {stats?.auto_approved_rate_change > 0 ? '+' : ''}{stats?.auto_approved_rate_change || 0}% este mês
               </p>
             </CardContent>
           </Card>
@@ -81,10 +97,10 @@ export default function EvolutionPage() {
               <Zap className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">94.5%</div>
+              <div className="text-2xl font-bold">{stats?.success_rate || 0}%</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
-                +2.1% este mês
+                {stats?.success_rate_change > 0 ? '+' : ''}{stats?.success_rate_change || 0}% este mês
               </p>
             </CardContent>
           </Card>
@@ -95,10 +111,10 @@ export default function EvolutionPage() {
               <Activity className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12.3</div>
+              <div className="text-2xl font-bold">{stats?.learning_velocity || 0}</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
-                +0.8 aprendizados/dia
+                {stats?.learning_velocity_change > 0 ? '+' : ''}{stats?.learning_velocity_change || 0} aprendizados/dia
               </p>
             </CardContent>
           </Card>
@@ -111,7 +127,10 @@ export default function EvolutionPage() {
             </CardHeader>
             <CardContent>
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                Gráfico de evolução será implementado em breve
+                {/* Placeholder para gráfico real - Dados viriam de stats.memory_growth */}
+                {(!stats?.memory_growth || stats?.memory_growth.length === 0)
+                  ? "Sem dados suficientes para gerar gráfico"
+                  : "Gráfico carregado (Visualização pendente)"}
               </div>
             </CardContent>
           </Card>
@@ -122,27 +141,21 @@ export default function EvolutionPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Nova memória: "Processo de onboarding"</p>
-                    <p className="text-xs text-muted-foreground">2 horas atrás</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Padrão detectado: "Saudação personalizada"</p>
-                    <p className="text-xs text-muted-foreground">5 horas atrás</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">12 aprendizados consolidados</p>
-                    <p className="text-xs text-muted-foreground">1 dia atrás</p>
-                  </div>
-                </div>
+                {(!stats?.recent_activity || stats?.recent_activity.length === 0) ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma atividade recente registrada.</p>
+                ) : (
+                  stats.recent_activity.map((activity: any, index: number) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${activity.type === 'memory' ? 'bg-green-500' :
+                          activity.type === 'learning' ? 'bg-blue-500' : 'bg-gray-500'
+                        }`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

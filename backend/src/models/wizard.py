@@ -38,12 +38,18 @@ class StandardFieldConfig(BaseModel):
 
 
 class WizardStep1Data(BaseModel):
-    """Step 1: Objetivo do Agente"""
-    template_type: Literal['customer_service', 'sales', 'support', 'recruitment', 'custom']
+    """Step 1: Definição Inicial (Contexto)"""
+    project_id: UUID = Field(..., description="Project ID")
+    client_id: UUID = Field(..., description="Client ID")
+    contract_type: Literal['b2b_empresa', 'b2c_individual'] = Field(..., description="Contract type")
+
+class WizardStep2Data(BaseModel):
+    """Step 2: Identidade do Agente"""
     name: str = Field(..., min_length=3, max_length=100, description="Agent name")
     description: Optional[str] = Field(None, max_length=500, description="Agent description")
-    niche: Literal['mmn', 'clinicas', 'vereadores', 'ecommerce', 'generico']
-    
+    niche: str = Field(..., description="Business niche")
+    template_type: Optional[str] = Field(default='custom', description="Template identifier")
+
     @field_validator('name')
     @classmethod
     def validate_name(cls, v):
@@ -52,45 +58,27 @@ class WizardStep1Data(BaseModel):
             raise ValueError("Name cannot be empty")
         return v.strip()
 
+class WizardStep3Data(BaseModel):
+    """Step 3: Configuração Técnica"""
+    channels: List[Literal['whatsapp', 'web', 'telegram', 'sms', 'email']] = Field(
+        default_factory=lambda: ['web'], 
+        description="Communication channels"
+    )
+    model: str = Field(default='gpt-4o-mini', description="AI Model")
 
-class WizardStep2Data(BaseModel):
-    """Step 2: Personalidade e Tom"""
+class WizardStep4Data(BaseModel):
+    """Step 4: Comportamento (Personality & Prompt)"""
     personality: Literal['professional', 'friendly', 'technical', 'casual']
     tone_formal: int = Field(..., ge=0, le=100, description="Formality level (0-100)")
     tone_direct: int = Field(..., ge=0, le=100, description="Directness level (0-100)")
-    custom_instructions: Optional[str] = Field(None, max_length=1000, description="Additional custom instructions")
+    system_prompt: str = Field(..., description="Main system instruction")
+    custom_instructions: Optional[str] = Field(None, max_length=1000)
 
-
-class WizardStep3Data(BaseModel):
-    """Step 3: Informações a Coletar"""
-    standard_fields: Dict[str, StandardFieldConfig] = Field(
-        default_factory=dict,
-        description="Standard fields configuration"
-    )
-    custom_fields: List[CustomFieldConfig] = Field(
-        default_factory=list,
-        description="Custom fields configuration"
-    )
-    
-    @field_validator('standard_fields')
-    @classmethod
-    def validate_at_least_one_field(cls, v, info):
-        """Validate at least one field is enabled"""
-        custom_fields = info.data.get('custom_fields', [])
-        enabled_standard = sum(1 for field in v.values() if field.enabled)
-        
-        if enabled_standard == 0 and len(custom_fields) == 0:
-            raise ValueError("At least one field must be enabled")
-        
-        return v
-
-
-class WizardStep4Data(BaseModel):
-    """Step 4: Integrações"""
-    integrations: Dict[str, bool] = Field(
-        default_factory=dict,
-        description="Enabled integrations (whatsapp, email, database)"
-    )
+class WizardStep5Data(BaseModel):
+    """Step 5: Ferramentas e Integrações"""
+    standard_fields: Dict[str, StandardFieldConfig] = Field(default_factory=dict)
+    custom_fields: List[CustomFieldConfig] = Field(default_factory=list)
+    integrations: Dict[str, bool] = Field(default_factory=dict)
 
 
 class WizardSessionCreate(BaseModel):
@@ -100,7 +88,7 @@ class WizardSessionCreate(BaseModel):
 
 class WizardSessionUpdate(BaseModel):
     """Update wizard step"""
-    step_number: int = Field(..., ge=1, le=5, description="Step number (1-5)")
+    step_number: int = Field(..., ge=1, le=6, description="Step number (1-6)")
     data: Dict[str, Any] = Field(..., description="Step data")
 
 
@@ -113,11 +101,12 @@ class WizardSession(BaseModel):
     """Wizard session response"""
     id: UUID = Field(..., description="Wizard session ID")
     client_id: UUID = Field(..., description="Client ID")
-    current_step: int = Field(default=1, ge=1, le=5, description="Current step")
+    current_step: int = Field(default=1, ge=1, le=6, description="Current step")
     step_1_data: Optional[WizardStep1Data] = None
     step_2_data: Optional[WizardStep2Data] = None
     step_3_data: Optional[WizardStep3Data] = None
     step_4_data: Optional[WizardStep4Data] = None
+    step_5_data: Optional[WizardStep5Data] = None
     created_at: datetime
     updated_at: datetime
     
@@ -193,7 +182,7 @@ class AgentListFilter(BaseModel):
     """Filters for agent list"""
     client_id: Optional[UUID] = None
     status: Optional[Literal['draft', 'active', 'paused', 'inactive']] = None
-    template_type: Optional[Literal['customer_service', 'sales', 'support', 'recruitment', 'custom']] = None
+    template_type: Optional[str] = None
     search: Optional[str] = Field(None, max_length=100, description="Search in name/description")
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)

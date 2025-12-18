@@ -1,17 +1,98 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { siccService } from '@/services/siccService';
+import { agentService } from '@/services/agentService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Settings, Save, RotateCcw, AlertTriangle } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SettingsPage() {
   const [learningEnabled, setLearningEnabled] = useState(true);
   const [autoApprovalThreshold, setAutoApprovalThreshold] = useState([80]);
   const [memoryLimit, setMemoryLimit] = useState([10000]);
+  const [loading, setLoading] = useState(true);
+  const [activeSnapshots, setActiveSnapshots] = useState<any[]>([]);
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const agent = await agentService.getSystemAgent('system_orchestrator');
+        if (agent) {
+          setAgentId(agent.id);
+          loadSettings(agent.id);
+          loadSnapshots(agent.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching system agent:', error);
+        setLoading(false);
+      }
+    };
+    init();
+  }, []);
+
+  const loadSettings = async (id: string) => {
+    try {
+      const data = await siccService.getSettings(id);
+      if (data) {
+        setLearningEnabled(data.learning_enabled ?? true);
+        setAutoApprovalThreshold([data.auto_approval_threshold ? data.auto_approval_threshold * 100 : 80]);
+        setMemoryLimit([data.max_memory_items || 10000]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSnapshots = async (id: string) => {
+    try {
+      const data = await siccService.listSnapshots(id);
+      setActiveSnapshots(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar snapshots', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!agentId) return;
+    try {
+      await siccService.updateSettings(agentId, {
+        learning_enabled: learningEnabled,
+        auto_approval_threshold: autoApprovalThreshold[0] / 100,
+        max_memory_items: memoryLimit[0]
+      });
+      toast({
+        title: "Sucesso",
+        description: "Configurações salvas com sucesso.",
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar configurações.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -23,7 +104,7 @@ export default function SettingsPage() {
               <RotateCcw className="h-4 w-4 mr-2" />
               Restaurar Padrões
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-purple-600 hover:bg-purple-700" onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               Salvar Alterações
             </Button>
@@ -43,8 +124,8 @@ export default function SettingsPage() {
                     Permite que o agente aprenda automaticamente com conversas
                   </p>
                 </div>
-                <Switch 
-                  checked={learningEnabled} 
+                <Switch
+                  checked={learningEnabled}
                   onCheckedChange={setLearningEnabled}
                 />
               </div>
@@ -107,22 +188,6 @@ export default function SettingsPage() {
                 </div>
                 <Badge className="bg-blue-600">Ativo</Badge>
               </div>
-
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-purple-800">Embeddings</p>
-                  <p className="text-sm text-purple-600">Modelo: GTE-small</p>
-                </div>
-                <Badge className="bg-purple-600">Ativo</Badge>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-orange-800">Fila de Aprendizados</p>
-                  <p className="text-sm text-orange-600">12 pendentes de revisão</p>
-                </div>
-                <Badge className="bg-orange-600">Atenção</Badge>
-              </div>
             </CardContent>
           </Card>
 
@@ -131,25 +196,21 @@ export default function SettingsPage() {
               <CardTitle>📸 Snapshots do Conhecimento</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium">Snapshot Automático - 10/12/2025</p>
-                  <Badge variant="outline">Atual</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  1.234 memórias • 45 padrões • 1 dia atrás
-                </p>
-              </div>
-
-              <div className="border rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium">Antes do Treinamento</p>
-                  <Button variant="ghost" size="sm">Restaurar</Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  1.100 memórias • 38 padrões • 7 dias atrás
-                </p>
-              </div>
+              {activeSnapshots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum snapshot encontrado.</p>
+              ) : (
+                activeSnapshots.map((snap) => (
+                  <div key={snap.id} className="border rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">Snapshot - {new Date(snap.created_at).toLocaleDateString()}</p>
+                      <Button variant="ghost" size="sm">Restaurar</Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {snap.memory_count} memórias • {new Date(snap.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              )}
 
               <Button variant="outline" className="w-full">
                 Criar Snapshot Manual

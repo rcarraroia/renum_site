@@ -7,45 +7,38 @@ export const siccService = {
       const { data } = await apiClient.get(`/api/sicc/stats/agent/${agentId}/evolution`, { days: period });
       return data;
     } catch (error) {
-      // Fallback para dados mock se backend não estiver disponível
+      console.error('Error fetching evolution stats:', error);
+      // Return empty/zero structure if backend fails, instead of fake data
       return {
-        total_memories: 1234,
-        total_memories_change: 15,
-        auto_approved_rate: 89,
-        auto_approved_rate_change: 5,
-        success_rate: 94.5,
-        success_rate_change: 2.1,
-        learning_velocity: 12.3,
-        learning_velocity_change: 0.8,
-        memory_growth: generateMockData(period, 45, 'count'),
-        success_trend: generateMockData(period, 90, 'rate'),
-        recent_activity: getMockActivity(),
+        total_memories: 0,
+        total_memories_change: 0,
+        auto_approved_rate: 0,
+        auto_approved_rate_change: 0,
+        success_rate: 0,
+        success_rate_change: 0,
+        learning_velocity: 0,
+        learning_velocity_change: 0,
+        memory_growth: [],
+        success_trend: [],
+        recent_activity: [],
       };
     }
   },
 
   // Memory Manager
   async listMemories(agentId: string, params: any = {}) {
-    try {
-      const { data } = await apiClient.get('/api/sicc/memory/', { 
-        agent_id: agentId, 
-        limit: params.limit || 10,
-        offset: params.offset || 0,
-        ...params 
-      });
-      return data;
-    } catch (error) {
-      return getMockMemories();
-    }
+    const { data } = await apiClient.get('/api/sicc/memories/', {
+      agent_id: agentId,
+      limit: params.limit || 10,
+      offset: params.offset || 0,
+      ...params
+    });
+    return data;
   },
 
   async getMemory(id: string) {
-    try {
-      const { data } = await apiClient.get(`/api/sicc/memory/${id}`);
-      return data;
-    } catch (error) {
-      return getMockMemories().data.find((m: any) => m.id === id);
-    }
+    const { data } = await apiClient.get(`/api/sicc/memories/${id}`);
+    return data;
   },
 
   async updateMemory(id: string, updates: any) {
@@ -58,19 +51,15 @@ export const siccService = {
   },
 
   async deleteMemory(id: string) {
-    try {
-      await apiClient.delete(`/api/sicc/memory/${id}`);
-    } catch (error) {
-      // Mock success
-    }
+    await apiClient.delete(`/api/sicc/memories/${id}`);
   },
 
   async searchSimilar(agentId: string, query: string) {
     try {
-      const { data } = await apiClient.post('/api/sicc/memory/search', { 
-        agent_id: agentId, 
+      const { data } = await apiClient.post('/api/sicc/memory/search', {
+        agent_id: agentId,
         query,
-        limit: 10 
+        limit: 10
       });
       return data;
     } catch (error) {
@@ -80,16 +69,12 @@ export const siccService = {
 
   // Learning Queue
   async getLearningQueue(agentId: string, status?: string) {
-    try {
-      const { data } = await apiClient.get('/api/sicc/learning/', {
-        agent_id: agentId,
-        status,
-        limit: 50
-      });
-      return data;
-    } catch (error) {
-      return getMockLearnings();
-    }
+    const { data } = await apiClient.get('/api/sicc/learnings/', {
+      agent_id: agentId,
+      status_filter: status, // Changed 'status' to 'status_filter' to match backend
+      limit: 50
+    });
+    return data;
   },
 
   async getLearning(id: string) {
@@ -121,8 +106,8 @@ export const siccService = {
 
   async batchApproveLearnings(ids: string[]) {
     try {
-      const { data } = await apiClient.post('/api/sicc/learning/batch/approve', { 
-        learning_ids: ids 
+      const { data } = await apiClient.post('/api/sicc/learning/batch/approve', {
+        learning_ids: ids
       });
       return data;
     } catch (error) {
@@ -132,9 +117,9 @@ export const siccService = {
 
   async batchRejectLearnings(ids: string[], reason: string) {
     try {
-      const { data } = await apiClient.post('/api/sicc/learning/batch/reject', { 
-        learning_ids: ids, 
-        reason 
+      const { data } = await apiClient.post('/api/sicc/learning/batch/reject', {
+        learning_ids: ids,
+        reason
       });
       return data;
     } catch (error) {
@@ -144,12 +129,8 @@ export const siccService = {
 
   // Settings Page
   async getSettings(agentId: string) {
-    try {
-      const { data } = await apiClient.get(`/api/sicc/settings/${agentId}`);
-      return data;
-    } catch (error) {
-      return getMockSettings();
-    }
+    const { data } = await apiClient.get(`/api/sicc/settings/${agentId}`);
+    return data;
   },
 
   async updateSettings(agentId: string, settings: any) {
@@ -172,15 +153,15 @@ export const siccService = {
 
   async createSnapshot(agentId: string, name?: string) {
     try {
-      const { data } = await apiClient.post('/api/sicc/snapshots/manual', { 
-        agent_id: agentId, 
-        name 
+      const { data } = await apiClient.post('/api/sicc/snapshots/manual', {
+        agent_id: agentId,
+        name
       });
       return data;
     } catch (error) {
-      return { 
-        id: `snap_${Date.now()}`, 
-        agent_id: agentId, 
+      return {
+        id: `snap_${Date.now()}`,
+        agent_id: agentId,
         name: name || `Snapshot ${new Date().toLocaleString()}`,
         created_at: new Date().toISOString()
       };
@@ -188,14 +169,10 @@ export const siccService = {
   },
 
   async listSnapshots(agentId: string) {
-    try {
-      const { data } = await apiClient.get('/api/sicc/snapshots', { 
-        params: { agent_id: agentId } 
-      });
-      return data;
-    } catch (error) {
-      return getMockSnapshots();
-    }
+    const { data } = await apiClient.get('/api/sicc/snapshots', {
+      agent_id: agentId // Passed as direct query param key
+    });
+    return data;
   },
 
   async restoreSnapshot(snapshotId: string) {

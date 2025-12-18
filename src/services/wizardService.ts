@@ -13,6 +13,8 @@ export interface WizardSession {
   step_2_data?: any;
   step_3_data?: any;
   step_4_data?: any;
+  step_5_data?: any;
+  step_6_data?: any;
   created_at: string;
   updated_at: string;
 }
@@ -28,12 +30,12 @@ export interface PublicationResult {
 
 class WizardService {
   async startWizard(clientId: string): Promise<WizardSession> {
-    const { data } = await apiClient.post('/api/agents/wizard/start', { client_id: clientId });
+    const { data } = await apiClient.post<WizardSession>('/api/agents/wizard/start', { client_id: clientId });
     return data;
   }
 
   async saveStep(wizardId: string, stepNumber: number, data: any): Promise<WizardSession> {
-    const { data: responseData } = await apiClient.put(`/api/agents/wizard/${wizardId}/step/${stepNumber}`, {
+    const { data: responseData } = await apiClient.put<WizardSession>(`/api/agents/wizard/${wizardId}/step/${stepNumber}`, {
       step_number: stepNumber,
       data
     });
@@ -41,7 +43,7 @@ class WizardService {
   }
 
   async getWizard(wizardId: string): Promise<WizardSession> {
-    const { data } = await apiClient.get(`/api/agents/wizard/${wizardId}`);
+    const { data } = await apiClient.get<WizardSession>(`/api/agents/wizard/${wizardId}`);
     return data;
   }
 
@@ -50,7 +52,7 @@ class WizardService {
   }
 
   async listTemplates(): Promise<any[]> {
-    const { data } = await apiClient.get('/api/agents/wizard/templates/list');
+    const { data } = await apiClient.get<any[]>('/api/agents/wizard/templates/list');
     return data;
   }
 
@@ -72,7 +74,7 @@ class WizardService {
   }
 
   async getSandboxHistory(wizardId: string): Promise<any[]> {
-    const { data } = await apiClient.get(`/api/agents/wizard/${wizardId}/sandbox/history`);
+    const { data } = await apiClient.get<any[]>(`/api/agents/wizard/${wizardId}/sandbox/history`);
     return data;
   }
 
@@ -88,7 +90,13 @@ class WizardService {
   // Publication
 
   async publishAgent(wizardId: string): Promise<PublicationResult> {
-    const { data } = await apiClient.post(`/api/agents/wizard/${wizardId}/publish`);
+    const { data } = await apiClient.post<PublicationResult>(`/api/agents/wizard/${wizardId}/publish`);
+    return data;
+  }
+
+  // Utility
+  async convertN8n(workflow: any): Promise<{ name: string; description: string; system_prompt_hint: string; node_count: number }> {
+    const { data } = await apiClient.post<{ name: string; description: string; system_prompt_hint: string; node_count: number }>('/api/agents/wizard/n8n-convert', workflow);
     return data;
   }
 }

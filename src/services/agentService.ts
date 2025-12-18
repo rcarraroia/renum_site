@@ -11,24 +11,16 @@ import type { Agent, AgentCreate, AgentUpdate, SubAgent, SubAgentCreate, SubAgen
 /**
  * List agents with optional filters
  */
-export async function listAgents(params?: {
-  clientId?: string;
-  role?: 'system_orchestrator' | 'system_supervisor' | 'client_agent';
-  status?: 'draft' | 'active' | 'paused' | 'archived';
-  isPublic?: boolean;
-  limit?: number;
-  offset?: number;
-}): Promise<Agent[]> {
-  /* listAgents URL fixed - params passed directly */
-  const response = await apiClient.get('/api/agents/', params);
+export async function listAgents(params: any = {}): Promise<Agent[]> {
+  const response = await apiClient.get<Agent[]>('/api/agents', params);
   return response.data;
 }
 
 /**
  * Get agent by ID
  */
-export async function getAgent(agentId: string): Promise<Agent> {
-  const response = await apiClient.get(`/api/agents/${agentId}`);
+export async function getAgent(id: string): Promise<Agent> {
+  const response = await apiClient.get<Agent>(`/api/agents/${id}`);
   return response.data;
 }
 
@@ -36,24 +28,34 @@ export async function getAgent(agentId: string): Promise<Agent> {
  * Get agent by slug
  */
 export async function getAgentBySlug(slug: string): Promise<Agent> {
-  const response = await apiClient.get(`/api/agents/slug/${slug}`);
+  const response = await apiClient.get<Agent>(`/api/agents/slug/${slug}`);
   return response.data;
 }
 
 /**
  * Create new agent
  */
-export async function createAgent(data: AgentCreate): Promise<Agent> {
-  const response = await apiClient.post('/api/agents/', data);
+export async function createAgent(data: Partial<Agent>): Promise<Agent> {
+  const response = await apiClient.post<Agent>('/api/agents', data);
   return response.data;
 }
 
 /**
  * Update agent
  */
-export async function updateAgent(agentId: string, data: AgentUpdate): Promise<Agent> {
-  const response = await apiClient.put(`/api/agents/${agentId}`, data);
+export async function updateAgent(id: string, data: Partial<Agent>): Promise<Agent> {
+  const response = await apiClient.put<Agent>(`/api/agents/${id}`, data);
   return response.data;
+}
+
+/**
+ * Get system agent (orchestrator or supervisor)
+ */
+export async function getSystemAgent(
+  role: 'system_orchestrator' | 'system_supervisor' = 'system_orchestrator'
+): Promise<Agent | undefined> {
+  const response = await apiClient.get<Agent[]>('/api/agents', { role, limit: 1 });
+  return response.data[0];
 }
 
 /**
@@ -66,11 +68,8 @@ export async function deleteAgent(agentId: string): Promise<void> {
 /**
  * Change agent status
  */
-export async function changeAgentStatus(
-  agentId: string,
-  newStatus: 'draft' | 'active' | 'paused' | 'archived'
-): Promise<Agent> {
-  const response = await apiClient.patch(`/api/agents/${agentId}/status`, null);
+export async function changeAgentStatus(id: string, status: string): Promise<Agent> {
+  const response = await apiClient.patch<Agent>(`/api/agents/${id}/status`, { new_status: status });
   return response.data;
 }
 
@@ -86,7 +85,15 @@ export async function getAgentStats(agentId: string): Promise<{
   access_count: number;
   last_used_at: string | null;
 }> {
-  const response = await apiClient.get(`/api/agents/${agentId}/stats`);
+  const response = await apiClient.get<{
+    agent_id: string;
+    sub_agents_count: number;
+    total_conversations: number;
+    active_conversations: number;
+    total_messages: number;
+    access_count: number;
+    last_used_at: string | null;
+  }>(`/api/agents/${agentId}/stats`);
   return response.data;
 }
 
@@ -97,35 +104,24 @@ export async function getAgentStats(agentId: string): Promise<{
 /**
  * List sub-agents of an agent
  */
-export async function listSubAgents(
-  agentId: string,
-  params?: {
-    isActive?: boolean;
-    limit?: number;
-    offset?: number;
-  }
-): Promise<SubAgent[]> {
-  const response = await apiClient.get(`/api/agents/${agentId}/sub-agents`, params);
+export async function listSubAgents(agentId: string, params: any = {}): Promise<SubAgent[]> {
+  const response = await apiClient.get<SubAgent[]>(`/api/agents/${agentId}/sub-agents`, params);
   return response.data;
 }
 
 /**
  * Create sub-agent for an agent
  */
-export async function createSubAgent(agentId: string, data: SubAgentCreate): Promise<SubAgent> {
-  const response = await apiClient.post(`/api/agents/${agentId}/sub-agents`, data);
+export async function createSubAgent(agentId: string, data: Partial<SubAgent>): Promise<SubAgent> {
+  const response = await apiClient.post<SubAgent>(`/api/agents/${agentId}/sub-agents`, data);
   return response.data;
 }
 
 /**
  * Update sub-agent
  */
-export async function updateSubAgent(
-  agentId: string,
-  subAgentId: string,
-  data: SubAgentUpdate
-): Promise<SubAgent> {
-  const response = await apiClient.put(`/api/agents/${agentId}/sub-agents/${subAgentId}`, data);
+export async function updateSubAgent(agentId: string, subAgentId: string, data: Partial<SubAgent>): Promise<SubAgent> {
+  const response = await apiClient.put<SubAgent>(`/api/agents/${agentId}/sub-agents/${subAgentId}`, data);
   return response.data;
 }
 
@@ -157,7 +153,7 @@ export async function toggleSubAgentActive(
   });
 }
 
-export default {
+export const agentService = {
   // Agents
   listAgents,
   getAgent,
@@ -167,6 +163,7 @@ export default {
   deleteAgent,
   changeAgentStatus,
   getAgentStats,
+  getSystemAgent,
 
   // Sub-agents
   listSubAgents,
@@ -175,3 +172,5 @@ export default {
   deleteSubAgent,
   toggleSubAgentActive,
 };
+
+export default agentService;
