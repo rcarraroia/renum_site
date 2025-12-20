@@ -9,12 +9,18 @@ export interface Interview {
   id: string;
   lead_id: string;
   project_id: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'abandoned';
   metadata: Record<string, any>;
   started_at?: string;
   completed_at?: string;
   created_at: string;
   updated_at?: string;
+  // Campos estendidos para UI
+  contactName?: string;
+  contactPhone?: string;
+  subagentName?: string;
+  messagesCount?: number;
+  topicsCovered?: string[];
 }
 
 export interface InterviewMessage {
@@ -57,7 +63,7 @@ export const interviewService = {
     limit?: number;
     status?: string;
   }): Promise<InterviewList> {
-    const { data } = await apiClient.get<InterviewList>('/api/interviews', params);
+    const { data } = await apiClient.get<InterviewList>('/api/interviews/', params);
     return data;
   },
 

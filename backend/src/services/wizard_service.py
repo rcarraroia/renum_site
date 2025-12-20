@@ -24,12 +24,13 @@ class WizardService:
     def __init__(self):
         self.supabase = supabase_admin
     
-    def start_wizard(self, client_id: UUID) -> WizardSession:
+    def start_wizard(self, client_id: Optional[UUID] = None, category: Optional[str] = None) -> WizardSession:
         """
         Create new wizard session
         
         Args:
-            client_id: Client ID creating the agent
+            client_id: Client ID creating the agent (optional, None para templates)
+            category: Category for template (b2b/b2c)
             
         Returns:
             Created wizard session
@@ -37,8 +38,12 @@ class WizardService:
         Raises:
             ValueError: If B2C client has reached agent limit
         """
-        # Check B2C agent limit
-        self._check_b2c_limit(client_id)
+        # Check B2C agent limit only if client_id is provided
+        if client_id:
+            self._check_b2c_limit(client_id)
+        
+        # Se não tem client_id, está criando template
+        is_template = client_id is None
         
         wizard_id = uuid4()
         now = datetime.utcnow()
@@ -48,15 +53,18 @@ class WizardService:
         
         wizard_data = {
             'id': str(wizard_id),
-            'client_id': str(client_id),
-            'name': f'Draft Agent {wizard_id.hex[:8]}',
-            'description': 'Agent in creation',
+            'client_id': str(client_id) if client_id else None,
+            'name': f'Draft {"Template" if is_template else "Agent"} {wizard_id.hex[:8]}',
+            'description': 'Template in creation' if is_template else 'Agent in creation',
             'channel': 'web',  # Default channel for wizard
-            'system_prompt': 'Draft agent',
+            'system_prompt': 'Draft template' if is_template else 'Draft agent',
             'model': 'gpt-4o-mini',
             'status': 'draft',
             'template_type': 'custom',
             'is_public': False,
+            'is_template': is_template,
+            'category': category,
+            'marketplace_visible': False,
             'config': {
                 'wizard_session': True,
                 'current_step': 1,
@@ -293,7 +301,7 @@ class WizardService:
         
         return WizardSession(
             id=UUID(data['id']),
-            client_id=UUID(data['client_id']),
+            client_id=UUID(data['client_id']) if data.get('client_id') else None,
             current_step=config.get('current_step', 1),
             step_1_data=step_1_data,
             step_2_data=step_2_data,

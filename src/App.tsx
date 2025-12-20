@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,11 @@ import MemoryManagerPage from './pages/sicc/MemoryManagerPage'; // Import new SI
 import LearningQueuePage from './pages/sicc/LearningQueuePage'; // Import new SICC page
 import SettingsPage from './pages/sicc/SettingsPage'; // Import new SICC page
 import ErrorBoundary from './components/ErrorBoundary'; // Import ErrorBoundary
+import TemplatesListPage from './pages/admin/agents/TemplatesListPage'; // Import Templates page
+import MarketplacePage from './pages/client/MarketplacePage'; // Import Marketplace page
+import CheckoutPage from './pages/client/CheckoutPage'; // Import Checkout page
+import ClientAgentsPage from './pages/client/ClientAgentsPage';
+import ClientAgentDetailsPage from './pages/client/ClientAgentDetailsPage';
 
 // Component to redirect authenticated users to dashboard
 const HomeRedirect = () => {
@@ -79,7 +85,7 @@ const App = () => (
                     <Route path="/dashboard/admin/agents" element={<AgentsListPage />} />
                     <Route path="/dashboard/admin/agents/create" element={<AgentCreatePage />} />
                     <Route path="/dashboard/admin/agents/:slug" element={<AgentDetailsPage />} />
-                    <Route path="/dashboard/admin/agents/templates" element={<AdminOverview />} /> {/* Mock route for templates */}
+                    <Route path="/dashboard/admin/agents/templates" element={<TemplatesListPage />} />
 
                     <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
                     <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
@@ -105,11 +111,17 @@ const App = () => (
                     <Route path="/dashboard/client" element={<ClientOverview />} />
                     {/* Client Routes */}
                     <Route path="/dashboard/client/projects" element={<ClientOverview />} />
+                    <Route path="/dashboard/client/agents" element={<ClientAgentsPage />} />
+                    <Route path="/dashboard/client/agents/:slug" element={<ClientAgentDetailsPage />} />
                     <Route path="/dashboard/client/conversations" element={<ClientOverview />} />
                     <Route path="/dashboard/client/documents" element={<ClientOverview />} />
                     <Route path="/dashboard/client/calendar" element={<ClientOverview />} />
                     <Route path="/dashboard/client/support" element={<ClientOverview />} />
                     <Route path="/dashboard/client/integrations" element={<ClientIntegrationsPage />} />
+
+                    {/* Marketplace Routes */}
+                    <Route path="/marketplace" element={<MarketplacePage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
                   </Route>
 
                   {/* Common Protected Routes */}

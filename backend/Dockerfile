@@ -1,33 +1,26 @@
-# Usar imagem base leve do Python 3.10
-FROM python:3.10-slim
+FROM python:3.10
 
-# Definir diretório de trabalho
 WORKDIR /app
 
-# Variáveis de ambiente para Python
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
-
-# Instalar dependências do sistema necessárias para compilação e libs
+# Instalar dependências do sistema necessárias
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar apenas requirements.txt primeiro (para cache do Docker)
+# Copiar requirements primeiro para aproveitar cache
 COPY requirements.txt .
 
-# Atualizar pip e instalar dependências
+# Instalar dependências Python
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copiar todo o código fonte
+# Copiar o resto do código
 COPY . .
 
-# Expor a porta 8000
+# Expor porta
 EXPOSE 8000
 
-# Comando de execução (substitui o script manual)
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando de inicialização
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

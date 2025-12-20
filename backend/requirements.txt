@@ -11,6 +11,7 @@ langchain-core==0.3.32
 langchain-openai==0.2.14
 langgraph==0.2.62
 openai==1.58.1
+stripe>=7.0.0
 sentence-transformers>=2.2.2
 
 # Database

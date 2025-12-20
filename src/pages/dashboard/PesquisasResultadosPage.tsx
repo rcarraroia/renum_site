@@ -39,7 +39,7 @@ const PesquisasResultadosPage = () => {
     try {
       setLoading(true);
       const data = await interviewService.getAll({ status: 'completed' });
-      setResults(data.items);
+      setResults(data?.items || []);
     } catch (err) {
       setError('Erro ao carregar resultados');
       console.error('Erro:', err);
@@ -77,9 +77,9 @@ const PesquisasResultadosPage = () => {
   ];
 
   const stats = {
-    totalRespostas: results.length,
-    mediaTempoResposta: results.length > 0 ? '4min 30s' : '0s', // Keep mock for duration until backend provides it
-    taxaConclusao: results.length > 0 ? Math.round((results.filter(r => r.status === 'completed').length / results.length) * 100) : 0,
+    totalRespostas: results?.length || 0,
+    mediaTempoResposta: results?.length > 0 ? '4min 30s' : '0s',
+    taxaConclusao: results?.length > 0 ? Math.round((results.filter(r => r.status === 'completed').length / results.length) * 100) : 0,
     topicosCompletos: 5
   };
 

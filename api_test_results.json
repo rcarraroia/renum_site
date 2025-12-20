@@ -1,0 +1,8 @@
+{
+    "health": true,
+    "login": true,
+    "agent_RENUS": true,
+    "agent_ISA": true,
+    "isa_chat": true,
+    "list_agents": false
+}

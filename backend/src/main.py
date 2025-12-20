@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.config.settings import settings
-from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, knowledge, auth_google
+from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, knowledge, marketplace, payment
 from src.utils.logger import logger
 
 # Configuração da Aplicação
@@ -41,17 +41,19 @@ app.include_router(interviews.router, prefix="/api")  # Discovery Agent intervie
 app.include_router(renus_config.router, prefix="/api")  # RENUS Configuration
 app.include_router(tools.router, prefix="/api")  # Agent Tools
 app.include_router(knowledge.router, prefix="/api")  # Knowledge Base (RAG)
-app.include_router(agents.router, prefix="/api")  # Sprint 09 - Agents Management
-app.include_router(sub_agents.router, prefix="/api")  # Sub-Agents Management (legacy)
+app.include_router(agents.router, prefix="/api")  # agents.py já define as rotas
+app.include_router(sub_agents.router, prefix="/api/subagents_legacy")
 app.include_router(public_chat.router, prefix="/api")  # Public Chat URLs
 app.include_router(isa.router, prefix="/api")  # ISA Assistant
 app.include_router(dashboard.router, prefix="/api")  # Dashboard Stats
 app.include_router(reports.router, prefix="/api")  # Reports & Analytics
 app.include_router(integrations.router, prefix="/api")  # Sprint 07A - Integrations
-app.include_router(auth_google.router, prefix="/api")
+# app.include_router(auth_google.router, prefix="/api")
 app.include_router(triggers.router, prefix="/api")  # Sprint 07A - Triggers
 app.include_router(webhooks.router)  # Sprint 07A - Webhooks (no prefix)
 app.include_router(wizard.router, prefix="/api")  # Sprint 06 - Wizard
+app.include_router(marketplace.router, prefix="/api")  # Marketplace de Templates
+app.include_router(payment.router, prefix="/api")  # Payment (Asaas + Stripe)
 app.include_router(sicc_memory.router, prefix="/api")  # Sprint 10 - SICC Memory
 app.include_router(sicc_learning.router, prefix="/api")  # Sprint 10 - SICC Learning
 app.include_router(sicc_stats.router, prefix="/api")  # Sprint 10 - SICC Stats
@@ -61,6 +63,11 @@ app.include_router(sicc_settings.router, prefix="/api/sicc")  # SICC Settings
 app.include_router(monitoring.router, prefix="/api/monitoring")  # Monitoring & Observability
 app.include_router(websocket.router)  # WebSocket endpoint
 
+
+@app.on_event("startup")
+async def startup_event():
+    for route in app.routes:
+        print(f"Route: {route.path} -> {route.name}")
 
 @app.get("/", tags=["Root"])
 async def root():
@@ -77,6 +84,10 @@ async def root():
         "docs": "/docs",
         "health": "/health"
     }
+
+@app.get("/api/global-debug")
+async def global_debug():
+    return {"status": "ok", "context": "global"}
 
 
 if __name__ == "__main__":

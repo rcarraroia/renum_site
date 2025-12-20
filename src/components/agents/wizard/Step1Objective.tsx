@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Briefcase, ShoppingCart, Headphones, Users, Sparkles } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Step1ObjectiveProps {
   formData: any;
@@ -89,28 +90,25 @@ const Step1Objective: React.FC<Step1ObjectiveProps> = ({ formData, setFormData }
           {templates.map((template) => {
             const Icon = template.icon;
             const isSelected = formData.template_type === template.type;
-            
+
             return (
               <Card
                 key={template.type}
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                  isSelected 
-                    ? 'ring-2 ring-[#FF6B35] shadow-lg bg-[#FF6B35]/5' 
-                    : 'hover:border-[#FF6B35]/50'
-                }`}
+                className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${isSelected
+                  ? 'ring-2 ring-[#FF6B35] shadow-lg bg-[#FF6B35]/5'
+                  : 'hover:border-[#FF6B35]/50'
+                  }`}
                 onClick={() => handleTemplateSelect(template.type)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">
-                    <div className={`${template.color} p-3 rounded-lg shadow-md transition-transform ${
-                      isSelected ? 'scale-110' : ''
-                    }`}>
+                    <div className={`${template.color} p-3 rounded-lg shadow-md transition-transform ${isSelected ? 'scale-110' : ''
+                      }`}>
                       <Icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h4 className={`font-semibold text-sm ${
-                        isSelected ? 'text-[#FF6B35]' : ''
-                      }`}>
+                      <h4 className={`font-semibold text-sm ${isSelected ? 'text-[#FF6B35]' : ''
+                        }`}>
                         {template.name}
                       </h4>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -179,6 +177,45 @@ const Step1Objective: React.FC<Step1ObjectiveProps> = ({ formData, setFormData }
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="category">Categoria do Template *</Label>
+          <Select
+            value={formData.category || ''}
+            onValueChange={(value) => setFormData({ ...formData, category: value })}
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Selecione a categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="b2c">B2C - Individual</SelectItem>
+              <SelectItem value="b2b">B2B - Empresarial</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            B2C: Para clientes individuais (limite 1 agente) | B2B: Para empresas (ilimitado)
+          </p>
+        </div>
+
+        <div className="flex items-start space-x-2">
+          <Checkbox
+            id="marketplace_visible"
+            checked={formData.marketplace_visible || false}
+            onCheckedChange={(checked) => setFormData({ ...formData, marketplace_visible: checked })}
+            className="mt-1"
+          />
+          <div className="grid gap-1.5 leading-none">
+            <Label
+              htmlFor="marketplace_visible"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Publicar no Marketplace
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Tornar este template disponível para clientes escolherem
+            </p>
+          </div>
         </div>
       </div>
     </div>

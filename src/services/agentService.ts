@@ -12,7 +12,7 @@ import type { Agent, AgentCreate, AgentUpdate, SubAgent, SubAgentCreate, SubAgen
  * List agents with optional filters
  */
 export async function listAgents(params: any = {}): Promise<Agent[]> {
-  const response = await apiClient.get<Agent[]>('/api/agents', params);
+  const response = await apiClient.get<Agent[]>('/api/agents/', params);
   return response.data;
 }
 
@@ -36,7 +36,7 @@ export async function getAgentBySlug(slug: string): Promise<Agent> {
  * Create new agent
  */
 export async function createAgent(data: Partial<Agent>): Promise<Agent> {
-  const response = await apiClient.post<Agent>('/api/agents', data);
+  const response = await apiClient.post<Agent>('/api/agents/', data);
   return response.data;
 }
 
@@ -54,7 +54,7 @@ export async function updateAgent(id: string, data: Partial<Agent>): Promise<Age
 export async function getSystemAgent(
   role: 'system_orchestrator' | 'system_supervisor' = 'system_orchestrator'
 ): Promise<Agent | undefined> {
-  const response = await apiClient.get<Agent[]>('/api/agents', { role, limit: 1 });
+  const response = await apiClient.get<Agent[]>('/api/agents/', { role, limit: 1 });
   return response.data[0];
 }
 
@@ -153,6 +153,27 @@ export async function toggleSubAgentActive(
   });
 }
 
+/**
+ * List templates from marketplace
+ */
+export async function listTemplates(params: { niche?: string } = {}): Promise<Agent[]> {
+  const response = await apiClient.get<Agent[]>('/api/agents/', {
+    ...params,
+    is_template: true
+  });
+  return response.data;
+}
+
+/**
+ * Clone template for client
+ */
+export async function cloneTemplate(templateId: string, customName?: string): Promise<Agent> {
+  const response = await apiClient.post<Agent>(`/api/marketplace/templates/${templateId}/clone`, {
+    custom_name: customName
+  });
+  return response.data;
+}
+
 export const agentService = {
   // Agents
   listAgents,
@@ -171,6 +192,10 @@ export const agentService = {
   updateSubAgent,
   deleteSubAgent,
   toggleSubAgentActive,
+
+  // Templates
+  listTemplates,
+  cloneTemplate,
 };
 
 export default agentService;

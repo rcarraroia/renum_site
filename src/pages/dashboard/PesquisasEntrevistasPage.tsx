@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,14 @@ interface Message {
   timestamp: string;
 }
 
+const mockMessages: Message[] = [
+  { role: 'assistant', content: 'Olá! Sou a Isa, assistente virtual da Renum. Como posso ajudar você hoje?', timestamp: '10:00' },
+  { role: 'user', content: 'Gostaria de saber como funcionam as pesquisas automatizadas.', timestamp: '10:05' },
+  { role: 'assistant', content: 'É simples! Nossos sub-agentes entram em contato com seus leads via WhatsApp e conduzem uma entrevista estruturada para coletar insights valiosos.', timestamp: '10:06' },
+  { role: 'user', content: 'Interessante. E onde vejo os resultados?', timestamp: '10:10' },
+  { role: 'assistant', content: 'Você pode acompanhar tudo em tempo real na aba de Resultados e Análise IA.', timestamp: '10:11' },
+];
+
 const PesquisasEntrevistasPage = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +79,7 @@ const PesquisasEntrevistasPage = () => {
     try {
       setLoading(true);
       const data = await interviewService.getInterviews();
-      setInterviews(data.items);
+      setInterviews(data?.items || []);
     } catch (err) {
       setError('Erro ao carregar entrevistas');
       console.error('Erro:', err);
@@ -85,9 +93,9 @@ const PesquisasEntrevistasPage = () => {
   const [filterSubagent, setFilterSubagent] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredEntrevistas = interviews.filter(e => {
+  const filteredEntrevistas = (interviews || []).filter(e => {
     const matchStatus = filterStatus === 'all' || e.status === filterStatus;
-    const contactName = (e as any).lead?.name || 'Cliente';
+    const contactName = (e as any).contactName || (e as any).lead?.name || 'Cliente';
     const matchSearch = contactName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchStatus && matchSearch;
   });
@@ -121,10 +129,10 @@ const PesquisasEntrevistasPage = () => {
   };
 
   const stats = {
-    total: interviews.length,
-    completed: interviews.filter(e => e.status === 'completed').length,
-    inProgress: interviews.filter(e => e.status === 'in_progress').length,
-    abandoned: interviews.filter(e => e.status === 'cancelled' || e.status === 'abandoned' as any).length
+    total: interviews?.length || 0,
+    completed: (interviews || []).filter(e => e.status === 'completed').length,
+    inProgress: (interviews || []).filter(e => e.status === 'in_progress').length,
+    abandoned: (interviews || []).filter(e => e.status === 'cancelled' || e.status === 'abandoned' as any).length
   };
 
   return (
@@ -232,7 +240,7 @@ const PesquisasEntrevistasPage = () => {
           <CardHeader>
             <CardTitle>Lista de Entrevistas</CardTitle>
             <CardDescription>
-              Mostrando {filteredEntrevistas.length} de {entrevistas.length} entrevistas
+              Mostrando {filteredEntrevistas.length} de {interviews.length} entrevistas
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -249,35 +257,35 @@ const PesquisasEntrevistasPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEntrevistas.map((entrevista) => (
-                  <TableRow key={entrevista.id}>
+                {filteredEntrevistas.map((e) => (
+                  <TableRow key={e.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {getStatusIcon(entrevista.status)}
-                        {getStatusBadge(entrevista.status)}
+                        {getStatusIcon(e.status)}
+                        {getStatusBadge(e.status)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{entrevista.contactName}</div>
-                        <div className="text-sm text-muted-foreground">{entrevista.contactPhone}</div>
+                        <div className="font-medium">{e.contactName}</div>
+                        <div className="text-sm text-muted-foreground">{e.contactPhone}</div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{entrevista.subagentName}</Badge>
+                      <Badge variant="outline">{e.subagentName}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {new Date(entrevista.startedAt).toLocaleString('pt-BR')}
+                        {e.started_at ? new Date(e.started_at).toLocaleString('pt-BR') : '-'}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{entrevista.messagesCount} msgs</Badge>
+                      <Badge variant="secondary">{e.messagesCount || 0} msgs</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {entrevista.topicsCovered.length > 0
-                          ? `${entrevista.topicsCovered.length} tópicos`
+                        {(e.topicsCovered?.length || 0) > 0
+                          ? `${e.topicsCovered?.length} tópicos`
                           : 'Nenhum'
                         }
                       </div>
@@ -286,7 +294,7 @@ const PesquisasEntrevistasPage = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewConversation(entrevista)}
+                        onClick={() => handleViewConversation(e)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Ver
@@ -328,8 +336,8 @@ const PesquisasEntrevistasPage = () => {
                   <div>
                     <div className="text-sm text-muted-foreground">Duração</div>
                     <div className="font-medium">
-                      {selectedEntrevista.completedAt
-                        ? `${Math.floor((new Date(selectedEntrevista.completedAt).getTime() - new Date(selectedEntrevista.startedAt).getTime()) / 60000)} min`
+                      {selectedEntrevista.completed_at && selectedEntrevista.started_at
+                        ? `${Math.floor((new Date(selectedEntrevista.completed_at).getTime() - new Date(selectedEntrevista.started_at).getTime()) / 60000)} min`
                         : 'Em andamento'
                       }
                     </div>

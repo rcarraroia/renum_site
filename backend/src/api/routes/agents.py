@@ -12,8 +12,10 @@ from src.models.agent import (
     AgentUpdate,
     AgentResponse,
     AgentListItem,
-    AgentStats
+    AgentStats,
+    AgentRole
 )
+from src.models.user import UserProfile
 from src.models.sub_agent import (
     SubAgentCreate,
     SubAgentUpdate,
@@ -23,41 +25,41 @@ from src.services.agent_service import get_agent_service
 from src.services.subagent_service import SubAgentService
 from src.api.middleware.auth_middleware import get_current_user
 
-router = APIRouter(prefix="/agents", tags=["agents"])
+router = APIRouter(prefix="", tags=["agents"])
 
 
 # ============================================================================
 # AGENTS CRUD
 # ============================================================================
 
-@router.get("/", response_model=List[AgentListItem])
+@router.get("/agents", response_model=List[AgentListItem])
 async def list_agents(
     client_id: Optional[UUID] = Query(None, description="Filter by client ID"),
-    role: Optional[str] = Query(None, description="Filter by agent role (system_orchestrator, system_supervisor, client_agent)"),
-    status: Optional[str] = Query(None, description="Filter by status (draft, active, paused, archived)"),
-    is_public: Optional[bool] = Query(None, description="Filter by public status"),
+    role: Optional[AgentRole] = Query(None, description="Filter by agent role"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    search: Optional[str] = Query(None, description="Search by name or description"),
     limit: int = Query(50, ge=1, le=100, description="Number of results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
-    current_user: dict = Depends(get_current_user)
+    current_user: UserProfile = Depends(get_current_user)
 ):
     """
     List agents with optional filtering
-    
-    Returns paginated list of agents
     """
     agent_service = get_agent_service()
     
     try:
         agents = await agent_service.list_agents(
             client_id=client_id,
-            role=role,
-            status=status,
-            is_public=is_public,
+            role=role.value if role else None,
+            is_active=is_active,
             limit=limit,
             offset=offset
         )
         return agents
     except Exception as e:
+        import traceback
+        from src.utils.logger import logger
+        logger.error(f"Erro na API de agentes: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list agents: {str(e)}"

@@ -38,10 +38,11 @@ class StandardFieldConfig(BaseModel):
 
 
 class WizardStep1Data(BaseModel):
-    """Step 1: Definição Inicial (Contexto)"""
-    project_id: UUID = Field(..., description="Project ID")
-    client_id: UUID = Field(..., description="Client ID")
-    contract_type: Literal['b2b_empresa', 'b2c_individual'] = Field(..., description="Contract type")
+    """Step 1: Definição Inicial (Template)"""
+    category: Literal['b2b', 'b2c'] = Field(..., description="Categoria do template")
+    niche: str = Field(..., min_length=3, max_length=100, description="Nicho de atuação")
+    marketplace_visible: bool = Field(default=False, description="Visível no marketplace")
+    n8n_workflow_url: Optional[str] = Field(None, description="URL do workflow N8N para importação")
 
 class WizardStep2Data(BaseModel):
     """Step 2: Identidade do Agente"""
@@ -83,7 +84,7 @@ class WizardStep5Data(BaseModel):
 
 class WizardSessionCreate(BaseModel):
     """Create wizard session"""
-    client_id: UUID = Field(..., description="Client ID creating the agent")
+    client_id: Optional[UUID] = Field(default=None, description="Client ID creating the agent")
 
 
 class WizardSessionUpdate(BaseModel):
@@ -100,7 +101,7 @@ class WizardStepData(BaseModel):
 class WizardSession(BaseModel):
     """Wizard session response"""
     id: UUID = Field(..., description="Wizard session ID")
-    client_id: UUID = Field(..., description="Client ID")
+    client_id: Optional[UUID] = Field(default=None, description="Client ID")
     current_step: int = Field(default=1, ge=1, le=6, description="Current step")
     step_1_data: Optional[WizardStep1Data] = None
     step_2_data: Optional[WizardStep2Data] = None

@@ -52,6 +52,14 @@ class AgentBase(BaseModel):
     is_active: bool = Field(default=True, description="Se o agente está ativo")
     is_public: bool = Field(default=False, description="Se é acessível publicamente")
     public_url: Optional[str] = Field(None, description="URL pública do agente")
+    
+    # Campos de Template (Marketplace)
+    is_template: bool = Field(default=False, description="Se é template do marketplace")
+    category: Optional[str] = Field(None, description="Categoria: b2b ou b2c")
+    niche: Optional[str] = Field(None, max_length=100, description="Nicho de atuação")
+    marketplace_visible: bool = Field(default=False, description="Visível no marketplace")
+    available_tools: Dict[str, Any] = Field(default_factory=dict, description="Ferramentas configuráveis pelo cliente")
+    available_integrations: Dict[str, Any] = Field(default_factory=dict, description="Integrações configuráveis pelo cliente")
 
     # Propriedades auxiliares para acessar campos dentro de Config de forma fácil
     @property

@@ -28,13 +28,24 @@ async def start_wizard(
     """
     Start new wizard session
     
-    Creates a draft agent and returns wizard session ID
+    Creates a draft agent/template and returns wizard session ID
     """
     wizard_service = get_wizard_service()
     
     try:
-        session = wizard_service.start_wizard(data.client_id)
+        # Extrair category se fornecida (para templates)
+        category = getattr(data, 'category', None)
+        
+        session = wizard_service.start_wizard(
+            client_id=data.client_id,
+            category=category
+        )
         return session
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

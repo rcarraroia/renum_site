@@ -19,8 +19,9 @@ const ConversationListItem: React.FC<ConversationListItemProps> = ({ conversatio
   const lastMessageContent = lastMessage?.content || 'Nenhuma mensagem.';
   const isUnread = conversation.unreadCount > 0;
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const getInitials = (name?: string) => {
+    if (!name) return '??';
+    return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase();
   };
 
   return (
@@ -35,7 +36,7 @@ const ConversationListItem: React.FC<ConversationListItemProps> = ({ conversatio
       <div className="relative flex-shrink-0">
         <Avatar className="h-10 w-10 bg-[#4e4ea8] text-white dark:bg-[#0ca7d2]">
           <AvatarFallback className="text-sm">
-            {getInitials(conversation.client.contact.name)}
+            {getInitials(conversation.client?.contact?.name || 'Cliente')}
           </AvatarFallback>
         </Avatar>
         <div className="absolute bottom-0 right-0 p-1 bg-background rounded-full border">
@@ -46,7 +47,7 @@ const ConversationListItem: React.FC<ConversationListItemProps> = ({ conversatio
       <div className="flex-grow overflow-hidden">
         <div className="flex justify-between items-center">
           <h4 className={cn("text-sm font-bold truncate", isUnread && "text-primary dark:text-white")}>
-            {conversation.client.companyName}
+            {conversation.client?.companyName || 'Empresa'}
           </h4>
           <span className="text-xs text-muted-foreground flex-shrink-0">
             {formatDistanceToNow(conversation.lastUpdate, { addSuffix: true, locale: ptBR })}

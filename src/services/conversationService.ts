@@ -73,7 +73,7 @@ export const conversationService = {
     limit?: number;
     status?: string;
   }): Promise<ConversationList> {
-    const { data } = await apiClient.get<ConversationList>('/api/conversations', params);
+    const { data } = await apiClient.get<ConversationList>('/api/conversations/', params);
     return data;
   },
 

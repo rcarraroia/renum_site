@@ -31,7 +31,7 @@ class IntegrationService {
    */
   async listIntegrations(provider?: string): Promise<Integration[]> {
     const params = provider ? { provider } : undefined;
-    const response = await apiClient.get<Integration[]>('/api/integrations', { params });
+    const response = await apiClient.get<Integration[]>('/api/integrations/', { params });
     return response.data;
   }
 
