@@ -1,6 +1,6 @@
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import AgentWizard from '@/components/agents/wizard/AgentWizard';
+;
 import { Zap } from 'lucide-react';
 
 const AgentCreatePage: React.FC = () => {
@@ -12,7 +12,7 @@ const AgentCreatePage: React.FC = () => {
           Criação de Agente
         </h2>
       </div>
-      <AgentWizard />
+      <PlaceholderNewAgent />
     </DashboardLayout>
   );
 };

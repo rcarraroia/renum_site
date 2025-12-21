@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-12-21T13:56:41.770851",
+  "backend_files_removed": [
+    "backend/src/api/routes/wizard.py",
+    "backend/src/services/wizard_service.py",
+    "backend/src/models/wizard.py",
+    "backend/src/agents/wizard_agent.py"
+  ],
+  "frontend_files_removed": [
+    "src/components/agents/wizard/",
+    "src/services/wizardService.ts"
+  ],
+  "database_cleaned": true,
+  "routes_updated": true,
+  "placeholder_created": true,
+  "validation_passed": true,
+  "errors": []
+}

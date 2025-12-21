@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-12-21T13:58:49.333901",
+  "backend_status": "error",
+  "frontend_status": "healthy",
+  "database_status": "healthy",
+  "renus_status": "error",
+  "isa_status": "error",
+  "import_errors": [],
+  "api_tests": [],
+  "database_tests": [
+    {
+      "test": "wizard_cleanup",
+      "description": "Verificar se wizard_session foi removido",
+      "expected": 0,
+      "actual": 0,
+      "success": true
+    },
+    {
+      "test": "ISA_exists",
+      "description": "Verificar se ISA ainda existe",
+      "expected": "exists",
+      "actual": "exists",
+      "success": true,
+      "status": "draft"
+    },
+    {
+      "test": "RENUS_exists",
+      "description": "Verificar se RENUS ainda existe",
+      "expected": "exists",
+      "actual": "exists",
+      "success": true,
+      "status": "draft"
+    }
+  ],
+  "overall_status": "fair",
+  "errors": [
+    "Erro validando backend: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=10)",
+    "Erro testando RENUS: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=10)",
+    "Erro testando ISA: HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=10)"
+  ],
+  "success_rate": 62.5
+}

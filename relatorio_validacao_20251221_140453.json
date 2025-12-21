@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-12-21T14:04:53.198462",
+  "backend_status": "healthy",
+  "frontend_status": "healthy",
+  "database_status": "healthy",
+  "renus_status": "unhealthy",
+  "isa_status": "unhealthy",
+  "import_errors": [],
+  "api_tests": [
+    {
+      "endpoint": "/docs",
+      "method": "GET",
+      "description": "Documentação Swagger",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.04527
+    },
+    {
+      "endpoint": "/api/agents",
+      "method": "GET",
+      "description": "Lista de agentes",
+      "status_code": 403,
+      "success": true,
+      "response_time": 0.00494
+    },
+    {
+      "endpoint": "/api/clients",
+      "method": "GET",
+      "description": "Lista de clientes",
+      "status_code": 403,
+      "success": true,
+      "response_time": 0.086225
+    },
+    {
+      "endpoint": "/api/leads",
+      "method": "GET",
+      "description": "Lista de leads",
+      "status_code": 403,
+      "success": true,
+      "response_time": 0.030516
+    }
+  ],
+  "database_tests": [
+    {
+      "test": "wizard_cleanup",
+      "description": "Verificar se wizard_session foi removido",
+      "expected": 0,
+      "actual": 0,
+      "success": true
+    },
+    {
+      "test": "ISA_exists",
+      "description": "Verificar se ISA ainda existe",
+      "expected": "exists",
+      "actual": "exists",
+      "success": true,
+      "status": "draft"
+    },
+    {
+      "test": "RENUS_exists",
+      "description": "Verificar se RENUS ainda existe",
+      "expected": "exists",
+      "actual": "exists",
+      "success": true,
+      "status": "draft"
+    }
+  ],
+  "overall_status": "good",
+  "errors": [
+    "RENUS retornou: 403",
+    "ISA retornou: 403"
+  ],
+  "success_rate": 83.33333333333334
+}

@@ -6,8 +6,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.config.settings import settings
-from src.api.routes import health, auth, clients, leads, projects, websocket, conversations, messages, interviews, renus_config, tools, sub_agents, public_chat, isa, dashboard, reports, integrations, triggers, webhooks, wizard, agents, sicc_memory, sicc_learning, sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, knowledge, marketplace, payment
 from src.utils.logger import logger
+
+# Imports dos routers
+from src.api.routes import (
+    health, auth, clients, leads, projects, conversations, messages, 
+    interviews, renus_config, tools, knowledge, agents, sub_agents, 
+    public_chat, isa, dashboard, reports, integrations, triggers, 
+    webhooks, marketplace, payment, sicc_memory, sicc_learning, 
+    sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, websocket
+)
 
 # Configuração da Aplicação
 app = FastAPI(
@@ -51,7 +59,6 @@ app.include_router(integrations.router, prefix="/api")  # Sprint 07A - Integrati
 # app.include_router(auth_google.router, prefix="/api")
 app.include_router(triggers.router, prefix="/api")  # Sprint 07A - Triggers
 app.include_router(webhooks.router)  # Sprint 07A - Webhooks (no prefix)
-app.include_router(wizard.router, prefix="/api")  # Sprint 06 - Wizard
 app.include_router(marketplace.router, prefix="/api")  # Marketplace de Templates
 app.include_router(payment.router, prefix="/api")  # Payment (Asaas + Stripe)
 app.include_router(sicc_memory.router, prefix="/api")  # Sprint 10 - SICC Memory
