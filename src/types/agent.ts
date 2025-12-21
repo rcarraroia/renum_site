@@ -6,12 +6,18 @@
 /**
  * Agent status
  */
-export type AgentStatus = 'draft' | 'active' | 'paused' | 'archived';
+export type AgentStatus = 'draft' | 'active' | 'paused' | 'archived' | 'ativo' | 'inativo' | 'pausado' | 'erro';
+
+/**
+ * Agent Type (Contract/Deployment)
+ */
+export type AgentType = 'b2b_empresa' | 'b2c_individual' | 'b2c_marketplace';
 
 /**
  * Communication channel
  */
-export type Channel = 'whatsapp' | 'web' | 'sms' | 'email';
+export type AgentChannel = 'whatsapp' | 'web' | 'sms' | 'email' | 'telegram';
+export type Channel = AgentChannel;
 
 /**
  * Template type
@@ -21,7 +27,7 @@ export type TemplateType = 'custom' | 'mmn' | 'vereador' | 'clinica' | 'pesquisa
 /**
  * Agent Categories
  */
-export type AgentCategory = 'discovery' | 'vendas' | 'suporte' | 'mmn' | 'clinica' | 'vereador' | 'custom';
+export type AgentCategory = 'discovery' | 'vendas' | 'suporte' | 'mmn' | 'clinica' | 'vereador' | 'custom' | 'imobiliario' | 'educacao' | 'marketing' | 'generico';
 
 export interface CategoryMock {
   id: AgentCategory;
@@ -32,26 +38,34 @@ export interface CategoryMock {
 /**
  * LLM model
  */
-export type Model = 'gpt-4' | 'gpt-4-turbo-preview' | 'gpt-4o-mini' | 'claude-3-5-sonnet-20241022' | 'claude-3-opus';
+export type Model = 'gpt-4' | 'gpt-4-turbo-preview' | 'gpt-4o-mini' | 'gpt-4o' | 'claude-3-5-sonnet-20241022' | 'claude-3-opus' | 'llama-3.1-405b';
 
 /**
  * Agent (main agent in hierarchy: clients → agents → sub_agents)
  */
 export interface Agent {
   id: string;
-  client_id: string;
+  client_id: string | null;
+  project_id: string | null;
   name: string;
   description: string | null;
   slug: string | null;
+  domain?: string;
   model: Model;
   system_prompt: string;
-  channel: Channel;
+  channel: AgentChannel[];
+  type: AgentType;
+  category: AgentCategory;
   template_type: TemplateType;
   status: AgentStatus;
+  is_template: boolean;
   is_public: boolean;
+  marketplace_visible: boolean;
   public_url: string | null;
   config: Record<string, any>;
   access_count: number;
+  instances_count?: number;
+  conversations_today?: number;
   created_at: string;
   updated_at: string;
 }

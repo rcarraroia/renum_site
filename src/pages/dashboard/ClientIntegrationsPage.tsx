@@ -83,7 +83,7 @@ const ClientIntegrationsPage: React.FC = () => {
                 </CardContent>
             </Card>
 
-            <IntegrationsTab />
+            <IntegrationsTab globalMode={true} />
         </DashboardLayout>
     );
 };

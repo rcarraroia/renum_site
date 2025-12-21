@@ -6,11 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, User, Globe, MessageSquare, Tag, CheckCircle, XCircle, Upload, FileJson } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { mockCategories, mockAgents } from '@/mocks/agents.mock';
 import { AgentCategory } from '@/types/agent';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { wizardService } from '@/services/wizardService';
+import { agentService } from '@/services/agentService';
 
 interface Step2IdentityProps {
   formData: any;
@@ -21,17 +21,33 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
   const MAX_DESCRIPTION_LENGTH = 500;
   const [slugStatus, setSlugStatus] = useState<'checking' | 'available' | 'unavailable' | 'initial'>('initial');
 
-  // Mock function to check slug availability
-  const checkSlugAvailability = (slug: string) => {
+  // Categorias Reais (Mapeadas do banco se tivéssemos serviço, mas por agora usaremos as globais)
+  const categories = [
+    { id: 'vendas', name: 'Vendas & Atendimento', icon: '💰' },
+    { id: 'suporte', name: 'Suporte Técnico', icon: '🛠️' },
+    { id: 'imobiliario', name: 'Imobiliário / Real Estate', icon: '🏠' },
+    { id: 'educacao', name: 'Educação / Cursos', icon: '🎓' },
+    { id: 'marketing', name: 'Marketing / Captação', icon: '📈' },
+    { id: 'generico', name: 'Geral / Outros', icon: '🤖' }
+  ];
+
+  const checkSlugAvailability = async (slug: string) => {
     if (slug.length < 3) return 'initial';
-    // Check against mock agents (excluding the current agent if editing, though we don't have edit context here)
-    const isDuplicate = mockAgents.some(agent => agent.slug === slug);
-    return isDuplicate ? 'unavailable' : 'available';
+    try {
+      setSlugStatus('checking');
+      const agent = await agentService.getAgentBySlug(slug);
+      return agent ? 'unavailable' : 'available';
+    } catch (error: any) {
+      // Se der 404, significa que está disponível
+      if (error.response?.status === 404) return 'available';
+      return 'available'; // Default para disponível se houver erro ou não existir
+    }
   };
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      const status = checkSlugAvailability(formData.slug);
+    if (!formData.slug) return;
+    const handler = setTimeout(async () => {
+      const status = await checkSlugAvailability(formData.slug);
       setSlugStatus(status);
     }, 500);
     return () => clearTimeout(handler);
@@ -56,6 +72,8 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
 
   const getSlugIcon = () => {
     switch (slugStatus) {
+      case 'checking':
+        return <div className="h-4 w-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />;
       case 'available':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'unavailable':
@@ -66,14 +84,16 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
   };
 
   const getSlugMessage = () => {
-    if (formData.slug.length < 3) return "Mínimo de 3 caracteres.";
+    if (!formData.slug || formData.slug.length < 3) return "Mínimo de 3 caracteres.";
     switch (slugStatus) {
+      case 'checking':
+        return "Verificando disponibilidade...";
       case 'available':
-        return <span className="text-green-500 flex items-center"><CheckCircle className="h-4 w-4 mr-1" /> Disponível</span>;
+        return <span className="text-green-500 flex items-center"><CheckCircle className="h-4 w-4 mr-1" /> Disponível para uso</span>;
       case 'unavailable':
-        return <span className="text-red-500 flex items-center"><XCircle className="h-4 w-4 mr-1" /> Já existe</span>;
+        return <span className="text-red-500 flex items-center"><XCircle className="h-4 w-4 mr-1" /> Este slug já está sendo usado</span>;
       default:
-        return "Este será o endereço de acesso do cliente.";
+        return "Este será o endereço único do seu agente.";
     }
   };
 
@@ -86,7 +106,7 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
       const json = JSON.parse(text);
 
       toast.promise(wizardService.convertN8n(json), {
-        loading: 'Convertendo workflow n8n...',
+        loading: 'Analisando lógica do n8n...',
         success: (data) => {
           setFormData({
             ...formData,
@@ -94,7 +114,7 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
             description: data.description,
             system_prompt: data.system_prompt_hint
           });
-          return `Workflow convertido! ${data.node_count} nós processados.`;
+          return `Workflow convertido com sucesso!`;
         },
         error: 'Erro ao converter workflow n8n.'
       });
@@ -107,7 +127,6 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
 
   return (
     <div className="space-y-6">
-      {/* n8n Import Tool */}
       <Card className="border-dashed border-2 bg-blue-50/30 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -117,7 +136,7 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
             <FileJson className="h-5 w-5 text-blue-400 opacity-50" />
           </div>
           <CardDescription>
-            Importe seu arquivo JSON para preencher automaticamente as configurações iniciais.
+            Importe seu arquivo JSON para que nossa IA configure a base do seu novo agente.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -126,7 +145,7 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
               htmlFor="n8n-upload"
               className="flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-700 rounded-md bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             >
-              <Upload className="h-4 w-4 mr-2" /> Fazer Upload do JSON
+              <Upload className="h-4 w-4 mr-2" /> Importar Workflow JSON
               <input
                 id="n8n-upload"
                 type="file"
@@ -136,7 +155,7 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
               />
             </Label>
             <p className="text-xs text-muted-foreground">
-              Vantagem: Nome, descrição e lógica de prompt serão sugeridos via IA.
+              Nome, descrição e o System Prompt inicial serão preenchidos automaticamente.
             </p>
           </div>
         </CardContent>
@@ -148,7 +167,7 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
             <User className="h-5 w-5 mr-2" /> 2. Identidade do Agente
           </CardTitle>
           <CardDescription>
-            Defina o nome, descrição e o identificador único do agente.
+            Defina como seu agente será identificado e onde ele atuará.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -157,24 +176,21 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
             <Label htmlFor="name">Nome do Agente *</Label>
             <Input
               id="name"
-              placeholder="Ex: Agente de Vendas Slim Quality"
+              placeholder="Ex: Consultor Slim Quality"
               value={formData.name || ''}
               onChange={handleNameChange}
             />
-            <p className="text-xs text-muted-foreground">
-              Escolha um nome descritivo que identifique o nicho e tipo.
-            </p>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="flex justify-between">
-              <span>Descrição (interna):</span>
+              <span>Descrição Interna</span>
               <span className="text-xs text-muted-foreground">{formData.description?.length || 0}/{MAX_DESCRIPTION_LENGTH}</span>
             </Label>
             <Textarea
               id="description"
-              placeholder="Breve descrição do objetivo e público-alvo deste agente..."
+              placeholder="Breve resumo da finalidade deste agente..."
               rows={3}
               value={formData.description || ''}
               onChange={handleInputChange}
@@ -182,15 +198,15 @@ const Step2Identity: React.FC<Step2IdentityProps> = ({ formData, setFormData }) 
             />
           </div>
 
-          {/* Category (Reusing from Step 1, but placing here as requested) */}
+          {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category" className="flex items-center"><Tag className="h-4 w-4 mr-2" /> Categoria/Nicho *</Label>
+            <Label htmlFor="category" className="flex items-center"><Tag className="h-4 w-4 mr-2" /> Categoria de Atuação *</Label>
             <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v as AgentCategory })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
               <SelectContent>
-                {mockCategories.map(c => (
+                {categories.map(c => (
                   <SelectItem key={c.id} value={c.id}>
                     <div className="flex items-center">
                       <span className="mr-2">{c.icon}</span> {c.name}

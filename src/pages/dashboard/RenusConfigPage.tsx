@@ -141,7 +141,7 @@ const RenusConfigPage: React.FC = () => {
 
       {/* Main Configuration Tabs - Now Full Width */}
       <div className="w-full">
-        <ConfigRenusPanel isGlobalConfig={true} />
+        <ConfigRenusPanel agentId={agent?.id} isGlobalConfig={true} />
       </div>
     </DashboardLayout>
   );

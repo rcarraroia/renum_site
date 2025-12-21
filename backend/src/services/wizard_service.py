@@ -56,10 +56,13 @@ class WizardService:
             'client_id': str(client_id) if client_id else None,
             'name': f'Draft {"Template" if is_template else "Agent"} {wizard_id.hex[:8]}',
             'description': 'Template in creation' if is_template else 'Agent in creation',
-            'channel': 'web',  # Default channel for wizard
-            'system_prompt': 'Draft template' if is_template else 'Draft agent',
-            'model': 'gpt-4o-mini',
-            'status': 'draft',
+            # 'channel': 'web',  # Rely on DB default to avoid schema cache issues
+            # 'system_prompt': 'Draft template' if is_template else 'Draft agent', # Rely on DB default
+            'slug': f'draft-{"template" if is_template else "agent"}-{wizard_id.hex[:8]}',
+            # 'model': 'gpt-4o-mini', # Rely on DB default
+            # 'status': 'draft', # Rely on DB default
+            # 'model': 'gpt-4o-mini', # Rely on DB default
+            # 'status': 'draft', # Rely on DB default
             'template_type': 'custom',
             'is_public': False,
             'is_template': is_template,
@@ -289,6 +292,13 @@ class WizardService:
         if config.get('step_3_data'):
             try:
                 step_3_data = WizardStep3Data(**config['step_3_data'])
+            except Exception:
+                pass
+        
+        step_4_data = None
+        if config.get('step_4_data'):
+            try:
+                step_4_data = WizardStep4Data(**config['step_4_data'])
             except Exception:
                 pass
         

@@ -18,7 +18,12 @@ const IconMap: Record<string, any> = {
   Wrench
 };
 
-const ToolsTab: React.FC = () => {
+interface ToolsTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+}
+
+const ToolsTab: React.FC<ToolsTabProps> = ({ agentId: propAgentId }) => {
   const [agent, setAgent] = useState<any>(null);
   const [registryTools, setRegistryTools] = useState<RegistryTool[]>([]);
   const [enabledTools, setEnabledTools] = useState<string[]>([]);
@@ -35,11 +40,15 @@ const ToolsTab: React.FC = () => {
 
       // Load Agent
       let agentData;
-      try {
-        agentData = await agentService.getAgentBySlug('renus');
-      } catch {
-        const agents = await agentService.listAgents();
-        agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+      if (propAgentId) {
+        agentData = await agentService.getAgent(propAgentId);
+      } else {
+        try {
+          agentData = await agentService.getAgentBySlug('renus');
+        } catch {
+          const agents = await agentService.listAgents();
+          agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+        }
       }
 
       if (agentData) {

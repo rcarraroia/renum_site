@@ -40,6 +40,12 @@ import MarketplacePage from './pages/client/MarketplacePage'; // Import Marketpl
 import CheckoutPage from './pages/client/CheckoutPage'; // Import Checkout page
 import ClientAgentsPage from './pages/client/ClientAgentsPage';
 import ClientAgentDetailsPage from './pages/client/ClientAgentDetailsPage';
+import RenusInterface from './pages/agents/contextual/RenusInterface';
+import PesquisasInterface from './pages/agents/contextual/PesquisasInterface';
+import IsaInterface from './pages/agents/contextual/IsaInterface';
+import IntelligenceDashboard from './pages/intelligence/IntelligenceDashboard';
+import IntegrationsRadar from './pages/integrations/IntegrationsRadar';
+import TemplateMarketplace from './pages/marketplace/TemplateMarketplace';
 
 // Component to redirect authenticated users to dashboard
 const HomeRedirect = () => {
@@ -98,6 +104,18 @@ const App = () => (
                     <Route path="/dashboard/admin/pesquisas/resultados" element={<PesquisasResultadosPage />} />
                     <Route path="/dashboard/admin/pesquisas/analise" element={<PesquisasAnalisePage />} />
                     <Route path="/dashboard/admin/assistente-isa" element={<AssistenteIsaPage />} />
+
+                    {/* Contextual Interfaces */}
+                    <Route path="/dashboard/agents/renus" element={<RenusInterface />} />
+                    <Route path="/dashboard/agents/pesquisas" element={<PesquisasInterface />} />
+                    <Route path="/dashboard/agents/isa" element={<IsaInterface />} />
+
+                    {/* Intelligence & Integrations */}
+                    <Route path="/dashboard/intelligence" element={<IntelligenceDashboard />} />
+                    <Route path="/dashboard/integrations/radar" element={<IntegrationsRadar />} />
+
+                    {/* Marketplace */}
+                    <Route path="/dashboard/marketplace" element={<TemplateMarketplace />} />
 
                     {/* SICC Routes */}
                     <Route path="/intelligence/evolution" element={<EvolutionPage />} />

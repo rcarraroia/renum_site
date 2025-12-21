@@ -39,14 +39,14 @@ const AgentOverviewTab: React.FC<AgentOverviewTabProps> = ({ agent }) => {
         navigator.clipboard.writeText(text);
         toast.info(`${label} copiado!`);
     };
-    
+
     const clientDashboardLink = `https://${agent.slug}.renum.com.br`;
     const registrationLink = `https://${agent.slug}.renum.com.br/cadastro?token=abc123xyz`;
 
     return (
         <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-3">
-                
+
                 {/* Card 1: Estatísticas Rápidas */}
                 <Card className="border-l-4 border-[#4e4ea8]">
                     <CardHeader><CardTitle className="flex items-center text-[#4e4ea8]"><Zap className="h-5 w-5 mr-2" /> Estatísticas Rápidas</CardTitle></CardHeader>
@@ -65,7 +65,7 @@ const AgentOverviewTab: React.FC<AgentOverviewTabProps> = ({ agent }) => {
                         <div className="flex justify-between"><span>Cliente:</span><span className="font-semibold">{client?.name}</span></div>
                         <div className="flex justify-between"><span>Projeto:</span><span className="font-semibold">{project?.name}</span></div>
                         <div className="flex justify-between"><span>Tipo:</span><Badge variant="secondary">{getAgentTypeLabel(agent.type)}</Badge></div>
-                        <div className="flex justify-between"><span>Categoria:</span><Badge className="bg-[#FF6B35] text-white">{agent.category.toUpperCase()}</Badge></div>
+                        <div className="flex justify-between"><span>Categoria:</span><Badge className="bg-[#FF6B35] text-white">{(agent.category || 'custom').toUpperCase()}</Badge></div>
                         <div className="flex justify-between"><span>Criado em:</span><span className="font-semibold">{agent.created_at}</span></div>
                     </CardContent>
                 </Card>
@@ -95,7 +95,7 @@ const AgentOverviewTab: React.FC<AgentOverviewTabProps> = ({ agent }) => {
                     </CardContent>
                 </Card>
             </div>
-            
+
             {/* Performance Chart Mock */}
             <Card>
                 <CardHeader><CardTitle>Performance Recente (Mock)</CardTitle></CardHeader>

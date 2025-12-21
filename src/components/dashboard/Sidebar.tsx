@@ -24,23 +24,22 @@ const adminNavItems: NavItem[] = [
 ];
 
 const adminAgentItems: NavItem[] = [
-  { title: 'Todos os Agentes', href: '/dashboard/admin/agents', icon: Zap, roles: ['admin'] },
-  { title: 'Criar Novo', href: '/dashboard/admin/agents/create', icon: Plus, roles: ['admin'] },
-  { title: 'Templates', href: '/dashboard/admin/agents/templates', icon: FileText, roles: ['admin'] },
+  { title: 'Gestão de Agentes', href: '/dashboard/admin/agents', icon: Zap, roles: ['admin'] },
+  { title: 'Marketplace', href: '/dashboard/marketplace', icon: Bot, roles: ['admin'] },
 ];
 
-const adminPesquisaItems: NavItem[] = [
-  { title: 'Entrevistas', href: '/dashboard/admin/pesquisas/entrevistas', icon: ClipboardList, roles: ['admin'] },
-  { title: 'Resultados', href: '/dashboard/admin/pesquisas/resultados', icon: BarChart, roles: ['admin'] },
-  { title: 'Análise IA', href: '/dashboard/admin/pesquisas/analise', icon: Sparkles, roles: ['admin'] },
+const adminOperationsItems: NavItem[] = [
+  { title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] },
+  { title: 'Relatórios & KPIs', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] },
+  { title: 'Hub de Integrações', href: '/dashboard/integrations/radar', icon: RefreshCw, roles: ['admin'] },
 ];
 
-const adminSiccItems: NavItem[] = [
+
+const adminIntelligenceItems: NavItem[] = [
+  { title: 'Brain Dashboard', href: '/dashboard/intelligence', icon: Brain, roles: ['admin'] },
   { title: 'Evolução do Agente', href: '/intelligence/evolution', icon: TrendingUp, roles: ['admin'] },
-  { title: 'Memórias', href: '/intelligence/memories', icon: Brain, roles: ['admin'] },
+  { title: 'Memórias Recentes', href: '/intelligence/memories', icon: Database, roles: ['admin'] },
   { title: 'Fila de Aprendizados', href: '/intelligence/queue', icon: Clock, roles: ['admin'] },
-  { title: 'Integrações (Radar)', href: '/dashboard/admin/integrations', icon: RefreshCw, roles: ['admin'] },
-  { title: 'Configurações IA', href: '/intelligence/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const clientNavItems: NavItem[] = [
@@ -150,22 +149,13 @@ const Sidebar: React.FC = () => {
       <nav className="flex-grow p-4 space-y-4 overflow-y-auto">
         {role === 'admin' ? (
           <>
-            {renderNavGroup(adminNavItems, 'Geral')}
+            {renderNavGroup(adminNavItems, 'Administração')}
 
-            {/* Novo Grupo de Agentes */}
             {renderAgentGroup()}
 
-            {renderNavGroup([{ title: 'Conversas', href: '/dashboard/admin/conversations', icon: MessageSquare, roles: ['admin'] }], 'Comunicação')}
+            {renderNavGroup(adminOperationsItems, 'Operações')}
 
-            {renderNavGroup(adminPesquisaItems, 'Pesquisas')}
-
-            {/* NOVA SEÇÃO: INTELIGÊNCIA */}
-            {renderNavGroup(adminSiccItems, 'Inteligência')}
-
-            {renderNavGroup([{ title: 'Relatórios', href: '/dashboard/admin/reports', icon: BarChart, roles: ['admin'] }], 'Análise')}
-
-            {renderNavGroup([{ title: 'Assistente Isa', href: '/dashboard/admin/assistente-isa', icon: Sparkles, roles: ['admin'] }], 'Ferramentas')}
-            {renderNavGroup([{ title: 'Config. Global', href: '/dashboard/admin/renus-config', icon: Wrench, roles: ['admin'] }], 'Sistema')}
+            {renderNavGroup(adminIntelligenceItems, 'Inteligência')}
           </>
         ) : (
           renderNavGroup(clientNavItems, 'Geral')

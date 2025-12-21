@@ -79,14 +79,23 @@ const KPI: React.FC<KPIProps> = ({ title, value, change, icon: Icon, color }) =>
     );
 };
 
-const ReportsOverviewTab: React.FC = () => {
+interface ReportsOverviewTabProps {
+    data?: any;
+}
+
+const ReportsOverviewTab: React.FC<ReportsOverviewTabProps> = ({ data }) => {
+    // Mesclar dados reais com mock para o que não estiver disponível
+    const kpiData = data || MOCK_KPI_DATA;
+    const projectStatusData = data?.projectStatusDistribution || MOCK_PROJECT_STATUS_DATA;
+    const guardrailsData = data?.guardrailsMetrics || MOCK_GUARDRAILS_METRICS;
+
     const kpis = [
-        { title: 'Total de Projetos', value: MOCK_KPI_DATA.totalProjects.value, change: MOCK_KPI_DATA.totalProjects.change, icon: Briefcase, color: 'text-[#4e4ea8]' },
-        { title: 'Clientes Ativos', value: MOCK_KPI_DATA.activeClients.value, change: MOCK_KPI_DATA.activeClients.change, icon: Users, color: 'text-[#0ca7d2]' },
-        { title: 'Novos Leads', value: MOCK_KPI_DATA.newLeads.value, change: MOCK_KPI_DATA.newLeads.change, icon: Zap, color: 'text-[#FF6B35]' },
-        { title: 'Vol. Conversas', value: MOCK_KPI_DATA.conversationVolume.value, change: MOCK_KPI_DATA.conversationVolume.change, icon: MessageSquare, color: 'text-purple-500' },
-        { title: 'Taxa Intervenção GR', value: MOCK_GUARDRAILS_METRICS.interventionRate.value, change: MOCK_GUARDRAILS_METRICS.interventionRate.change, icon: Shield, color: 'text-red-500' },
-        { title: 'Taxa de Conclusão', value: MOCK_KPI_DATA.completionRate.value, change: MOCK_KPI_DATA.completionRate.change, icon: CheckCircle, color: 'text-green-500' },
+        { title: 'Total de Projetos', value: kpiData.totalProjects?.value ?? kpiData.activeProjects ?? 0, change: kpiData.totalProjects?.change ?? 0, icon: Briefcase, color: 'text-[#4e4ea8]' },
+        { title: 'Clientes Ativos', value: kpiData.activeClients?.value ?? kpiData.totalClients ?? 0, change: kpiData.activeClients?.change ?? 0, icon: Users, color: 'text-[#0ca7d2]' },
+        { title: 'Novos Leads', value: kpiData.newLeads?.value ?? kpiData.totalLeads ?? 0, change: kpiData.newLeads?.change ?? 0, icon: Zap, color: 'text-[#FF6B35]' },
+        { title: 'Vol. Conversas', value: kpiData.totalConversations ?? 0, change: kpiData.totalConversationsChange ?? 0, icon: MessageSquare, color: 'text-purple-500' },
+        { title: 'Interv. Guardrails', value: guardrailsData.blocked ?? 0, change: 0, icon: Shield, color: 'text-red-500' },
+        { title: 'Taxa de Conclusão', value: `${kpiData.completionRate ?? kpiData.conversionRate ?? 0}%`, change: 0, icon: CheckCircle, color: 'text-green-500' },
     ];
 
     const recentActivity = [
@@ -131,7 +140,7 @@ const ReportsOverviewTab: React.FC = () => {
                 <ReportChart
                     title="Projetos por Status"
                     description="Visão geral do pipeline de desenvolvimento."
-                    data={MOCK_PROJECT_STATUS_DATA}
+                    data={projectStatusData}
                     type="donut"
                     dataKeys={[]}
                 />

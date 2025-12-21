@@ -10,7 +10,12 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import agentService from '@/services/agentService';
 
-const GuardrailsTab: React.FC = () => {
+interface GuardrailsTabProps {
+    agentId?: string;
+    clientMode?: boolean;
+}
+
+const GuardrailsTab: React.FC<GuardrailsTabProps> = ({ agentId: propAgentId }) => {
     const [agent, setAgent] = useState<any>(null);
     const [config, setConfig] = useState<any>({
         enabled: true,
@@ -27,12 +32,16 @@ const GuardrailsTab: React.FC = () => {
     const loadAgent = async () => {
         try {
             setIsLoading(true);
-            const agents = await agentService.listAgents({ role: 'system_orchestrator' });
-            // Fallback default
-            let foundAgent = agents[0];
-            if (!foundAgent) {
-                const all = await agentService.listAgents();
-                foundAgent = all.find((a: any) => a.slug === 'renus') || all[0];
+            let foundAgent;
+            if (propAgentId) {
+                foundAgent = await agentService.getAgent(propAgentId);
+            } else {
+                const agents = await agentService.listAgents({ role: 'system_orchestrator' });
+                foundAgent = agents[0];
+                if (!foundAgent) {
+                    const all = await agentService.listAgents();
+                    foundAgent = all.find((a: any) => a.slug === 'renus') || all[0];
+                }
             }
 
             if (foundAgent) {

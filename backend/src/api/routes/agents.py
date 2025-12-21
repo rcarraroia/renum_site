@@ -25,14 +25,14 @@ from src.services.agent_service import get_agent_service
 from src.services.subagent_service import SubAgentService
 from src.api.middleware.auth_middleware import get_current_user
 
-router = APIRouter(prefix="", tags=["agents"])
+router = APIRouter(prefix="/agents", tags=["agents"])
 
 
 # ============================================================================
 # AGENTS CRUD
 # ============================================================================
 
-@router.get("/agents", response_model=List[AgentListItem])
+@router.get("/", response_model=List[AgentListItem])
 async def list_agents(
     client_id: Optional[UUID] = Query(None, description="Filter by client ID"),
     role: Optional[AgentRole] = Query(None, description="Filter by agent role"),
@@ -533,242 +533,28 @@ async def delete_agent_subagent(
 
 
 # ============================================================================
-# NESTED SUB-AGENTS ROUTES
+# RENUS DASHBOARD (MONITORING)
 # ============================================================================
 
-@router.get("/{agent_id}/sub-agents", response_model=List[SubAgentResponse])
-async def list_agent_sub_agents(
-    agent_id: UUID,
-    is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    limit: int = Query(50, ge=1, le=100, description="Number of results"),
-    offset: int = Query(0, ge=0, description="Offset for pagination"),
+@router.get("/renus/conversations")
+async def get_renus_conversations(
+    status: Optional[str] = Query(None),
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    List sub-agents of a specific agent
-    
-    Returns paginated list of sub-agents belonging to the agent
-    """
-    subagent_service = SubAgentService()
-    
-    try:
-        # Verify agent exists
-        agent_service = get_agent_service()
-        agent = await agent_service.get_agent(agent_id)
-        if not agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Agent {agent_id} not found"
-            )
-        
-        # List sub-agents
-        sub_agents = await subagent_service.list_by_agent(
-            agent_id=agent_id,
-            is_active=is_active,
-            limit=limit,
-            offset=offset
-        )
-        return sub_agents
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list sub-agents: {str(e)}"
-        )
+    """Retorna conversas ativas do RENUS (mock para dashboard)"""
+    return []
 
-
-@router.post("/{agent_id}/sub-agents", response_model=SubAgentResponse, status_code=status.HTTP_201_CREATED)
-async def create_agent_sub_agent(
-    agent_id: UUID,
-    data: SubAgentCreate,
+@router.get("/renus/metrics")
+async def get_renus_metrics(
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    Create sub-agent for a specific agent
-    
-    Creates sub-agent and associates it with the agent
-    """
-    subagent_service = SubAgentService()
-    
-    try:
-        # Verify agent exists
-        agent_service = get_agent_service()
-        agent = await agent_service.get_agent(agent_id)
-        if not agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Agent {agent_id} not found"
-            )
-        
-        # Set agent_id in data
-        data.agent_id = agent_id
-        
-        # Create sub-agent
-        sub_agent = await subagent_service.create(data)
-        return sub_agent
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create sub-agent: {str(e)}"
-        )
+    """Retorna métricas de performance do RENUS (mock para dashboard)"""
+    return {
+        "active_conversations": 0,
+        "total_conversations_today": 0,
+        "avg_response_time": 0,
+        "satisfaction_rate": 0
+    }
 
 
-@router.get("/{agent_id}/sub-agents/{sub_agent_id}", response_model=SubAgentResponse)
-async def get_agent_sub_agent(
-    agent_id: UUID,
-    sub_agent_id: UUID,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Get specific sub-agent of an agent
-    
-    Returns sub-agent details
-    """
-    subagent_service = SubAgentService()
-    
-    try:
-        # Verify agent exists
-        agent_service = get_agent_service()
-        agent = await agent_service.get_agent(agent_id)
-        if not agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Agent {agent_id} not found"
-            )
-        
-        # Get sub-agent
-        sub_agent = await subagent_service.get(sub_agent_id)
-        if not sub_agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Sub-agent {sub_agent_id} not found"
-            )
-        
-        # Verify sub-agent belongs to agent
-        if sub_agent.agent_id != agent_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Sub-agent {sub_agent_id} does not belong to agent {agent_id}"
-            )
-        
-        return sub_agent
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get sub-agent: {str(e)}"
-        )
 
-
-@router.put("/{agent_id}/sub-agents/{sub_agent_id}", response_model=SubAgentResponse)
-async def update_agent_sub_agent(
-    agent_id: UUID,
-    sub_agent_id: UUID,
-    data: SubAgentUpdate,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Update sub-agent of an agent
-    
-    Updates sub-agent with provided data
-    """
-    subagent_service = SubAgentService()
-    
-    try:
-        # Verify agent exists
-        agent_service = get_agent_service()
-        agent = await agent_service.get_agent(agent_id)
-        if not agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Agent {agent_id} not found"
-            )
-        
-        # Get sub-agent
-        sub_agent = await subagent_service.get(sub_agent_id)
-        if not sub_agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Sub-agent {sub_agent_id} not found"
-            )
-        
-        # Verify sub-agent belongs to agent
-        if sub_agent.agent_id != agent_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Sub-agent {sub_agent_id} does not belong to agent {agent_id}"
-            )
-        
-        # Update sub-agent
-        updated_sub_agent = await subagent_service.update(sub_agent_id, data)
-        return updated_sub_agent
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update sub-agent: {str(e)}"
-        )
-
-
-@router.delete("/{agent_id}/sub-agents/{sub_agent_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_agent_sub_agent(
-    agent_id: UUID,
-    sub_agent_id: UUID,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Delete sub-agent of an agent
-    
-    Deletes sub-agent
-    """
-    subagent_service = SubAgentService()
-    
-    try:
-        # Verify agent exists
-        agent_service = get_agent_service()
-        agent = await agent_service.get_agent(agent_id)
-        if not agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Agent {agent_id} not found"
-            )
-        
-        # Get sub-agent
-        sub_agent = await subagent_service.get(sub_agent_id)
-        if not sub_agent:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Sub-agent {sub_agent_id} not found"
-            )
-        
-        # Verify sub-agent belongs to agent
-        if sub_agent.agent_id != agent_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Sub-agent {sub_agent_id} does not belong to agent {agent_id}"
-            )
-        
-        # Delete sub-agent
-        await subagent_service.delete(sub_agent_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete sub-agent: {str(e)}"
-        )

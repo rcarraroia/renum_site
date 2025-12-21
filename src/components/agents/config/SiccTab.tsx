@@ -7,10 +7,16 @@ import { Slider } from '@/components/ui/slider';
 import { Brain, Activity, TrendingUp, ExternalLink, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { Separator } from '@/components/ui/separator';
 import { siccService } from '@/services/siccService';
 import agentService from '@/services/agentService';
 
-const SiccTab: React.FC = () => {
+interface SiccTabProps {
+    agentId?: string;
+    clientMode?: boolean;
+}
+
+const SiccTab: React.FC<SiccTabProps> = ({ agentId: propAgentId }) => {
     const [agent, setAgent] = useState<any>(null);
     const [stats, setStats] = useState<any>(null);
     const [settings, setSettings] = useState<any>(null);
@@ -26,11 +32,15 @@ const SiccTab: React.FC = () => {
             setIsLoading(true);
             // 1. Get Agent to know ID
             let agentData;
-            try {
-                agentData = await agentService.getAgentBySlug('renus');
-            } catch {
-                const agents = await agentService.listAgents();
-                agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+            if (propAgentId) {
+                agentData = await agentService.getAgent(propAgentId);
+            } else {
+                try {
+                    agentData = await agentService.getAgentBySlug('renus');
+                } catch {
+                    const agents = await agentService.listAgents();
+                    agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+                }
             }
 
             if (agentData) {
@@ -81,12 +91,23 @@ const SiccTab: React.FC = () => {
     };
 
     const handleSaveSettings = async () => {
-        if (!agent || !settings) return;
+        if (!agent) return;
         setIsSaving(true);
         try {
-            await siccService.updateSettings(agent.id, settings);
+            const promises = [];
+
+            // 1. Save SICC Settings
+            if (settings) {
+                promises.push(siccService.updateSettings(agent.id, settings));
+            }
+
+            // 2. Save Agent Config (LLM Params)
+            promises.push(agentService.updateAgent(agent.id, { config: agent.config }));
+
+            await Promise.all(promises);
             toast.success('Configurações de Inteligência salvas!');
         } catch (error) {
+            console.error(error);
             toast.error('Erro ao salvar configurações');
         } finally {
             setIsSaving(false);
@@ -201,9 +222,53 @@ const SiccTab: React.FC = () => {
                                         onValueChange={(val) => setSettings({ ...settings, auto_approval_threshold: val[0] / 100 })}
                                     />
                                 </div>
-                                <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSaveSettings} disabled={isSaving}>
-                                        {isSaving ? 'Salvando...' : 'Aplicar Alterações'}
+
+                                <Separator />
+
+                                <div className="space-y-4">
+                                    <h4 className="font-semibold text-purple-700 dark:text-purple-400 flex items-center">
+                                        <Zap className="h-4 w-4 mr-2" /> Parâmetros do Modelo (LLM)
+                                    </h4>
+
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between">
+                                            <label className="text-sm font-medium">Criatividade (Temperature: {agent.config?.temperature || 0.7})</label>
+                                        </div>
+                                        <Slider
+                                            value={[agent.config?.temperature || 0.7]}
+                                            min={0}
+                                            max={1.5}
+                                            step={0.1}
+                                            onValueChange={(val) => {
+                                                const newConfig = { ...agent.config, temperature: val[0] };
+                                                setAgent({ ...agent, config: newConfig });
+                                            }}
+                                        />
+                                        <p className="text-xs text-muted-foreground">0 = Conservador/Factual | 1.5 = Muito Criativo/Variado</p>
+                                    </div>
+
+                                    <div className="space-y-4 pt-2">
+                                        <div className="flex justify-between">
+                                            <label className="text-sm font-medium">Diversidade de Vocabulário (Top P: {agent.config?.top_p || 1.0})</label>
+                                        </div>
+                                        <Slider
+                                            value={[agent.config?.top_p || 1.0]}
+                                            min={0}
+                                            max={1.0}
+                                            step={0.05}
+                                            onValueChange={(val) => {
+                                                const newConfig = { ...agent.config, top_p: val[0] };
+                                                setAgent({ ...agent, config: newConfig });
+                                            }}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Controla a amostragem de núcleos (0.1 = Apenas palavras prováveis)</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-4 gap-3">
+                                    <Button variant="outline" onClick={loadData}>Descartar</Button>
+                                    <Button onClick={handleSaveSettings} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700">
+                                        {isSaving ? 'Salvando...' : 'Salvar Inteligência'}
                                     </Button>
                                 </div>
                             </>

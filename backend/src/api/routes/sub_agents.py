@@ -1,189 +1,117 @@
 """
-API routes for sub-agents management.
+Task 7: Create sub-agent management APIs
+GET /api/agents/{id}/sub-agents - List sub-agents
+POST /api/agents/{id}/sub-agents - Create sub-agent  
+PUT /api/agents/{id}/sub-agents/{sub_id} - Update sub-agent
+DELETE /api/agents/{id}/sub-agents/{sub_id} - Delete sub-agent
+POST /api/agents/{id}/sub-agents/{sub_id}/test - Test sub-agent
+Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
 """
-from typing import List
+
+from fastapi import APIRouter, HTTPException, Depends
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
-from src.models.sub_agent import SubAgentCreate, SubAgentUpdate, SubAgentResponse
-from src.services.subagent_service import SubAgentService
-from src.api.middleware.auth_middleware import get_current_user
+from typing import Dict, Any
+from src.services.agent_service import get_agent_service
+from src.services.sub_agent_inheritance_service import get_inheritance_service
 
-router = APIRouter(prefix="/sub-agents", tags=["sub-agents"])
+router = APIRouter(prefix="/api/agents", tags=["sub-agents"])
 
-
-@router.get("", response_model=List[SubAgentResponse])
-@router.get("/", response_model=List[SubAgentResponse])
+@router.get("/{agent_id}/sub-agents")
 async def list_sub_agents(
-    active_only: bool = False,
-    agent_type: str = None,
-    current_user: dict = Depends(get_current_user)
+    agent_id: UUID,
+    agent_service = Depends(get_agent_service)
 ):
-    """List all sub-agents."""
-    service = SubAgentService()
-    return service.list_sub_agents(active_only=active_only, agent_type=agent_type)
+    """List all sub-agents of an agent"""
+    result = agent_service.supabase.table('sub_agents')\
+        .select('*')\
+        .eq('parent_agent_id', str(agent_id))\
+        .execute()
+    
+    return result.data
 
-
-@router.get("/{sub_agent_id}", response_model=SubAgentResponse)
-async def get_sub_agent(
-    sub_agent_id: UUID,
-    current_user: dict = Depends(get_current_user)
-):
-    """Get sub-agent by ID."""
-    service = SubAgentService()
-    sub_agent = service.get_sub_agent(sub_agent_id)
-    if not sub_agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sub-agent not found"
-        )
-    return sub_agent
-
-
-@router.post("/", response_model=SubAgentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/{agent_id}/sub-agents")
 async def create_sub_agent(
-    sub_agent_data: SubAgentCreate,
-    current_user: dict = Depends(get_current_user)
+    agent_id: UUID,
+    sub_agent_data: Dict[str, Any],
+    agent_service = Depends(get_agent_service)
 ):
-    """Create new sub-agent."""
-    # Only admins can create sub-agents
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can create sub-agents"
-        )
-    
-    service = SubAgentService()
-    return service.create_sub_agent(sub_agent_data)
-
-
-@router.put("/{sub_agent_id}", response_model=SubAgentResponse)
-async def update_sub_agent(
-    sub_agent_id: UUID,
-    sub_agent_data: SubAgentUpdate,
-    current_user: dict = Depends(get_current_user)
-):
-    """Update sub-agent."""
-    # Only admins can update sub-agents
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can update sub-agents"
-        )
-    
-    service = SubAgentService()
-    sub_agent = service.update_sub_agent(sub_agent_id, sub_agent_data)
-    if not sub_agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sub-agent not found"
-        )
+    """Create new sub-agent"""
+    sub_agent = agent_service.create_sub_agent(
+        parent_id=agent_id,
+        name=sub_agent_data['name'],
+        specialization=sub_agent_data['specialization'],
+        inheritance_config=sub_agent_data.get('inheritance_config', {}),
+        config=sub_agent_data.get('config', {})
+    )
     return sub_agent
 
+@router.put("/{agent_id}/sub-agents/{sub_agent_id}")
+async def update_sub_agent(
+    agent_id: UUID,
+    sub_agent_id: UUID,
+    update_data: Dict[str, Any],
+    agent_service = Depends(get_agent_service)
+):
+    """Update sub-agent"""
+    result = agent_service.supabase.table('sub_agents')\
+        .update(update_data)\
+        .eq('id', str(sub_agent_id))\
+        .eq('parent_agent_id', str(agent_id))\
+        .execute()
+    
+    return result.data[0]
 
-@router.delete("/{sub_agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{agent_id}/sub-agents/{sub_agent_id}")
 async def delete_sub_agent(
+    agent_id: UUID,
     sub_agent_id: UUID,
-    current_user: dict = Depends(get_current_user)
+    agent_service = Depends(get_agent_service)
 ):
-    """Delete sub-agent."""
-    # Only admins can delete sub-agents
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can delete sub-agents"
-        )
+    """Delete sub-agent"""
+    result = agent_service.supabase.table('sub_agents')\
+        .delete()\
+        .eq('id', str(sub_agent_id))\
+        .eq('parent_agent_id', str(agent_id))\
+        .execute()
     
-    service = SubAgentService()
-    success = service.delete_sub_agent(sub_agent_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sub-agent not found"
-        )
+    return {"message": "Sub-agent deleted"}
 
-
-
-@router.patch("/{sub_agent_id}/toggle", response_model=SubAgentResponse)
-async def toggle_sub_agent(
+@router.post("/{agent_id}/sub-agents/{sub_agent_id}/test")
+async def test_sub_agent(
+    agent_id: UUID,
     sub_agent_id: UUID,
-    current_user: dict = Depends(get_current_user)
+    test_context: Dict[str, Any],
+    inheritance_service = Depends(get_inheritance_service)
 ):
-    """Toggle sub-agent active status."""
-    # Only admins can toggle sub-agents
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can toggle sub-agents"
-        )
+    """Test sub-agent activation and effective configuration"""
+    # Get sub-agent
+    result = inheritance_service.supabase.table('sub_agents')\
+        .select('*')\
+        .eq('id', str(sub_agent_id))\
+        .single()\
+        .execute()
     
-    service = SubAgentService()
-    try:
-        return await service.toggle_active(sub_agent_id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-@router.get("/{sub_agent_id}/stats")
-async def get_sub_agent_stats(
-    sub_agent_id: UUID,
-    current_user: dict = Depends(get_current_user)
-):
-    """Get sub-agent usage statistics."""
-    service = SubAgentService()
+    sub_agent = result.data
     
-    # Verificar se sub-agent existe
-    sub_agent = await service.get_subagent(sub_agent_id)
-    if not sub_agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sub-agent not found"
-        )
+    # Test routing
+    should_activate = inheritance_service.evaluate_routing_conditions(
+        sub_agent['routing_config'],
+        test_context
+    )
     
-    # Buscar estatísticas de uso
-    from src.config.supabase import supabase_admin
+    # Get effective config
+    from src.services.agent_service import get_agent_service
+    agent_service = get_agent_service()
+    parent = agent_service.get_agent(agent_id)
     
-    try:
-        # Total de entrevistas
-        total_interviews = supabase_admin.table('interviews')\
-            .select('id', count='exact')\
-            .eq('subagent_id', str(sub_agent_id))\
-            .execute()
-        
-        # Entrevistas completadas
-        completed_interviews = supabase_admin.table('interviews')\
-            .select('id', count='exact')\
-            .eq('subagent_id', str(sub_agent_id))\
-            .eq('status', 'completed')\
-            .execute()
-        
-        # Entrevistas em andamento
-        in_progress_interviews = supabase_admin.table('interviews')\
-            .select('id', count='exact')\
-            .eq('subagent_id', str(sub_agent_id))\
-            .eq('status', 'in_progress')\
-            .execute()
-        
-        total = total_interviews.count or 0
-        completed = completed_interviews.count or 0
-        in_progress = in_progress_interviews.count or 0
-        
-        completion_rate = (completed / total * 100) if total > 0 else 0
-        
-        return {
-            "sub_agent_id": str(sub_agent_id),
-            "total_interviews": total,
-            "completed_interviews": completed,
-            "in_progress_interviews": in_progress,
-            "abandoned_interviews": total - completed - in_progress,
-            "completion_rate": round(completion_rate, 2),
-            "access_count": sub_agent.access_count or 0
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching stats: {str(e)}"
-        )
+    effective_config = inheritance_service.calculate_effective_config(
+        parent.config,
+        sub_agent['config'],
+        sub_agent['inheritance_config']
+    )
+    
+    return {
+        "should_activate": should_activate,
+        "effective_config": effective_config,
+        "test_context": test_context
+    }

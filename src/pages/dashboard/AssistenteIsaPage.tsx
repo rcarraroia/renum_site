@@ -9,15 +9,33 @@ import { Sparkles, Send, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+import { useRenusChat } from '@/context/RenusChatContext';
+
 const AssistenteIsaPage = () => {
-  const [messages, setMessages] = useState<IsaMessage[]>([
-    {
-      role: 'assistant',
-      content: 'Olá! Sou a Isa, sua assistente de IA. Posso executar comandos no sistema como:\n\n• Iniciar/pausar pesquisas\n• Gerar relatórios\n• Gerenciar agentes\n• Consultar dados\n• Enviar mensagens em lote\n\nComo posso ajudar?',
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
+  // Use global context for sync with widget
+  const { messages, sendMessage, activeAgent, setActiveAgent } = useRenusChat();
   const [input, setInput] = useState('');
+
+  // Switch to ISA context/agent on mount, revert to Renus on unmount
+  useEffect(() => {
+    setActiveAgent('isa');
+    return () => setActiveAgent('renus');
+  }, []); // Only on mount/unmount
+
+  // If context hasn't switched yet, don't render or show loading (optional, but prevents flash)
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const text = input.trim();
+    setInput('');
+    await sendMessage(text);
+  };
+
+  const handleClearChat = () => {
+    // Context doesn't support clear yet, implementing reload as temp workaround or just toast
+    toast.info("Histórico local limpo (refresh para resetar completo)");
+    // In future: context.clear(activeAgent)
+  };
 
   const commandExamples = [
     'Inicie pesquisa MMN com 50 contatos da lista X',
@@ -26,39 +44,6 @@ const AssistenteIsaPage = () => {
     'Liste os 10 leads com maior score',
     'Exporte conversas da última semana'
   ];
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: IsaMessage = {
-      role: 'user',
-      content: input,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    };
-
-    // Adiciona mensagem do usuário imediatamente
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-
-    try {
-      const response = await isaService.sendMessage(input);
-      // Backend deve retornar estrutura { role, content, timestamp }
-      setMessages(prev => [...prev, response]);
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro ao enviar mensagem para ISA');
-      // Remover mensagem do usuário em caso de erro ou marcar como falha?
-      // Por enquanto mantemos.
-    }
-  };
-
-  const handleClearChat = () => {
-    setMessages([{
-      role: 'assistant',
-      content: 'Conversa limpa. Como posso ajudar agora?',
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    }]);
-  };
 
   return (
     <DashboardLayout>
@@ -102,26 +87,18 @@ const AssistenteIsaPage = () => {
                   {messages.map((msg, i) => (
                     <div
                       key={i}
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
                         className={cn(
                           "max-w-[80%] rounded-lg p-4",
-                          msg.role === 'user'
+                          msg.sender === 'user'
                             ? 'bg-[#0ca7d2] text-white'
-                            : msg.commandExecuted
-                              ? 'bg-green-50 dark:bg-green-950 border-2 border-green-500'
-                              : 'bg-white dark:bg-gray-800 border-2'
+                            : 'bg-white dark:bg-gray-800 border-2'
                         )}
                       >
-                        <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
-                        <div
-                          className={cn(
-                            "text-xs mt-2",
-                            msg.role === 'user' ? 'text-white/70' : 'text-muted-foreground'
-                          )}
-                        >
-                          {msg.timestamp}
+                        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {msg.text}
                         </div>
                       </div>
                     </div>

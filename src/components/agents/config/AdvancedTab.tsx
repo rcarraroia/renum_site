@@ -13,7 +13,13 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import agentService from '@/services/agentService';
 
-export const AdvancedTab = () => {
+interface AdvancedTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+  restrictedMode?: boolean;
+}
+
+export const AdvancedTab = ({ agentId: propAgentId }: AdvancedTabProps) => {
   const [agent, setAgent] = useState<any>(null);
   const [config, setConfig] = useState({
     provider: 'openai',
@@ -37,11 +43,15 @@ export const AdvancedTab = () => {
       setIsLoading(true);
       // Load Agent
       let agentData;
-      try {
-        agentData = await agentService.getAgentBySlug('renus');
-      } catch {
-        const agents = await agentService.listAgents();
-        agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+      if (propAgentId) {
+        agentData = await agentService.getAgent(propAgentId);
+      } else {
+        try {
+          agentData = await agentService.getAgentBySlug('renus');
+        } catch {
+          const agents = await agentService.listAgents();
+          agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+        }
       }
 
       if (agentData) {

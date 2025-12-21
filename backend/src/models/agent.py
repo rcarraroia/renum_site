@@ -120,6 +120,7 @@ class AgentListItem(BaseModel):
     client_id: Optional[UUID]
     name: str
     description: Optional[str]
+    slug: Optional[str]
     is_active: bool
     created_at: datetime
     updated_at: datetime

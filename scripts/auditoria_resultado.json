@@ -1,0 +1,1420 @@
+{
+  "timestamp": "2025-12-21T08:03:27.519382",
+  "total_tabelas": 25,
+  "tabelas_agentes": [
+    "agent_behavior_patterns",
+    "agent_dna",
+    "agent_integrations",
+    "agent_knowledge_snapshots",
+    "agent_learning_logs",
+    "agent_learning_settings",
+    "agent_memory_chunks",
+    "agent_performance_metrics",
+    "agents",
+    "renus_config",
+    "sub_agents"
+  ],
+  "tabelas_sicc": [
+    "agent_behavior_patterns",
+    "agent_learning_logs",
+    "agent_learning_settings",
+    "agent_memory_chunks",
+    "isa_commands"
+  ],
+  "tabelas_integracao": [
+    "agent_integrations",
+    "integration_status",
+    "integrations",
+    "tools"
+  ],
+  "analises": {
+    "agent_behavior_patterns": {
+      "nome": "agent_behavior_patterns",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 13,
+      "total_policies": 2,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "pattern_type",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "trigger_context",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "action_config",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "success_rate",
+          "tipo": "double precision",
+          "nullable": "NO",
+          "default": "0.0",
+          "max_length": null
+        },
+        {
+          "nome": "total_applications",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "successful_applications",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "last_applied_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "is_active",
+          "tipo": "boolean",
+          "nullable": "NO",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_dna": {
+      "nome": "agent_dna",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 12,
+      "total_policies": 1,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "function",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "principles",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'[]'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "restrictions",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'[]'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "tone_of_voice",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "operational_limits",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "security_policies",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "version",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "1",
+          "max_length": null
+        },
+        {
+          "nome": "is_active",
+          "tipo": "boolean",
+          "nullable": "NO",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_integrations": {
+      "nome": "agent_integrations",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 8,
+      "total_policies": 4,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "uuid_generate_v4()",
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "provider",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "config",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "is_active",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_knowledge_snapshots": {
+      "nome": "agent_knowledge_snapshots",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 10,
+      "total_policies": 3,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "snapshot_type",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": "'automatic'::text",
+          "max_length": null
+        },
+        {
+          "nome": "memory_count",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "pattern_count",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "total_interactions",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "avg_success_rate",
+          "tipo": "double precision",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "snapshot_data",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_learning_logs": {
+      "nome": "agent_learning_logs",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 12,
+      "total_policies": 2,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "learning_type",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "source_data",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "analysis",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "action_taken",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "confidence",
+          "tipo": "double precision",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "status",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": "'pending'::text",
+          "max_length": null
+        },
+        {
+          "nome": "reviewed_by",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "reviewed_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_learning_settings": {
+      "nome": "agent_learning_settings",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 13,
+      "total_policies": 2,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "learning_enabled",
+          "tipo": "boolean",
+          "nullable": "NO",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "auto_approve_threshold",
+          "tipo": "double precision",
+          "nullable": "NO",
+          "default": "0.8",
+          "max_length": null
+        },
+        {
+          "nome": "analysis_frequency",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": "'hourly'::text",
+          "max_length": null
+        },
+        {
+          "nome": "max_memories_quota",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "10000",
+          "max_length": null
+        },
+        {
+          "nome": "max_patterns_quota",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "1000",
+          "max_length": null
+        },
+        {
+          "nome": "enabled_learning_types",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'[\"memory_added\", \"pattern_detected\", \"behavior_updated\", \"insight_generated\"]'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "snapshot_frequency",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": "'daily'::text",
+          "max_length": null
+        },
+        {
+          "nome": "retention_days",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "90",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_memory_chunks": {
+      "nome": "agent_memory_chunks",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 15,
+      "total_policies": 2,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "chunk_type",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "content",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "embedding",
+          "tipo": "USER-DEFINED",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "metadata",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "source",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "confidence_score",
+          "tipo": "double precision",
+          "nullable": "NO",
+          "default": "1.0",
+          "max_length": null
+        },
+        {
+          "nome": "usage_count",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "last_used_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "version",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "1",
+          "max_length": null
+        },
+        {
+          "nome": "is_active",
+          "tipo": "boolean",
+          "nullable": "NO",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agent_performance_metrics": {
+      "nome": "agent_performance_metrics",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 14,
+      "total_policies": 2,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "metric_date",
+          "tipo": "date",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "total_interactions",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "successful_interactions",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "avg_response_time_ms",
+          "tipo": "integer",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "user_satisfaction_score",
+          "tipo": "double precision",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "conversion_rate",
+          "tipo": "double precision",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "memory_chunks_used",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "patterns_applied",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "new_learnings",
+          "tipo": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "metadata",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "agents": {
+      "nome": "agents",
+      "registros": 4,
+      "rls_enabled": false,
+      "total_colunas": 28,
+      "total_policies": 0,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "parent_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "role",
+          "tipo": "USER-DEFINED",
+          "nullable": "YES",
+          "default": "'assistant'::agent_role",
+          "max_length": null
+        },
+        {
+          "nome": "name",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "description",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "config",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "sicc_enabled",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "fine_tuning_config",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "is_active",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "slug",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "is_public",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "false",
+          "max_length": null
+        },
+        {
+          "nome": "public_url",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "access_count",
+          "tipo": "integer",
+          "nullable": "YES",
+          "default": "0",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "is_template",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "false",
+          "max_length": null
+        },
+        {
+          "nome": "category",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "niche",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "marketplace_visible",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "false",
+          "max_length": null
+        },
+        {
+          "nome": "available_tools",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "available_integrations",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "channel",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": "'web'::text",
+          "max_length": null
+        },
+        {
+          "nome": "is_system",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "false",
+          "max_length": null
+        },
+        {
+          "nome": "agent_type",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": "'custom'::text",
+          "max_length": null
+        },
+        {
+          "nome": "template_type",
+          "tipo": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "max_length": 50
+        },
+        {
+          "nome": "type",
+          "tipo": "character varying",
+          "nullable": "YES",
+          "default": "'renus'::character varying",
+          "max_length": 50
+        },
+        {
+          "nome": "agent_role",
+          "tipo": "character varying",
+          "nullable": "YES",
+          "default": "'assistant'::character varying",
+          "max_length": 50
+        }
+      ]
+    },
+    "renus_config": {
+      "nome": "renus_config",
+      "registros": 1,
+      "rls_enabled": true,
+      "total_colunas": 7,
+      "total_policies": 1,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "config",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "prompts",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "active",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "sub_agents": {
+      "nome": "sub_agents",
+      "registros": 0,
+      "rls_enabled": false,
+      "total_colunas": 10,
+      "total_policies": 0,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "parent_agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "name",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "specialization",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "config",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "inheritance_config",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{\"tools\": false, \"triggers\": false, \"knowledge\": false, \"guardrails\": true, \"instructions\": true, \"integrations\": true, \"intelligence\": true}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "routing_config",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "is_active",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "isa_commands": {
+      "nome": "isa_commands",
+      "registros": 1,
+      "rls_enabled": true,
+      "total_colunas": 10,
+      "total_policies": 1,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "admin_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "command",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "target_type",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "target_id",
+          "tipo": "uuid",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "result",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "status",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": "'pending'::text",
+          "max_length": null
+        },
+        {
+          "nome": "executed_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "integration_status": {
+      "nome": "integration_status",
+      "registros": 0,
+      "rls_enabled": false,
+      "total_colunas": 9,
+      "total_policies": 0,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "agent_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "integration_type",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "status",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "last_test",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "error_message",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "config_hash",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "integrations": {
+      "nome": "integrations",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 10,
+      "total_policies": 2,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "uuid_generate_v4()",
+          "max_length": null
+        },
+        {
+          "nome": "client_id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "type",
+          "tipo": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "max_length": 50
+        },
+        {
+          "nome": "name",
+          "tipo": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "max_length": 255
+        },
+        {
+          "nome": "status",
+          "tipo": "character varying",
+          "nullable": "YES",
+          "default": "'disconnected'::character varying",
+          "max_length": 50
+        },
+        {
+          "nome": "config",
+          "tipo": "jsonb",
+          "nullable": "NO",
+          "default": "'{}'::jsonb",
+          "max_length": null
+        },
+        {
+          "nome": "last_tested_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "last_error",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    },
+    "tools": {
+      "nome": "tools",
+      "registros": 0,
+      "rls_enabled": true,
+      "total_colunas": 8,
+      "total_policies": 1,
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "uuid",
+          "nullable": "NO",
+          "default": "gen_random_uuid()",
+          "max_length": null
+        },
+        {
+          "nome": "config_id",
+          "tipo": "integer",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "name",
+          "tipo": "text",
+          "nullable": "NO",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "description",
+          "tipo": "text",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "is_enabled",
+          "tipo": "boolean",
+          "nullable": "YES",
+          "default": "true",
+          "max_length": null
+        },
+        {
+          "nome": "parameters",
+          "tipo": "jsonb",
+          "nullable": "YES",
+          "default": null,
+          "max_length": null
+        },
+        {
+          "nome": "created_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        },
+        {
+          "nome": "updated_at",
+          "tipo": "timestamp with time zone",
+          "nullable": "YES",
+          "default": "now()",
+          "max_length": null
+        }
+      ]
+    }
+  }
+}

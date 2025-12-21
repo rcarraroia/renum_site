@@ -14,6 +14,36 @@ class IntegrationConfigInput(BaseModel):
     config: Dict[str, Any]
     agent_id: Optional[str] = None # If set, overrides global config for this agent
 
+@router.get("/status")
+async def get_integrations_status(
+    current_user: Dict = Depends(get_current_user)
+) -> List[Dict[str, Any]]:
+    """
+    Get aggregated status of all integrations for the Radar dashboard.
+    """
+    client_id = current_user.get('client_id')
+    if not client_id:
+        return []
+        
+    service = IntegrationService(client_id=client_id)
+    try:
+        integrations = service.list_integrations()
+        
+        status_list = []
+        for integration in integrations:
+            status_list.append({
+                "id": str(integration.get('id')),
+                "type": integration.get('provider'),
+                "name": integration.get('provider').upper(),
+                "status": "active" if integration.get('is_active') else "inactive",
+                "last_test": integration.get('updated_at'),
+                "error_message": None, # Could be expanded later
+                "agent_count": 1 if integration.get('agent_id') else 5 # Mocking count for now
+            })
+        return status_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/")
 async def list_integrations(
     provider: Optional[str] = None,

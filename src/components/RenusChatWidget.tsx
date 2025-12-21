@@ -13,7 +13,7 @@ import { ChatMessage } from '@/services/publicChatService';
 
 
 const RenusChatWidget: React.FC = () => {
-  const { isChatOpen, toggleChat, closeChat, messages, sendMessage, isTyping } = useRenusChat();
+  const { isChatOpen, toggleChat, closeChat, messages, sendMessage, isTyping, activeAgent } = useRenusChat();
   const [input, setInput] = React.useState('');
   const chatContentRef = React.useRef<HTMLDivElement>(null);
 
@@ -73,8 +73,17 @@ const RenusChatWidget: React.FC = () => {
             <Card className="flex flex-col h-full border-2 border-[#4e4ea8] dark:border-[#0ca7d2]">
               <CardHeader className="flex flex-row items-center justify-between p-4 bg-[#4e4ea8] dark:bg-gray-800 text-white">
                 <CardTitle className="text-lg font-bold flex items-center">
-                  <Zap className="h-5 w-5 mr-2 text-[#0ca7d2]" />
-                  Renus - Assistente Discovery
+                  {activeAgent === 'renus' ? (
+                    <>
+                      <Zap className="h-5 w-5 mr-2 text-[#0ca7d2]" />
+                      Renus - Assistente Discovery
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-5 w-5 mr-2 text-green-400" />
+                      ISA - Assistente Admin
+                    </>
+                  )}
                 </CardTitle>
                 <Button variant="ghost" size="icon" onClick={closeChat} className="text-white hover:bg-white/20">
                   <X className="h-5 w-5" />

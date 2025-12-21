@@ -1,0 +1,1095 @@
+{
+  "timestamp": "2025-12-21T09:54:41.438686",
+  "resumo": {
+    "total_bugs": 13,
+    "total_inconsistencias": 85,
+    "total_warnings": 38,
+    "bugs_por_severidade": {
+      "CRÍTICO": 2,
+      "ALTO": 11,
+      "MÉDIO": 0,
+      "BAIXO": 0
+    },
+    "bugs_por_categoria": {
+      "BANCO_DADOS": 1,
+      "VARIAVEL_NAO_DEFINIDA": 5,
+      "ENDPOINT": 2,
+      "REACT": 5
+    }
+  },
+  "bugs_encontrados": [
+    {
+      "categoria": "BANCO_DADOS",
+      "titulo": "Colunas obrigatórias faltando",
+      "descricao": "Colunas necessárias para wizard não encontradas: ['system_prompt']",
+      "severidade": "CRÍTICO",
+      "arquivo": null,
+      "linha": null,
+      "timestamp": "2025-12-21T09:54:40.091324"
+    },
+    {
+      "categoria": "VARIAVEL_NAO_DEFINIDA",
+      "titulo": "Variável possivelmente não definida",
+      "descricao": "Variável step_X_data usada mas pode não estar definida",
+      "severidade": "ALTO",
+      "arquivo": "backend/src/services/wizard_service.py",
+      "linha": 74,
+      "timestamp": "2025-12-21T09:54:40.350742"
+    },
+    {
+      "categoria": "VARIAVEL_NAO_DEFINIDA",
+      "titulo": "Variável possivelmente não definida",
+      "descricao": "Variável step_X_data usada mas pode não estar definida",
+      "severidade": "ALTO",
+      "arquivo": "backend/src/services/wizard_service.py",
+      "linha": 75,
+      "timestamp": "2025-12-21T09:54:40.350742"
+    },
+    {
+      "categoria": "VARIAVEL_NAO_DEFINIDA",
+      "titulo": "Variável possivelmente não definida",
+      "descricao": "Variável step_X_data usada mas pode não estar definida",
+      "severidade": "ALTO",
+      "arquivo": "backend/src/services/wizard_service.py",
+      "linha": 76,
+      "timestamp": "2025-12-21T09:54:40.350742"
+    },
+    {
+      "categoria": "VARIAVEL_NAO_DEFINIDA",
+      "titulo": "Variável possivelmente não definida",
+      "descricao": "Variável step_X_data usada mas pode não estar definida",
+      "severidade": "ALTO",
+      "arquivo": "backend/src/services/wizard_service.py",
+      "linha": 77,
+      "timestamp": "2025-12-21T09:54:40.351740"
+    },
+    {
+      "categoria": "VARIAVEL_NAO_DEFINIDA",
+      "titulo": "Variável possivelmente não definida",
+      "descricao": "Variável step_X_data usada mas pode não estar definida",
+      "severidade": "ALTO",
+      "arquivo": "backend/src/services/wizard_service.py",
+      "linha": 78,
+      "timestamp": "2025-12-21T09:54:40.351740"
+    },
+    {
+      "categoria": "ENDPOINT",
+      "titulo": "Erro 5xx em /api/agents/wizard/templates",
+      "descricao": "GET /api/agents/wizard/templates retornou 500: {\"detail\":\"'coroutine' object is not iterable\"}",
+      "severidade": "CRÍTICO",
+      "arquivo": null,
+      "linha": null,
+      "timestamp": "2025-12-21T09:54:40.661521"
+    },
+    {
+      "categoria": "ENDPOINT",
+      "titulo": "Erro 4xx em /api/agents/wizard/test-id/publish",
+      "descricao": "POST /api/agents/wizard/test-id/publish retornou 422: {\"detail\":[{\"type\":\"uuid_parsing\",\"loc\":[\"path\",\"wizard_id\"],\"msg\":\"Input should be a valid UUID, invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `t` at 1\",\"input\":\"test-id\",\"ctx\":{\"error\":\"invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `t` at 1\"}}]}",
+      "severidade": "ALTO",
+      "arquivo": null,
+      "linha": null,
+      "timestamp": "2025-12-21T09:54:40.844640"
+    },
+    {
+      "categoria": "REACT",
+      "titulo": "Componente controlled sem onChange",
+      "descricao": "Input com value mas sem onChange",
+      "severidade": "ALTO",
+      "arquivo": "src/components/agents/wizard/WizardContext.tsx",
+      "linha": 95,
+      "timestamp": "2025-12-21T09:54:41.053373"
+    },
+    {
+      "categoria": "REACT",
+      "titulo": "Componente controlled sem onChange",
+      "descricao": "Input com value mas sem onChange",
+      "severidade": "ALTO",
+      "arquivo": "src/components/agents/wizard/steps/WizardStep3Personality.tsx",
+      "linha": 31,
+      "timestamp": "2025-12-21T09:54:41.098836"
+    },
+    {
+      "categoria": "REACT",
+      "titulo": "Componente controlled sem onChange",
+      "descricao": "Input com value mas sem onChange",
+      "severidade": "ALTO",
+      "arquivo": "src/components/agents/wizard/steps/WizardStep3Personality.tsx",
+      "linha": 39,
+      "timestamp": "2025-12-21T09:54:41.099364"
+    },
+    {
+      "categoria": "REACT",
+      "titulo": "Componente controlled sem onChange",
+      "descricao": "Input com value mas sem onChange",
+      "severidade": "ALTO",
+      "arquivo": "src/components/agents/wizard/steps/WizardStep3Personality.tsx",
+      "linha": 53,
+      "timestamp": "2025-12-21T09:54:41.099364"
+    },
+    {
+      "categoria": "REACT",
+      "titulo": "Componente controlled sem onChange",
+      "descricao": "Input com value mas sem onChange",
+      "severidade": "ALTO",
+      "arquivo": "src/components/agents/wizard/steps/WizardStep3Personality.tsx",
+      "linha": 70,
+      "timestamp": "2025-12-21T09:54:41.099364"
+    }
+  ],
+  "inconsistencias": [
+    {
+      "titulo": "Estruturas de config inconsistentes",
+      "descricao": "Agentes com estruturas diferentes no config: [('00000000-0000-0000-0000-000000000002', {'wizard_session', 'step_5_data', 'identity', 'step_1_data', 'sicc', 'current_step', 'step_3_data', 'step_2_data', 'step_4_data'}), ('00000000-0000-0000-0000-000000000001', {'wizard_session', 'step_5_data', 'step_1_data', 'current_step', 'step_3_data', 'step_2_data', 'step_4_data'}), ('079b9ec2-e191-4e01-844f-847cd21efb02', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'}), ('ec3fdaaa-7043-4bb1-879c-26f1c77fadee', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'}), ('0e081510-4674-47c0-8d89-6c5918d6df92', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'}), ('8bc938ee-5299-48e8-bc16-8e423f898465', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'}), ('7672faad-94a0-416c-9b69-8f886425eb8c', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'}), ('1c3a2038-40f9-4a25-9a2a-94cfd90fa55b', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'}), ('3dcfbbfe-94f8-4746-9be6-c5e4b671b107', {'tools', 'system_prompt', 'identity', 'sicc', 'max_tokens', 'provider', 'temperature', 'model'})]",
+      "arquivos_envolvidos": [],
+      "timestamp": "2025-12-21T09:54:40.272221"
+    },
+    {
+      "titulo": "Tipo incompatível: id",
+      "descricao": "Modelo Pydantic: str , Banco: uuid",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: label",
+      "descricao": "Campo 'label' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: type",
+      "descricao": "Modelo Pydantic: Literal['text', 'textarea', 'number', 'date', 'time', 'radio', 'checkbox', 'dropdown'], Banco: character varying",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: required",
+      "descricao": "Campo 'required' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: validation",
+      "descricao": "Campo 'validation' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: placeholder",
+      "descricao": "Campo 'placeholder' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: options",
+      "descricao": "Campo 'options' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: order",
+      "descricao": "Campo 'order' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: 0",
+      "descricao": "Campo '0' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: enabled",
+      "descricao": "Campo 'enabled' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: required",
+      "descricao": "Campo 'required' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: 1",
+      "descricao": "Campo '1' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: category",
+      "descricao": "Modelo Pydantic: Literal['b2b', 'b2c'] , Banco: text",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: n8n_workflow_url",
+      "descricao": "Campo 'n8n_workflow_url' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: 2",
+      "descricao": "Campo '2' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: description",
+      "descricao": "Modelo Pydantic: Optional[str] , Banco: text",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: template_type",
+      "descricao": "Modelo Pydantic: Optional[str] , Banco: character varying",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: 3",
+      "descricao": "Campo '3' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: channels",
+      "descricao": "Campo 'channels' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: lambda",
+      "descricao": "Campo 'lambda' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: model",
+      "descricao": "Campo 'model' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: 4",
+      "descricao": "Campo '4' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: personality",
+      "descricao": "Campo 'personality' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: tone_formal",
+      "descricao": "Campo 'tone_formal' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: tone_direct",
+      "descricao": "Campo 'tone_direct' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: system_prompt",
+      "descricao": "Campo 'system_prompt' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: custom_instructions",
+      "descricao": "Campo 'custom_instructions' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: 5",
+      "descricao": "Campo '5' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: standard_fields",
+      "descricao": "Campo 'standard_fields' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: custom_fields",
+      "descricao": "Campo 'custom_fields' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: integrations",
+      "descricao": "Campo 'integrations' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: client_id",
+      "descricao": "Modelo Pydantic: Optional[UUID] , Banco: uuid",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: category",
+      "descricao": "Modelo Pydantic: Optional[str] , Banco: text",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: step_number",
+      "descricao": "Campo 'step_number' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: data",
+      "descricao": "Campo 'data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: data",
+      "descricao": "Campo 'data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: client_id",
+      "descricao": "Modelo Pydantic: Optional[UUID] , Banco: uuid",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: current_step",
+      "descricao": "Campo 'current_step' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: step_1_data",
+      "descricao": "Campo 'step_1_data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: step_2_data",
+      "descricao": "Campo 'step_2_data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: step_3_data",
+      "descricao": "Campo 'step_3_data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: step_4_data",
+      "descricao": "Campo 'step_4_data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: step_5_data",
+      "descricao": "Campo 'step_5_data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: Config",
+      "descricao": "Campo 'Config' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: message",
+      "descricao": "Campo 'message' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: role",
+      "descricao": "Modelo Pydantic: Literal['user', 'assistant', 'system'], Banco: USER-DEFINED",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: content",
+      "descricao": "Campo 'content' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: timestamp",
+      "descricao": "Campo 'timestamp' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: collected_data",
+      "descricao": "Campo 'collected_data' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: wizard_id",
+      "descricao": "Campo 'wizard_id' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: conversation_id",
+      "descricao": "Campo 'conversation_id' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: expires_at",
+      "descricao": "Campo 'expires_at' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: Config",
+      "descricao": "Campo 'Config' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: agent_id",
+      "descricao": "Campo 'agent_id' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: embed_code",
+      "descricao": "Campo 'embed_code' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: qr_code_url",
+      "descricao": "Campo 'qr_code_url' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Tipo incompatível: status",
+      "descricao": "Modelo Pydantic: str , Banco: USER-DEFINED",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: default_personality",
+      "descricao": "Campo 'default_personality' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: default_fields",
+      "descricao": "Campo 'default_fields' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: recommended_integrations",
+      "descricao": "Campo 'recommended_integrations' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: wizard_id",
+      "descricao": "Campo 'wizard_id' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.422683"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: Config",
+      "descricao": "Campo 'Config' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: source_agent_id",
+      "descricao": "Campo 'source_agent_id' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: new_name",
+      "descricao": "Campo 'new_name' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: status",
+      "descricao": "Modelo Pydantic: Literal['draft', 'active', 'paused', 'inactive'], Banco: USER-DEFINED",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: client_id",
+      "descricao": "Modelo Pydantic: Optional[UUID] , Banco: uuid",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: status",
+      "descricao": "Modelo Pydantic: Optional[Literal['draft', 'active', 'paused', 'inactive']] , Banco: USER-DEFINED",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: template_type",
+      "descricao": "Modelo Pydantic: Optional[str] , Banco: character varying",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: search",
+      "descricao": "Campo 'search' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: limit",
+      "descricao": "Campo 'limit' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: offset",
+      "descricao": "Campo 'offset' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: agent_id",
+      "descricao": "Campo 'agent_id' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: conversations_total",
+      "descricao": "Campo 'conversations_total' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: conversations_today",
+      "descricao": "Campo 'conversations_today' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: leads_qualified",
+      "descricao": "Campo 'leads_qualified' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: conversion_rate",
+      "descricao": "Campo 'conversion_rate' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: avg_conversation_duration",
+      "descricao": "Campo 'avg_conversation_duration' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: last_conversation_at",
+      "descricao": "Campo 'last_conversation_at' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: description",
+      "descricao": "Modelo Pydantic: Optional[str], Banco: text",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: status",
+      "descricao": "Modelo Pydantic: str, Banco: USER-DEFINED",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: slug",
+      "descricao": "Modelo Pydantic: Optional[str], Banco: text",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Tipo incompatível: public_url",
+      "descricao": "Modelo Pydantic: Optional[str], Banco: text",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: metrics",
+      "descricao": "Campo 'metrics' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    },
+    {
+      "titulo": "Campo no modelo mas não no banco: Config",
+      "descricao": "Campo 'Config' existe no modelo mas não na tabela agents",
+      "arquivos_envolvidos": [
+        "backend/src/models/wizard.py",
+        "banco de dados"
+      ],
+      "timestamp": "2025-12-21T09:54:41.423682"
+    }
+  ],
+  "warnings": [
+    {
+      "titulo": "Índice faltando",
+      "descricao": "Índice em 'client_id' recomendado para performance",
+      "timestamp": "2025-12-21T09:54:40.122843"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 39",
+      "timestamp": "2025-12-21T09:54:40.288741"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 66",
+      "timestamp": "2025-12-21T09:54:40.288741"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 93",
+      "timestamp": "2025-12-21T09:54:40.288741"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 131",
+      "timestamp": "2025-12-21T09:54:40.289741"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 144",
+      "timestamp": "2025-12-21T09:54:40.289741"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 155",
+      "timestamp": "2025-12-21T09:54:40.289741"
+    },
+    {
+      "titulo": "Import de datetime sem timezone",
+      "descricao": "Linha 8 em backend/src/services/wizard_service.py: from datetime import datetime",
+      "timestamp": "2025-12-21T09:54:40.349742"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 160",
+      "timestamp": "2025-12-21T09:54:40.351740"
+    },
+    {
+      "titulo": "Import de datetime sem timezone",
+      "descricao": "Linha 9 em backend/src/models/wizard.py: from datetime import datetime",
+      "timestamp": "2025-12-21T09:54:40.406167"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 31",
+      "timestamp": "2025-12-21T09:54:40.406167"
+    },
+    {
+      "titulo": "Type hints faltando",
+      "descricao": "Função sem type hint de retorno em linha 60",
+      "timestamp": "2025-12-21T09:54:40.406167"
+    },
+    {
+      "titulo": "useState sem tipo TypeScript",
+      "descricao": "useState sem tipo explícito em src/components/agents/wizard/AgentWizard.tsx:37",
+      "timestamp": "2025-12-21T09:54:41.035772"
+    },
+    {
+      "titulo": "Import não utilizado",
+      "descricao": "Import 'Save' não utilizado em src/components/agents/wizard/AgentWizard.tsx",
+      "timestamp": "2025-12-21T09:54:41.036771"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/components/agents/wizard/WizardContext.tsx:17",
+      "timestamp": "2025-12-21T09:54:41.053373"
+    },
+    {
+      "titulo": "useState sem tipo TypeScript",
+      "descricao": "useState sem tipo explícito em src/components/agents/wizard/WizardContext.tsx:57",
+      "timestamp": "2025-12-21T09:54:41.053373"
+    },
+    {
+      "titulo": "useState sem tipo TypeScript",
+      "descricao": "useState sem tipo explícito em src/components/agents/wizard/WizardContext.tsx:59",
+      "timestamp": "2025-12-21T09:54:41.053373"
+    },
+    {
+      "titulo": "Import não utilizado",
+      "descricao": "Import 'useEffect' não utilizado em src/components/agents/wizard/WizardContext.tsx",
+      "timestamp": "2025-12-21T09:54:41.054370"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/components/agents/wizard/steps/WizardStep1TypeSelection.tsx:27",
+      "timestamp": "2025-12-21T09:54:41.067499"
+    },
+    {
+      "titulo": "useEffect sem dependências",
+      "descricao": "useEffect sem array de dependências em src/components/agents/wizard/steps/WizardStep1TypeSelection.tsx:29",
+      "timestamp": "2025-12-21T09:54:41.067499"
+    },
+    {
+      "titulo": "Import não utilizado",
+      "descricao": "Import 'Label' não utilizado em src/components/agents/wizard/steps/WizardStep5Integrations.tsx",
+      "timestamp": "2025-12-21T09:54:41.120510"
+    },
+    {
+      "titulo": "useState sem tipo TypeScript",
+      "descricao": "useState sem tipo explícito em src/components/agents/wizard/steps/WizardStep6TestPublish.tsx:15",
+      "timestamp": "2025-12-21T09:54:41.136469"
+    },
+    {
+      "titulo": "useState sem tipo TypeScript",
+      "descricao": "useState sem tipo explícito em src/components/agents/wizard/steps/WizardStep6TestPublish.tsx:16",
+      "timestamp": "2025-12-21T09:54:41.136469"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:12",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:13",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:14",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:15",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:16",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:17",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:40",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:57",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:58",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:79",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:80",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Uso de tipo 'any'",
+      "descricao": "Tipo 'any' usado em src/services/wizardService.ts:101",
+      "timestamp": "2025-12-21T09:54:41.142770"
+    },
+    {
+      "titulo": "Método faltando no context: updateStep",
+      "descricao": "WizardContext pode estar incompleto",
+      "timestamp": "2025-12-21T09:54:41.433686"
+    },
+    {
+      "titulo": "Método faltando no context: goToStep",
+      "descricao": "WizardContext pode estar incompleto",
+      "timestamp": "2025-12-21T09:54:41.433686"
+    },
+    {
+      "titulo": "Método faltando no context: submitWizard",
+      "descricao": "WizardContext pode estar incompleto",
+      "timestamp": "2025-12-21T09:54:41.433686"
+    }
+  ]
+}

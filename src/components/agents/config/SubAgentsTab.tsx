@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import agentService from '@/services/agentService';
-import { useAuth } from '@/hooks/useAuth'; // Assuming useAuth exists for clientId
+import { useAuth } from '@/context/AuthContext';
 
 interface SubAgent {
   id: string;
@@ -269,7 +269,12 @@ const SubAgentModal: React.FC<SubAgentModalProps> = ({
 };
 
 // --- Main Component ---
-export const SubAgentsTab = () => {
+interface SubAgentsTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+}
+
+export const SubAgentsTab: React.FC<SubAgentsTabProps> = ({ agentId: propAgentId }) => {
   const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -287,7 +292,7 @@ export const SubAgentsTab = () => {
     model: 'gpt-4o-mini',
   });
 
-  const { user } = { user: { id: "mock-user" } }; // Placeholder if useAuth is not available
+  const { user } = useAuth();
   // To verify: we assume fetching listAgents handles auth via cookies/headers
 
   useEffect(() => {
@@ -295,21 +300,23 @@ export const SubAgentsTab = () => {
   }, []);
 
   const loadSubAgents = async () => {
+    if (!propAgentId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      // Fetch agents where role is 'sub_agent'
-      // Using Type Assertion strictly to handle response structure
-      const agents: any[] = await agentService.listAgents({ role: 'sub_agent' } as any);
+      const agents: any[] = await agentService.listSubAgents(propAgentId);
 
       const mapped: SubAgent[] = agents.map((a: any) => ({
         id: a.id,
         name: a.name,
         description: a.description || '',
-        isActive: a.status === 'active' || a.is_active,
-        channel: a.config?.channel || 'whatsapp',
-        systemPrompt: a.config?.identity?.system_prompt || '',
-        topics: a.config?.topics || [],
-        model: a.config?.model || 'gpt-4o-mini',
+        isActive: a.is_active !== undefined ? a.is_active : (a.status === 'active' || a.status === 'ativo'),
+        channel: a.channel || a.config?.channel || 'whatsapp',
+        systemPrompt: a.system_prompt || a.config?.identity?.system_prompt || '',
+        topics: a.topics || a.config?.topics || [],
+        model: a.model || a.config?.model || 'gpt-4o-mini',
         useFineTuning: false
       }));
       setSubAgents(mapped);
@@ -340,6 +347,10 @@ export const SubAgentsTab = () => {
       toast.error("Nome e Prompt são obrigatórios");
       return;
     }
+    if (!propAgentId) {
+      toast.error("Agente mestre não identificado.");
+      return;
+    }
     setIsSaving(true);
     try {
       const payload = {
@@ -359,13 +370,11 @@ export const SubAgentsTab = () => {
       };
 
       if (editingAgent) {
-        await agentService.updateAgent(editingAgent.id, payload as any);
-        toast.success("Agente atualizado!");
+        await agentService.updateSubAgent(propAgentId, editingAgent.id, payload as any);
+        toast.success("Agente especialista atualizado!");
       } else {
-        // Need clientId. If auth context missing, backend *might* infer, or we rely on user context
-        // Assuming the createAgent endpoint handles user context.
-        await agentService.createAgent(payload as any);
-        toast.success("Agente criado!");
+        await agentService.createSubAgent(propAgentId, payload as any);
+        toast.success("Agente especialista criado!");
       }
       loadSubAgents();
       setIsModalOpen(false);
@@ -378,11 +387,12 @@ export const SubAgentsTab = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!propAgentId) return;
     if (!confirm("Tem certeza que deseja excluir este especialista?")) return;
     try {
-      await agentService.deleteAgent(id);
+      await agentService.deleteSubAgent(propAgentId, id);
       setSubAgents(prev => prev.filter(a => a.id !== id));
-      toast.success("Agente removido.");
+      toast.success("Agente especialista removido.");
     } catch (error) {
       toast.error("Erro ao excluir.");
     }
@@ -391,12 +401,12 @@ export const SubAgentsTab = () => {
   const handleToggleActive = async (agent: SubAgent) => {
     try {
       const newStatus = !agent.isActive;
-      const statusStr = newStatus ? 'active' : 'paused';
+      if (!propAgentId) return;
 
       // Optimistic update
       setSubAgents(prev => prev.map(a => a.id === agent.id ? { ...a, isActive: newStatus } : a));
 
-      await agentService.changeAgentStatus(agent.id, statusStr);
+      await agentService.updateSubAgent(propAgentId, agent.id, { is_active: newStatus });
       toast.success(`Agente ${newStatus ? 'ativado' : 'pausado'}.`);
     } catch (error) {
       toast.error("Erro ao alterar status.");

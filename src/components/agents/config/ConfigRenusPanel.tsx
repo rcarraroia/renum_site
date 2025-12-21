@@ -19,6 +19,7 @@ import { AdvancedTab } from './AdvancedTab';
 import ApiWebhooksTab from '../ApiWebhooksTab';
 
 interface ConfigRenusPanelProps {
+    agentId?: string;
     isGlobalConfig?: boolean;
     initialTab?: string;
     clientMode?: boolean; // New prop for client dashboard
@@ -27,6 +28,7 @@ interface ConfigRenusPanelProps {
 }
 
 const ConfigRenusPanel: React.FC<ConfigRenusPanelProps> = ({
+    agentId,
     isGlobalConfig = false,
     initialTab = 'instructions',
     clientMode = false,
@@ -123,6 +125,7 @@ const ConfigRenusPanel: React.FC<ConfigRenusPanelProps> = ({
                             // Pass clientMode prop to children if they accept it
                             // We use TypeScript type casting to avoid strict check errors on dynamic components
                             <tab.component
+                                agentId={agentId}
                                 clientMode={clientMode}
                                 readOnly={clientMode && tab.restricted} // Example logic
                                 {...(tab.value === 'advanced' && clientMode ? { restrictedMode: true } : {})}

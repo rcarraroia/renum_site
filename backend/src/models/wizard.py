@@ -85,6 +85,7 @@ class WizardStep5Data(BaseModel):
 class WizardSessionCreate(BaseModel):
     """Create wizard session"""
     client_id: Optional[UUID] = Field(default=None, description="Client ID creating the agent")
+    category: Optional[str] = Field(default=None, description="Category for template (b2b/b2c)")
 
 
 class WizardSessionUpdate(BaseModel):

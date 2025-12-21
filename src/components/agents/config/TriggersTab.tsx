@@ -31,7 +31,12 @@ interface TriggerRule {
   enabled: boolean;
 }
 
-const TriggersTab: React.FC = () => {
+interface TriggersTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+}
+
+const TriggersTab: React.FC<TriggersTabProps> = ({ agentId: propAgentId }) => {
   const [agent, setAgent] = useState<any>(null);
   const [triggers, setTriggers] = useState<TriggerRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,8 +59,13 @@ const TriggersTab: React.FC = () => {
   const loadAgent = async () => {
     try {
       setIsLoading(true);
-      const agents = await agentService.listAgents();
-      const foundAgent = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+      let foundAgent;
+      if (propAgentId) {
+        foundAgent = await agentService.getAgent(propAgentId);
+      } else {
+        const agents = await agentService.listAgents();
+        foundAgent = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+      }
 
       if (foundAgent) {
         setAgent(foundAgent);

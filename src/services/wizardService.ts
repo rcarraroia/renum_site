@@ -29,8 +29,11 @@ export interface PublicationResult {
 }
 
 class WizardService {
-  async startWizard(clientId: string): Promise<WizardSession> {
-    const { data } = await apiClient.post<WizardSession>('/api/agents/wizard/start', { client_id: clientId });
+  async startWizard(clientId?: string, category?: string): Promise<WizardSession> {
+    const { data } = await apiClient.post<WizardSession>('/api/agents/wizard/start', {
+      client_id: clientId,
+      category: category
+    });
     return data;
   }
 

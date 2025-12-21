@@ -3,23 +3,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, MessageSquare, Clock, CheckCircle, Smile, Brain, Shield, TrendingUp } from 'lucide-react';
 // Mock data (local fallback)
 const MOCK_RENUS_METRICS = {
-  totalInteractions: 15420,
-  successRate: 94.2,
-  avgResponseTime: 1.8,
-  userSatisfaction: 4.6
+    totalInteractions: 15420,
+    successRate: 94.2,
+    avgResponseTime: 1.8,
+    userSatisfaction: 4.6
 };
 
 const MOCK_INTENT_BREAKDOWN = [
-  { name: 'Suporte', value: 45, color: '#4e4ea8' },
-  { name: 'Vendas', value: 30, color: '#FF6B35' },
-  { name: 'Informações', value: 25, color: '#00D4AA' }
+    { name: 'Suporte', value: 45, color: '#4e4ea8' },
+    { name: 'Vendas', value: 30, color: '#FF6B35' },
+    { name: 'Informações', value: 25, color: '#00D4AA' }
 ];
 
-const MOCK_GUARDRAILS_STATS = {
-  totalChecks: 8420,
-  blocked: 156,
-  warnings: 89,
-  passed: 8175
+const MOCK_GUARDRAILS_STATS = [
+    { reason: 'Fuga de Contexto', count: 45 },
+    { reason: 'Conteúdo Inadequado', count: 12 },
+    { reason: 'Técnica de Jailbreak', count: 8 },
+    { reason: 'Prompt Injection', count: 24 }
+];
+
+const GUARDRAILS_SUMMARY = {
+    totalChecks: 8420,
+    blocked: 156,
+    warnings: 89,
+    passed: 8175
 };
 import ReportChart from './ReportChart';
 import { cn } from '@/lib/utils';
@@ -45,12 +52,17 @@ const RenusKPI: React.FC<RenusKPIProps> = ({ title, value, icon: Icon, color }) 
     </Card>
 );
 
-const RenusPerformanceTab: React.FC = () => {
+interface RenusPerformanceTabProps {
+    data?: any;
+}
+
+const RenusPerformanceTab: React.FC<RenusPerformanceTabProps> = ({ data }) => {
+    const metrics = data?.renusMetrics || MOCK_RENUS_METRICS;
     const kpis = [
-        { title: 'Total de Conversas', value: MOCK_RENUS_METRICS.totalConversations, icon: MessageSquare, color: 'text-[#4e4ea8]' },
-        { title: 'Taxa de Resolução', value: MOCK_RENUS_METRICS.resolutionRate, icon: CheckCircle, color: 'text-green-500' },
-        { title: 'Duração Média', value: MOCK_RENUS_METRICS.avgLength, icon: Clock, color: 'text-yellow-500' },
-        { title: 'Satisfação do Usuário', value: MOCK_RENUS_METRICS.userSatisfaction, icon: Smile, color: 'text-[#FF6B35]' },
+        { title: 'Total de Conversas', value: metrics.totalConversations ?? 0, icon: MessageSquare, color: 'text-[#4e4ea8]' },
+        { title: 'Taxa de Resolução', value: `${metrics.resolutionRate ?? 0}%`, icon: CheckCircle, color: 'text-green-500' },
+        { title: 'Duração Média', value: `${metrics.avgLength ?? 0}m`, icon: Clock, color: 'text-yellow-500' },
+        { title: 'Satisfação do Usuário', value: metrics.userSatisfaction ?? 0, icon: Smile, color: 'text-[#FF6B35]' },
     ];
 
     const performanceOverTime = [

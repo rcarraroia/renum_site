@@ -25,7 +25,12 @@ const MOCK_INSTRUCTIONS: InstructionsConfig = {
   welcomeMessage: "Olá! Sou Renus, seu agente de descoberta de IA da Renum Tech Agency. Estou aqui para ajudar a mapear seus desafios de negócios e sugerir soluções de IA personalizadas. Como posso te ajudar hoje?"
 };
 
-const InstructionsTab: React.FC = () => {
+interface InstructionsTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+}
+
+const InstructionsTab: React.FC<InstructionsTabProps> = ({ agentId: propAgentId }) => {
   const [config, setConfig] = useState<InstructionsConfig>({
     systemPrompt: '',
     persona: '',
@@ -58,13 +63,17 @@ const InstructionsTab: React.FC = () => {
       const agentService = (await import('@/services/agentService')).default;
 
       let agent;
-      try {
-        agent = await agentService.getAgentBySlug('renus');
-      } catch (e) {
-        console.warn("Agent 'renus' not found by slug, trying to find by role or list...");
-        // Fallback: List agents and find system_orchestrator
-        const agents = await agentService.listAgents();
-        agent = agents.find(a => a.slug === 'renus' || a.role === 'system_orchestrator');
+      if (propAgentId) {
+        agent = await agentService.getAgent(propAgentId);
+      } else {
+        // Fallback or Global Config logic
+        try {
+          agent = await agentService.getAgentBySlug('renus');
+        } catch (e) {
+          console.warn("Agent 'renus' not found by slug, trying to find by role or list...");
+          const agents = await agentService.listAgents();
+          agent = agents.find(a => a.slug === 'renus' || a.role === 'system_orchestrator');
+        }
       }
 
       if (agent) {

@@ -34,8 +34,9 @@ const getCategoryInfo = (category: AgentCategory): CategoryMock | undefined => {
   return mockCategories.find(c => c.id === category);
 };
 
-const getAgentTypeLabel = (type: string) => {
-  switch (type) {
+const getAgentTypeLabel = (agent: Agent) => {
+  if (agent.is_template) return 'TEMPLATE';
+  switch (agent.type) {
     case 'b2b_empresa': return 'B2B';
     case 'b2c_marketplace': return 'B2C';
     case 'b2c_individual': return 'B2C';
@@ -45,8 +46,8 @@ const getAgentTypeLabel = (type: string) => {
 
 const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onClone, onPauseResume, onDelete, basePath = '/dashboard/admin/agents', onClick }) => {
   const categoryInfo = getCategoryInfo(agent.category);
-  const client = mockClients.find(c => c.id === agent.client_id);
-  const project = mockProjects.find(p => p.id === agent.project_id);
+  const client = agent.client_id ? mockClients.find(c => c.id === agent.client_id) : null;
+  const project = agent.project_id ? mockProjects.find(p => p.id === agent.project_id) : null;
 
   const handleToggleStatus = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -84,7 +85,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onClone, onPauseRe
         "transition-all hover:shadow-xl hover:scale-[1.01] h-full flex flex-col",
         agent.status === 'ativo'
           ? "border-2 border-[#0ca7d2]"
-          : "border-dashed opacity-80"
+          : "border-dashed opacity-80",
+        agent.is_template && "border-orange-400 bg-orange-50/10"
       )}
       onClick={onClick}
     >
@@ -94,14 +96,24 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onClone, onPauseRe
             <CardTitle className="flex items-center gap-2 text-lg">
               {agent.name}
             </CardTitle>
-            <CardDescription className="text-sm line-clamp-2">
-              {client?.name} / {project?.name}
+            <CardDescription className="text-sm line-clamp-1">
+              {agent.is_template ? (
+                <span className="text-orange-600 font-medium italic">Template de Marketplace</span>
+              ) : (
+                `${client?.name || 'Cliente s/ nome'} / ${project?.name || 'Projeto s/ nome'}`
+              )}
             </CardDescription>
           </div>
           <div className="flex flex-col items-end space-y-1">
             {getStatusBadge(agent.status)}
-            <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-700">
-              {getAgentTypeLabel(agent.type)}
+            <Badge
+              variant={agent.is_template ? "default" : "outline"}
+              className={cn(
+                "text-xs",
+                agent.is_template ? "bg-orange-500 text-white" : "bg-gray-100 dark:bg-gray-700"
+              )}
+            >
+              {getAgentTypeLabel(agent)}
             </Badge>
           </div>
         </div>
@@ -115,14 +127,14 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onClone, onPauseRe
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Globe className="h-4 w-4" />
-          <span className="font-mono text-xs truncate">{agent.domain}</span>
+          <span className="font-mono text-xs truncate">{agent.domain || 'N/A'}</span>
         </div>
 
         {/* Channels */}
         <div className="flex items-center gap-2 text-sm pt-2 border-t dark:border-gray-800">
           <MessageSquare className="h-4 w-4 text-[#4e4ea8]" />
           <span className="text-muted-foreground">Canais:</span>
-          {agent.channel.map(c => (
+          {(agent.channel || ['whatsapp']).map(c => (
             <Badge key={c} variant="secondary" className="text-xs capitalize">{c}</Badge>
           ))}
         </div>
@@ -132,12 +144,12 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onClone, onPauseRe
           <div className="flex items-center gap-1">
             <Server className="h-4 w-4 text-green-500" />
             <span className="text-muted-foreground">Instâncias:</span>
-            <span className="font-semibold">{agent.instances_count}</span>
+            <span className="font-semibold">{agent.instances_count ?? 0}</span>
           </div>
           <div className="flex items-center gap-1">
             <TrendingUp className="h-4 w-4 text-yellow-500" />
             <span className="text-muted-foreground">Conversas (Hoje):</span>
-            <span className="font-semibold">{agent.conversations_today}</span>
+            <span className="font-semibold">{agent.conversations_today ?? 0}</span>
           </div>
         </div>
       </CardContent>

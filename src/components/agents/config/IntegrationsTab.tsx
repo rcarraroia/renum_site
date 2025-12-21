@@ -12,6 +12,7 @@ import GoogleConfigModal from './modals/GoogleConfigModal';
 import ChatwootConfigModal from './modals/ChatwootConfigModal';
 import SupabaseConfigModal from './modals/SupabaseConfigModal';
 import { integrationService } from '@/services/integrationService';
+import agentService from '@/services/agentService';
 
 interface IntegrationConfig {
   name: string;
@@ -80,23 +81,49 @@ const FUTURE_INTEGRATIONS = [
   { name: 'Zapier', icon: Zap, color: 'text-red-400' },
 ];
 
-const IntegrationsTab: React.FC = () => {
+interface IntegrationsTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+  globalMode?: boolean;
+}
+
+const IntegrationsTab: React.FC<IntegrationsTabProps> = ({ agentId: propAgentId, globalMode = false }) => {
   const [integrations, setIntegrations] = useState<IntegrationConfig[]>(SUPPORTED_INTEGRATIONS);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationConfig | null>(null);
 
-  const agentSlug = 'slim-vendas';
+  const [agent, setAgent] = useState<any>(null);
 
   // Load Integrations from Backend
   React.useEffect(() => {
     loadIntegrations();
-  }, []);
+  }, [propAgentId, globalMode]);
 
   const loadIntegrations = async () => {
     try {
       setLoading(true);
-      const savedIntegrations = await integrationService.listIntegrations();
+      let currentAgent = null;
+
+      if (!globalMode) {
+        if (propAgentId) {
+          currentAgent = await agentService.getAgent(propAgentId);
+        } else {
+          try {
+            currentAgent = await agentService.getAgentBySlug('renus');
+          } catch {
+            const agents = await agentService.listAgents();
+            currentAgent = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+          }
+        }
+      }
+
+      if (currentAgent) {
+        setAgent(currentAgent);
+      }
+
+      // Fetch integrations. If globalMode, pass undefined agentId to service
+      const savedIntegrations = await integrationService.listIntegrations(undefined, globalMode ? undefined : currentAgent?.id);
 
       const mergedList = SUPPORTED_INTEGRATIONS.map(def => {
         // Match provider (case insensitive)
@@ -131,7 +158,11 @@ const IntegrationsTab: React.FC = () => {
     if (!selectedIntegration) return;
 
     try {
-      await integrationService.saveIntegration(selectedIntegration.provider, updatedConfig);
+      await integrationService.saveIntegration(
+        selectedIntegration.provider,
+        updatedConfig,
+        globalMode ? undefined : agent?.id
+      );
       toast.success("Integração salva com sucesso!");
       await loadIntegrations();
       setIsModalOpen(false);
@@ -168,7 +199,7 @@ const IntegrationsTab: React.FC = () => {
             onClose={() => setIsModalOpen(false)}
             initialConfig={selectedIntegration.configData}
             onSave={handleSaveConfig}
-            agentSlug={agentSlug}
+            agentSlug={agent?.slug || 'renus'}
           />
         );
       case 'chatwoot':
@@ -178,7 +209,7 @@ const IntegrationsTab: React.FC = () => {
             onClose={() => setIsModalOpen(false)}
             initialConfig={selectedIntegration.configData}
             onSave={handleSaveConfig}
-            agentSlug={agentSlug}
+            agentSlug={agent?.slug || 'renus'}
           />
         );
       case 'google':

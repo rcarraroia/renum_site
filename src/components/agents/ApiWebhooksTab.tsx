@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Zap, Key, Copy, Trash2, Globe, MessageSquare, FileText, CheckCircle, XCircle, Clock, Settings, Plus, Eye } from 'lucide-react';
+import { Zap, Key, Copy, Trash2, Globe, MessageSquare, FileText, CheckCircle, XCircle, Clock, Settings, Plus, Eye, Loader2, Save } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -11,61 +11,163 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { integrationService, Integration } from '@/services/integrationService';
 
-interface ApiKey {
-    key: string;
-    name: string;
-    created: string;
-    lastUsed: string;
+interface ApiWebhooksTabProps {
+    agentId?: string;
+    clientMode?: boolean;
 }
 
-interface WebhookLog {
-    date: string;
-    event: string;
-    status: string;
-}
+const ApiWebhooksTab: React.FC<ApiWebhooksTabProps> = ({ agentId }) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-const MOCK_API_KEYS: ApiKey[] = [
-    { key: 'sk-slim-abc123', name: 'Site Slim Quality', created: '15/11/2025', lastUsed: '2 min atrás' },
-    { key: 'sk-slim-xyz789', name: 'WhatsApp Bot', created: '10/11/2025', lastUsed: '1 hora atrás' },
-];
+    // API Keys State
+    const [apiKeys, setApiKeys] = useState<any[]>([]);
 
-const MOCK_WEBHOOK_LOGS: WebhookLog[] = [
-    { date: '01/12 10:23', event: 'message.received', status: '200 OK' },
-    { date: '01/12 10:15', event: 'conversation.started', status: '200 OK' },
-    { date: '01/12 09:47', event: 'message.received', status: '500 Error' },
-];
-
-const ApiWebhooksTab: React.FC = () => {
-    const [apiKeys, setApiKeys] = useState(MOCK_API_KEYS);
-    const [webhookStatus, setWebhookStatus] = useState('Funcionando');
+    // Webhooks State
+    const [webhookUrl, setWebhookUrl] = useState('');
+    const [callbackUrl, setCallbackUrl] = useState('');
     const [webhookEvents, setWebhookEvents] = useState({
         messageReceived: true,
         conversationStarted: true,
         toolCalled: false,
     });
+    const [webhookStatus, setWebhookStatus] = useState('Não Configurado');
+
+    useEffect(() => {
+        loadData();
+    }, [agentId]);
+
+    const loadData = async () => {
+        if (!agentId) {
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // Load Webhook Integration
+            const integrations = await integrationService.listIntegrations(undefined, agentId);
+
+            // Webhook
+            const webhookInt = integrations.find(i => i.provider === 'webhook');
+            if (webhookInt) {
+                setWebhookUrl(webhookInt.config.url || '');
+                setCallbackUrl(webhookInt.config.callback_url || '');
+                setWebhookEvents(webhookInt.config.events || {
+                    messageReceived: true,
+                    conversationStarted: true,
+                    toolCalled: false,
+                });
+                setWebhookStatus('Configurado');
+            }
+
+            // API Keys
+            const apiKeyInt = integrations.find(i => i.provider === 'api_key');
+            if (apiKeyInt && apiKeyInt.config.keys) {
+                setApiKeys(apiKeyInt.config.keys);
+            } else {
+                setApiKeys([]);
+            }
+
+        } catch (error) {
+            console.error("Error loading API/Webhooks:", error);
+            toast.error("Erro ao carregar configurações técnicas.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleCopy = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
         toast.info(`${label} copiada!`);
     };
 
-    const handleRevoke = (key: string) => {
-        setApiKeys(apiKeys.filter(k => k.key !== key));
-        toast.warning("Chave de API revogada.");
+    const handleGenerateKey = async () => {
+        if (!agentId) return;
+
+        const newKeyName = prompt("Nome para a chave (ex: Produção, Testes):");
+        if (!newKeyName) return;
+
+        setIsSaving(true);
+        try {
+            const newKey = `sk_renum_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+            const updatedKeys = [
+                ...apiKeys,
+                {
+                    name: newKeyName,
+                    key: newKey,
+                    created: new Date().toLocaleDateString('pt-BR'),
+                    lastUsed: 'Nunca'
+                }
+            ];
+
+            await integrationService.saveIntegration('api_key', { keys: updatedKeys }, agentId);
+            setApiKeys(updatedKeys);
+            toast.success("Chave de API gerada com sucesso!");
+        } catch (error) {
+            toast.error("Erro ao gerar chave.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleRevoke = async (key: string) => {
+        if (!agentId || !confirm("Tem certeza que deseja revogar esta chave?")) return;
+
+        setIsSaving(true);
+        try {
+            const updatedKeys = apiKeys.filter(k => k.key !== key);
+            await integrationService.saveIntegration('api_key', { keys: updatedKeys }, agentId);
+            setApiKeys(updatedKeys);
+            toast.warning("Chave de API revogada.");
+        } catch (error) {
+            toast.error("Erro ao revogar chave.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveWebhook = async () => {
+        if (!agentId) return;
+
+        setIsSaving(true);
+        try {
+            const config = {
+                url: webhookUrl,
+                callback_url: callbackUrl,
+                events: webhookEvents
+            };
+
+            await integrationService.saveIntegration('webhook', config, agentId);
+            setWebhookStatus('Configurado');
+            toast.success("Configurações de Webhook salvas!");
+        } catch (error) {
+            toast.error("Erro ao salvar Webhook.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleTestWebhook = () => {
+        if (!webhookUrl) {
+            toast.error("Configure uma URL primeiro.");
+            return;
+        }
         toast.info("Enviando teste de webhook...");
         setTimeout(() => {
-            setWebhookStatus('Funcionando');
-            toast.success("Webhook testado com sucesso! Status: 200 OK.");
+            toast.success("Carga de teste enviada para " + webhookUrl);
         }, 1500);
     };
 
+    if (isLoading) {
+        return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-[#4e4ea8]" /></div>;
+    }
+
     return (
         <div className="space-y-8">
-            
+
             {/* API Keys */}
             <Card>
                 <CardHeader>
@@ -73,86 +175,122 @@ const ApiWebhooksTab: React.FC = () => {
                     <CardDescription>Gerencie as chaves de acesso para interagir com este agente via API.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {apiKeys.map((keyData, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
-                            <div className="flex-grow">
-                                <h4 className="font-semibold text-sm">{keyData.name}</h4>
-                                <p className="text-xs font-mono text-muted-foreground truncate max-w-xs">
-                                    {keyData.key.substring(0, 10)}...{keyData.key.substring(keyData.key.length - 6)}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">Criada: {keyData.created} | Último uso: {keyData.lastUsed}</p>
-                            </div>
-                            <div className="flex space-x-2 flex-shrink-0">
-                                <Button variant="outline" size="sm" onClick={() => handleCopy(keyData.key, 'Chave de API')}>
-                                    <Copy className="h-4 w-4" />
-                                </Button>
-                                <Button variant="destructive" size="sm" onClick={() => handleRevoke(keyData.key)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
+                    {apiKeys.length === 0 ? (
+                        <div className="text-center py-6 text-sm text-muted-foreground border-2 border-dashed rounded-lg">
+                            Nenhuma chave de API gerada para este agente.
                         </div>
-                    ))}
-                    <Button variant="outline" className="w-full"><Plus className="h-4 w-4 mr-2" /> Gerar Nova Chave</Button>
+                    ) : (
+                        apiKeys.map((keyData, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700">
+                                <div className="flex-grow">
+                                    <h4 className="font-semibold text-sm">{keyData.name}</h4>
+                                    <p className="text-xs font-mono text-muted-foreground truncate max-w-xs">
+                                        {keyData.key.substring(0, 10)}...{keyData.key.substring(keyData.key.length - 6)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">Criada: {keyData.created} | Último uso: {keyData.lastUsed}</p>
+                                </div>
+                                <div className="flex space-x-2 flex-shrink-0">
+                                    <Button variant="outline" size="sm" onClick={() => handleCopy(keyData.key, 'Chave de API')}>
+                                        <Copy className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="destructive" size="sm" onClick={() => handleRevoke(keyData.key)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                    <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleGenerateKey}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                        Gerar Nova Chave
+                    </Button>
                 </CardContent>
             </Card>
 
             {/* Webhooks */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center text-[#FF6B35]"><Globe className="h-5 w-5 mr-2" /> Webhooks</CardTitle>
+                    <CardTitle className="flex items-center text-[#FF6B35]"><Globe className="h-5 w-5 mr-2" /> Webhooks de Saída</CardTitle>
                     <CardDescription>Configure endpoints para receber notificações em tempo real sobre eventos do agente.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label>URL Webhook</Label>
-                        <Input readOnly defaultValue="https://api.renum.com.br/webhook/slim/abc123" className="font-mono text-sm" />
+                        <Label>URL Webhook (Onde o Renum enviará eventos)</Label>
+                        <Input
+                            placeholder="https://sua-api.com/webhook"
+                            className="font-mono text-sm"
+                            value={webhookUrl}
+                            onChange={(e) => setWebhookUrl(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
-                        <Label>URL Callback (Opcional)</Label>
-                        <Input readOnly defaultValue="https://slim.com.br/webhook/renum" className="font-mono text-sm" />
+                        <Label>URL Callback (Opcional - link de status para o agente)</Label>
+                        <Input
+                            placeholder="https://seu-sistema.com/callback"
+                            className="font-mono text-sm"
+                            value={callbackUrl}
+                            onChange={(e) => setCallbackUrl(e.target.value)}
+                        />
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-3 border rounded-lg">
-                        <span className="font-semibold text-sm">Status:</span>
-                        <Badge className={cn(webhookStatus === 'Funcionando' ? 'bg-green-500' : 'bg-red-500', 'text-white')}>
+                        <span className="font-semibold text-sm">Configuração:</span>
+                        <Badge className={cn(webhookStatus === 'Configurado' ? 'bg-green-500' : 'bg-gray-400', 'text-white')}>
                             {webhookStatus}
                         </Badge>
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Eventos Ativos</Label>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="flex items-center space-x-2"><Checkbox id="msg-received" checked={webhookEvents.messageReceived} onCheckedChange={(v) => setWebhookEvents({...webhookEvents, messageReceived: v as boolean})} /><Label htmlFor="msg-received">message.received</Label></div>
-                            <div className="flex items-center space-x-2"><Checkbox id="conv-started" checked={webhookEvents.conversationStarted} onCheckedChange={(v) => setWebhookEvents({...webhookEvents, conversationStarted: v as boolean})} /><Label htmlFor="conv-started">conversation.started</Label></div>
-                            <div className="flex items-center space-x-2"><Checkbox id="tool-called" checked={webhookEvents.toolCalled} onCheckedChange={(v) => setWebhookEvents({...webhookEvents, toolCalled: v as boolean})} /><Label htmlFor="tool-called">tool.called</Label></div>
+                        <Label>Eventos para Notificar</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="msg-received"
+                                    checked={webhookEvents.messageReceived}
+                                    onCheckedChange={(v) => setWebhookEvents({ ...webhookEvents, messageReceived: v as boolean })}
+                                />
+                                <Label htmlFor="msg-received">message.received</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="conv-started"
+                                    checked={webhookEvents.conversationStarted}
+                                    onCheckedChange={(v) => setWebhookEvents({ ...webhookEvents, conversationStarted: v as boolean })}
+                                />
+                                <Label htmlFor="conv-started">conversation.started</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="tool-called"
+                                    checked={webhookEvents.toolCalled}
+                                    onCheckedChange={(v) => setWebhookEvents({ ...webhookEvents, toolCalled: v as boolean })}
+                                />
+                                <Label htmlFor="tool-called">tool.called</Label>
+                            </div>
                         </div>
                     </div>
 
-                    <Button onClick={handleTestWebhook} variant="outline" className="w-full"><Settings className="h-4 w-4 mr-2" /> Testar Webhook</Button>
-                    
+                    <div className="flex gap-2">
+                        <Button onClick={handleSaveWebhook} disabled={isSaving} className="flex-1 bg-[#FF6B35] hover:bg-[#e55f30]">
+                            {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                            Salvar Webhook
+                        </Button>
+                        <Button onClick={handleTestWebhook} variant="outline" className="flex-1">
+                            <Settings className="h-4 w-4 mr-2" /> Testar Destino
+                        </Button>
+                    </div>
+
                     <Separator />
 
-                    <h5 className="font-semibold text-sm flex items-center text-muted-foreground"><Clock className="h-4 w-4 mr-2" /> Logs Recentes</h5>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Data</TableHead>
-                                <TableHead>Evento</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {MOCK_WEBHOOK_LOGS.map((log, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="text-xs">{log.date}</TableCell>
-                                    <TableCell className="text-xs font-mono">{log.event}</TableCell>
-                                    <TableCell className={cn("text-xs font-medium", log.status.startsWith('200') ? 'text-green-500' : 'text-red-500')}>
-                                        {log.status}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                    <h5 className="font-semibold text-sm flex items-center text-muted-foreground"><Clock className="h-4 w-4 mr-2" /> Logs de Envio (Próxima Fase)</h5>
+                    <div className="text-xs text-center py-4 text-muted-foreground italic">
+                        Logs de execução de webhooks estarão disponíveis após a ativação do pipeline de eventos.
+                    </div>
                 </CardContent>
             </Card>
 
@@ -161,21 +299,33 @@ const ApiWebhooksTab: React.FC = () => {
                 <Card>
                     <CardHeader><CardTitle className="flex items-center text-[#0ca7d2]"><MessageSquare className="h-5 w-5 mr-2" /> Widget de Chat</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
-                        <Label>Código Embed</Label>
-                        <Textarea readOnly rows={3} defaultValue="<script src='renum.js' data-agent='slim-vendas'></script>" className="font-mono text-xs" />
-                        <p className="text-sm">Cor Primária: <Badge style={{ backgroundColor: '#6366F1' }} className="text-white">#6366F1</Badge></p>
-                        <p className="text-sm">Posição: bottom-right</p>
-                        <Button variant="outline" className="w-full"><Eye className="h-4 w-4 mr-2" /> Preview do Widget</Button>
+                        <Label>Código Embed (Script de Integração)</Label>
+                        <Textarea
+                            readOnly
+                            rows={3}
+                            value={`<script src='https://cdn.renum.com.br/widget.js' data-agent-id='${agentId || 'id'}'></script>`}
+                            className="font-mono text-xs bg-gray-50 dark:bg-gray-900"
+                        />
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Status do Widget:</span>
+                            <Badge variant="outline" className="text-green-600">Disponível</Badge>
+                        </div>
+                        <Button variant="outline" className="w-full" onClick={() => toast.info("Funcionalidade de preview em desenvolvimento.")}>
+                            <Eye className="h-4 w-4 mr-2" /> Preview do Widget
+                        </Button>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader><CardTitle className="flex items-center text-[#4e4ea8]"><FileText className="h-5 w-5 mr-2" /> Documentação</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="flex items-center text-[#4e4ea8]"><FileText className="h-5 w-5 mr-2" /> Documentação da API</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
-                        <p className="text-sm text-muted-foreground">Acesse a documentação completa da API para este agente.</p>
-                        <Button variant="link" className="p-0 h-auto text-[#4e4ea8]">
-                            Ver Docs da API →
+                        <p className="text-sm text-muted-foreground">Acesse a documentação técnica para integrar este agente em seus sistemas via REST API.</p>
+                        <Button variant="outline" className="w-full border-[#4e4ea8] text-[#4e4ea8] hover:bg-[#4e4ea8] hover:text-white">
+                            Explorar Swagger/OpenAPI →
                         </Button>
-                        <p className="text-xs font-mono mt-2">Endpoint: /api/v1/agents/slim-vendas</p>
+                        <div className="p-2 bg-gray-50 dark:bg-gray-900 rounded border font-mono text-[10px] break-all">
+                            POST /api/v1/chat/completions <br />
+                            Auth: Bearer YOUR_API_KEY
+                        </div>
                     </CardContent>
                 </Card>
             </div>

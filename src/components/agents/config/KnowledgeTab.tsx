@@ -9,7 +9,12 @@ import { cn } from '@/lib/utils';
 import agentService from '@/services/agentService';
 import { knowledgeService, KnowledgeDocument, SearchResult } from '@/services/knowledgeService';
 
-const KnowledgeTab: React.FC = () => {
+interface KnowledgeTabProps {
+  agentId?: string;
+  clientMode?: boolean;
+}
+
+const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ agentId: propAgentId }) => {
   const [agent, setAgent] = useState<any>(null);
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,13 +32,15 @@ const KnowledgeTab: React.FC = () => {
       setIsLoading(true);
       // Load Agent (Try getting Renus)
       let agentData;
-      try {
-        // Try strictly renus first
-        agentData = await agentService.getAgentBySlug('renus');
-      } catch {
-        // Fallback to first available if renus not found
-        const agents = await agentService.listAgents();
-        agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+      if (propAgentId) {
+        agentData = await agentService.getAgent(propAgentId);
+      } else {
+        try {
+          agentData = await agentService.getAgentBySlug('renus');
+        } catch {
+          const agents = await agentService.listAgents();
+          agentData = agents.find((a: any) => a.slug === 'renus' || a.role === 'system_orchestrator');
+        }
       }
 
       if (agentData) {

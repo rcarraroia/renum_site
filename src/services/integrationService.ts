@@ -29,8 +29,11 @@ class IntegrationService {
   /**
    * Get all integrations for current client
    */
-  async listIntegrations(provider?: string): Promise<Integration[]> {
-    const params = provider ? { provider } : undefined;
+  async listIntegrations(provider?: string, agentId?: string): Promise<Integration[]> {
+    const params: any = {};
+    if (provider) params.provider = provider;
+    if (agentId) params.agent_id = agentId;
+
     const response = await apiClient.get<Integration[]>('/api/integrations/', { params });
     return response.data;
   }
@@ -57,6 +60,13 @@ class IntegrationService {
   ): Promise<IntegrationTestResult> {
     const payload = { config };
     const response = await apiClient.post<IntegrationTestResult>(`/api/integrations/${provider}/test`, payload);
+    return response.data;
+  }
+  /**
+   * Get aggregated status for Radar
+   */
+  async getIntegrationsStatus(): Promise<any[]> {
+    const response = await apiClient.get<any[]>('/api/integrations/status');
     return response.data;
   }
 }

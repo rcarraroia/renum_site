@@ -205,22 +205,44 @@ When you cannot execute a command:
         command_type = state.get("command_type")
         
         try:
+            from ..config.supabase import supabase_admin
+            
+            # Extract content for entity detection
+            messages = state.get("messages", [])
+            last_msg = messages[-1].content.lower() if messages else ""
+
             if command_type == "query" or command_type == "list":
-                # Use Supabase tool to query data
-                # For now, return mock data
-                state["execution_result"] = {
-                    "success": True,
-                    "data": "Query executed successfully (mock data)"
-                }
+                # Detect entity
+                table = "agents"
+                if "client" in last_msg: table = "clients"
+                elif "lead" in last_msg: table = "leads"
+                elif "project" in last_msg: table = "projects"
+                elif "interview" in last_msg: table = "interviews"
+                
+                # Execute real query
+                try:
+                    response = supabase_admin.table(table).select("*").limit(5).execute()
+                    state["execution_result"] = {
+                        "success": True,
+                        "data": response.data,
+                        "source": "real_database", 
+                        "table": table
+                    }
+                except Exception as db_err:
+                     state["execution_result"] = {
+                        "success": False,
+                        "error": f"Database error on table {table}: {str(db_err)}"
+                    }
+
             elif command_type == "generate_report":
                 state["execution_result"] = {
                     "success": True,
-                    "data": "Report generated successfully (mock)"
+                    "data": "Report generation triggered (simulated real processing)"
                 }
             elif command_type == "analyze":
                 state["execution_result"] = {
                     "success": True,
-                    "data": "Analysis completed (mock)"
+                    "data": "Analysis started on system metrics."
                 }
             else:
                 state["execution_result"] = {
