@@ -65,3 +65,10 @@ docs/
 # Claude
 .claude/
 .vercel
+# Relatórios temporários (JSON)
+*_test_results.json
+*_analysis.json
+*_report_*.json
+auditoria_*.json
+teste_*.json
+audit_*.json
