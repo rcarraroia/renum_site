@@ -10,11 +10,11 @@ from typing import List, Dict, Any, Optional
 from uuid import UUID
 import tiktoken
 
-from ...utils.logger import logger
+from src.utils.logger import logger
 from .memory_service import MemoryService
 from .behavior_service import BehaviorService
 from .embedding_service import get_embedding_service
-from ...models.sicc.memory import MemorySearchQuery, ChunkType
+from src.models.sicc.memory import MemorySearchQuery, ChunkType
 
 
 class EnrichedPrompt:

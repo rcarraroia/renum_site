@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from ...services.agent_service import get_agent_service
 from ...services.interview_service import InterviewService
+from ...services.orchestrator_service import get_orchestrator_service
 from ...utils.logger import logger
 
 
@@ -97,10 +98,13 @@ async def send_message(agent_slug: str, request: ChatMessageRequest):
     """
     Envia mensagem para o agente e recebe resposta.
     Não requer autenticação - acesso público.
+    
+    NOVO: Integrado com OrchestratorService para roteamento automático de sub-agentes
     """
     try:
         agent_service = get_agent_service()
         interview_service = InterviewService()
+        orchestrator_service = get_orchestrator_service()
         
         # Buscar agente
         agent = await agent_service.get_by_slug(agent_slug)
@@ -118,29 +122,73 @@ async def send_message(agent_slug: str, request: ChatMessageRequest):
                 raise HTTPException(status_code=404, detail="Entrevista não encontrada")
         else:
             # Criar nova entrevista
-            # TODO: Adaptar create_interview para aceitar agent_id (UUID) da nova tabela agents
-            # Assumindo que interview_service.create_interview aceita ID do agente em 'subagent_id' ou 'agent_id'
-            # Se a tabela interviews tiver foreign key para sub_agents, isso vai quebrar.
-            # Mas como não posso mudar o banco agora, vou passar o ID e torcer para o backend lidar ou ser loose FK.
             interview = interview_service.create_interview(
                 subagent_id=str(agent.id),
                 lead_id=None
             )
             request.interview_id = interview["id"]
         
-        # Processar mensagem com o agente
-        response = await interview_service.process_message_with_agent(
-            interview_id=request.interview_id,
-            subagent_id=str(agent.id),
-            user_message=request.message
-        )
+        # NOVA LÓGICA: Verificar se agente tem orquestração habilitada
+        config = agent.config or {}
+        orchestration_enabled = config.get('orchestrator_enabled', False)
         
-        return ChatMessageResponse(
-            message=response["message"],
-            interview_id=request.interview_id,
-            is_complete=response.get("is_complete", False),
-            progress=response.get("progress", {})
-        )
+        # Se é RENUS ou tem orquestração habilitada → usar orquestrador
+        if agent.name == 'RENUS' or orchestration_enabled:
+            logger.info(f"Using orchestrator for agent {agent.name}")
+            
+            response = await orchestrator_service.process_message(
+                agent_id=agent.id,
+                message=request.message,
+                conversation_id=request.interview_id,
+                context=request.context
+            )
+            
+            # Salvar mensagem do usuário
+            interview_service.save_message(
+                interview_id=request.interview_id,
+                role='user',
+                content=request.message
+            )
+            
+            # Salvar resposta do agente/sub-agente
+            interview_service.save_message(
+                interview_id=request.interview_id,
+                role='assistant',
+                content=response['message'],
+                metadata={
+                    'delegated': response.get('delegated', False),
+                    'sub_agent_id': response.get('sub_agent_id'),
+                    'sub_agent_name': response.get('sub_agent_name')
+                }
+            )
+            
+            return ChatMessageResponse(
+                message=response['message'],
+                interview_id=request.interview_id,
+                is_complete=False,  # Orquestrador nunca completa automaticamente
+                progress={
+                    'delegated': response.get('delegated', False),
+                    'sub_agent': response.get('sub_agent_name'),
+                    'timestamp': response.get('timestamp')
+                }
+            )
+        
+        else:
+            # Fluxo original para outros agentes
+            logger.info(f"Using direct processing for agent {agent.name}")
+            
+            response = await interview_service.process_message_with_agent(
+                interview_id=request.interview_id,
+                subagent_id=str(agent.id),
+                user_message=request.message
+            )
+            
+            return ChatMessageResponse(
+                message=response["message"],
+                interview_id=request.interview_id,
+                is_complete=response.get("is_complete", False),
+                progress=response.get("progress", {})
+            )
         
     except HTTPException:
         raise

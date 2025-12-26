@@ -5,10 +5,52 @@ export const siccService = {
   async getEvolutionStats(agentId: string, period: number = 30) {
     try {
       const { data } = await apiClient.get(`/api/sicc/stats/agent/${agentId}/evolution`, { days: period });
-      return data;
+      
+      // Bug #6 - Corrigido: Se backend retornar dados parciais, buscar contagens reais
+      if (data) {
+        const typedData = data as Record<string, unknown>;
+        // Se total_memories for 0, tentar buscar contagem real de memórias
+        if (!typedData.total_memories || typedData.total_memories === 0) {
+          try {
+            const memoriesResponse = await apiClient.get('/api/sicc/memories/', {
+              agent_id: agentId,
+              limit: 1
+            });
+            const memData = memoriesResponse.data as Record<string, unknown>;
+            // Se a resposta tiver total ou count, usar
+            if (memData?.total) {
+              typedData.total_memories = memData.total;
+            } else if (Array.isArray(memoriesResponse.data)) {
+              // Fazer outra chamada para contar
+              const countResponse = await apiClient.get('/api/sicc/memories/', {
+                agent_id: agentId,
+                limit: 100
+              });
+              typedData.total_memories = Array.isArray(countResponse.data) ? countResponse.data.length : 0;
+            }
+          } catch (e) {
+            console.warn('Could not fetch memory count:', e);
+          }
+        }
+        return typedData;
+      }
+      
+      return {
+        total_memories: 0,
+        total_memories_change: 0,
+        auto_approved_rate: 0,
+        auto_approved_rate_change: 0,
+        success_rate: 0,
+        success_rate_change: 0,
+        learning_velocity: 0,
+        learning_velocity_change: 0,
+        memory_growth: [],
+        success_trend: [],
+        recent_activity: [],
+      };
     } catch (error) {
       console.error('Error fetching evolution stats:', error);
-      // Return empty/zero structure if backend fails, instead of fake data
+      // Return empty/zero structure if backend fails
       return {
         total_memories: 0,
         total_memories_change: 0,
@@ -41,12 +83,37 @@ export const siccService = {
     return data;
   },
 
-  async updateMemory(id: string, updates: any) {
+  // Bug #2 - Adicionado: Método para criar memória
+  async createMemory(agentId: string, memoryData: { content: string; chunk_type: string; confidence_score: number }) {
     try {
-      const { data } = await apiClient.put(`/api/sicc/memory/${id}`, updates);
+      // Validação do agentId antes de enviar
+      if (!agentId || agentId === 'undefined' || agentId === 'null') {
+        throw new Error('agent_id is required and must be a valid UUID');
+      }
+      
+      console.log('siccService.createMemory - agentId:', agentId, 'data:', memoryData);
+      
+      const { data } = await apiClient.post('/api/sicc/memories/', {
+        agent_id: agentId,
+        content: memoryData.content,
+        chunk_type: memoryData.chunk_type,
+        confidence_score: memoryData.confidence_score
+      });
       return data;
     } catch (error) {
-      return { ...updates, id };
+      console.error('Error creating memory:', error);
+      throw error;
+    }
+  },
+
+  async updateMemory(id: string, updates: any) {
+    try {
+      // Bug #1 - Corrigido: Endpoint correto é /memories/ não /memory/
+      const { data } = await apiClient.put(`/api/sicc/memories/${id}`, updates);
+      return data;
+    } catch (error) {
+      console.error('Error updating memory:', error);
+      throw error;
     }
   },
 
@@ -69,12 +136,36 @@ export const siccService = {
 
   // Learning Queue
   async getLearningQueue(agentId: string, status?: string) {
-    const { data } = await apiClient.get('/api/sicc/learnings/', {
-      agent_id: agentId,
-      status_filter: status, // Changed 'status' to 'status_filter' to match backend
-      limit: 50
-    });
-    return data;
+    try {
+      // Bug #5 - Corrigido: Passar status corretamente e tratar resposta
+      const params: Record<string, string | number | boolean> = {
+        agent_id: agentId,
+        limit: 50
+      };
+      
+      // Só adiciona filtro de status se for diferente de 'all' ou undefined
+      if (status && status !== 'all') {
+        params.status_filter = status;
+      }
+      
+      const { data } = await apiClient.get('/api/sicc/learnings/', params);
+      
+      // Garantir que retorna array
+      if (Array.isArray(data)) {
+        return data;
+      }
+      const typedData = data as Record<string, unknown>;
+      if (typedData?.items && Array.isArray(typedData.items)) {
+        return typedData.items;
+      }
+      if (typedData?.data && Array.isArray(typedData.data)) {
+        return typedData.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching learning queue:', error);
+      return [];
+    }
   },
 
   async getLearning(id: string) {

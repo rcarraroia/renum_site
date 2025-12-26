@@ -1,49 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { siccService } from '@/services/siccService';
 import { agentService } from '@/services/agentService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Clock, CheckCircle, XCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function LearningQueuePage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('pending');
   const [learnings, setLearnings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [agentId, setAgentId] = useState<string | null>(null);
+  const [agent, setAgent] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
+      if (!slug) {
+        setError('Slug do agente não fornecido');
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const agent = await agentService.getSystemAgent('system_orchestrator');
-        if (agent) {
-          setAgentId(agent.id);
+        // Busca agente pelo slug da URL
+        const agentData = await agentService.getAgentBySlug(slug);
+        if (agentData) {
+          setAgent(agentData);
         } else {
-          console.error('System agent not found');
+          setError(`Agente "${slug}" não encontrado`);
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching system agent:', error);
+        console.error('Error fetching agent:', error);
+        setError('Erro ao carregar agente');
         setLoading(false);
       }
     };
     init();
-  }, []);
+  }, [slug]);
 
   useEffect(() => {
-    if (agentId) {
-      loadLearnings(agentId);
+    if (agent?.id) {
+      loadLearnings(agent.id);
     }
-  }, [agentId, activeTab]);
+  }, [agent?.id, activeTab]);
 
   const loadLearnings = async (id: string) => {
     try {
       setLoading(true);
-      const data = await siccService.getLearningQueue(id, activeTab);
-      // Assuming backend returns { items: [...] } or array based on siccService refactor
-      setLearnings(Array.isArray(data) ? data : (data.items || []));
+      const data: any = await siccService.getLearningQueue(id, activeTab);
+      setLearnings(Array.isArray(data) ? data : (data?.items || []));
     } catch (error) {
       console.error('Erro ao carregar learnings:', error);
       setLearnings([]);
@@ -53,26 +64,26 @@ export default function LearningQueuePage() {
   };
 
   const handleApprove = async (learningId: string) => {
-    if (!agentId) return;
+    if (!agent?.id) return;
     try {
       await siccService.approveLearning(learningId);
-      loadLearnings(agentId); // Reload
+      loadLearnings(agent.id);
     } catch (error) {
       console.error('Erro ao aprovar:', error);
     }
   };
 
   const handleReject = async (learningId: string) => {
-    if (!agentId) return;
+    if (!agent?.id) return;
     try {
-      await siccService.rejectLearning(learningId);
-      loadLearnings(agentId); // Reload
+      await siccService.rejectLearning(learningId, 'Rejeitado manualmente pelo administrador');
+      loadLearnings(agent.id);
     } catch (error) {
       console.error('Erro ao rejeitar:', error);
     }
   };
 
-  if (loading && !agentId) {
+  if (loading && !agent) {
     return (
       <DashboardLayout>
         <div className="p-6 flex justify-center">
@@ -82,11 +93,37 @@ export default function LearningQueuePage() {
     );
   }
 
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => navigate('/dashboard/admin/agents')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Agentes
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">⏳ Fila de Aprendizados</h1>
+          <div className="flex items-center gap-4">
+            {/* Bug #3 - Corrigido: Voltar para aba Inteligência */}
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/admin/agents/${slug}?tab=intelligence`)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">⏳ Fila de Aprendizados</h1>
+              <p className="text-muted-foreground">{agent?.name || slug}</p>
+            </div>
+          </div>
           <div className="flex space-x-2">
             <Button variant="outline" size="sm">
               Aprovar Selecionados
@@ -198,7 +235,11 @@ export default function LearningQueuePage() {
                               </p>
                               {learning.analysis && (
                                 <p className="text-xs text-gray-600">
-                                  <strong>Análise ISA:</strong> {learning.analysis}
+                                  <strong>Análise ISA:</strong> {
+                                    typeof learning.analysis === 'string' 
+                                      ? learning.analysis 
+                                      : learning.analysis.suggestion || JSON.stringify(learning.analysis)
+                                  }
                                 </p>
                               )}
                             </div>

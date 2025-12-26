@@ -10,8 +10,8 @@ from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID
 from datetime import datetime, timedelta
 
-from ...config.supabase import supabase_admin
-from ...models.sicc.learning import (
+from src.utils.supabase_client import get_client
+from src.models.sicc.learning import (
     LearningLogCreate,
     LearningLogResponse,
     LearningApproval,
@@ -20,9 +20,9 @@ from ...models.sicc.learning import (
     LearningStats,
     LearningBatch
 )
-from ...models.sicc.memory import MemoryChunkCreate, ChunkType
-from ...models.sicc.behavior import BehaviorPatternCreate, PatternType
-from ...utils.logger import logger
+from src.models.sicc.memory import MemoryChunkCreate, ChunkType
+from src.models.sicc.behavior import BehaviorPatternCreate, PatternType
+from src.utils.logger import logger
 from .memory_service import MemoryService
 from .behavior_service import BehaviorService
 from .metrics_service import MetricsService
@@ -33,7 +33,7 @@ class LearningService:
     
     def __init__(self):
         """Initialize service with dependencies"""
-        self.supabase = supabase_admin
+        self.supabase = get_client()
         self.memory_service = MemoryService()
         self.behavior_service = BehaviorService()
         self.metrics_service = MetricsService()
@@ -383,7 +383,7 @@ class LearningService:
             }
             
             # Insert into database
-            result = self.supabase.table("agent_learning_logs").insert(
+            result = self.supabase.table("learning_logs").insert(
                 log_data
             ).execute()
             
@@ -423,7 +423,7 @@ class LearningService:
             )
             
             # Get learning log
-            log_result = self.supabase.table("agent_learning_logs").select(
+            log_result = self.supabase.table("learning_logs").select(
                 "*"
             ).eq("id", str(learning_id)).single().execute()
             
@@ -439,7 +439,7 @@ class LearningService:
                 "reviewed_at": datetime.utcnow().isoformat()
             }
             
-            result = self.supabase.table("agent_learning_logs").update(
+            result = self.supabase.table("learning_logs").update(
                 update_data
             ).eq("id", str(learning_id)).execute()
             
@@ -484,7 +484,7 @@ class LearningService:
                 "action_taken": f"rejected: {reason}"
             }
             
-            result = self.supabase.table("agent_learning_logs").update(
+            result = self.supabase.table("learning_logs").update(
                 update_data
             ).eq("id", str(learning_id)).execute()
             
@@ -601,7 +601,7 @@ class LearningService:
                 )
             
             # Update learning log to mark as applied
-            self.supabase.table("agent_learning_logs").update({
+            self.supabase.table("learning_logs").update({
                 "status": "applied",
                 "action_taken": f"consolidated into {learning_type}"
             }).eq("id", log["id"]).execute()
@@ -637,7 +637,7 @@ class LearningService:
             List of LearningLogResponse
         """
         try:
-            result = self.supabase.table("agent_learning_logs").select(
+            result = self.supabase.table("learning_logs").select(
                 "*"
             ).eq("agent_id", str(agent_id)).eq(
                 "status", "pending"
@@ -659,34 +659,38 @@ class LearningService:
             agent_id: Agent ID
         
         Returns:
-            Dictionary with learning statistics
+            Dictionary with learning statistics matching LearningStats model
         """
         try:
             # Get all learnings for agent
-            result = self.supabase.table("agent_learning_logs").select(
+            result = self.supabase.table("learning_logs").select(
                 "status, confidence, created_at"
             ).eq("agent_id", str(agent_id)).execute()
             
             if not result.data:
                 return {
+                    "agent_id": str(agent_id),
                     "total_learnings": 0,
-                    "pending": 0,
-                    "approved": 0,
-                    "rejected": 0,
-                    "applied": 0,
+                    "pending_count": 0,
+                    "approved_count": 0,
+                    "rejected_count": 0,
+                    "auto_approved_count": 0,
+                    "applied_count": 0,
                     "avg_confidence": 0.0,
                     "last_learning_at": None
                 }
             
             logs = result.data
             
-            # Calculate statistics
+            # Calculate statistics - matching LearningStats model fields
             stats = {
+                "agent_id": str(agent_id),
                 "total_learnings": len(logs),
-                "pending": sum(1 for log in logs if log["status"] == "pending"),
-                "approved": sum(1 for log in logs if log["status"] == "approved"),
-                "rejected": sum(1 for log in logs if log["status"] == "rejected"),
-                "applied": sum(1 for log in logs if log["status"] == "applied"),
+                "pending_count": sum(1 for log in logs if log["status"] == "pending"),
+                "approved_count": sum(1 for log in logs if log["status"] == "approved"),
+                "rejected_count": sum(1 for log in logs if log["status"] == "rejected"),
+                "auto_approved_count": sum(1 for log in logs if log["status"] == "auto_approved"),
+                "applied_count": sum(1 for log in logs if log["status"] == "applied"),
                 "avg_confidence": sum(log["confidence"] for log in logs) / len(logs),
                 "last_learning_at": max(log["created_at"] for log in logs)
             }

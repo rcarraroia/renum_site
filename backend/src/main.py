@@ -14,7 +14,8 @@ from src.api.routes import (
     interviews, renus_config, tools, knowledge, agents, sub_agents, 
     public_chat, isa, dashboard, reports, integrations, triggers, 
     webhooks, marketplace, payment, sicc_memory, sicc_learning, 
-    sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, websocket
+    sicc_stats, sicc_patterns, sicc_audio, sicc_settings, sicc_hook,
+    monitoring, websocket, orchestrator
 )
 
 # Configuração da Aplicação
@@ -37,6 +38,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Handler para requisições OPTIONS (CORS preflight)
+@app.options("/{full_path:path}")
+async def preflight_handler(full_path: str):
+    """
+    Handle CORS preflight requests (OPTIONS)
+    
+    Browser envia OPTIONS antes de GET/POST/PUT/DELETE
+    Este handler responde com status 200
+    CORSMiddleware adiciona headers CORS automaticamente
+    """
+    return {"status": "ok"}
+
 # Registrar routers
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -50,7 +63,7 @@ app.include_router(renus_config.router, prefix="/api")  # RENUS Configuration
 app.include_router(tools.router, prefix="/api")  # Agent Tools
 app.include_router(knowledge.router, prefix="/api")  # Knowledge Base (RAG)
 app.include_router(agents.router, prefix="/api")  # agents.py já define as rotas
-app.include_router(sub_agents.router, prefix="/api/subagents_legacy")
+app.include_router(sub_agents.router)  # Sub-agents API
 app.include_router(public_chat.router, prefix="/api")  # Public Chat URLs
 app.include_router(isa.router, prefix="/api")  # ISA Assistant
 app.include_router(dashboard.router, prefix="/api")  # Dashboard Stats
@@ -67,7 +80,9 @@ app.include_router(sicc_stats.router, prefix="/api")  # Sprint 10 - SICC Stats
 app.include_router(sicc_patterns.router, prefix="/api")  # Sprint 10 - SICC Patterns
 app.include_router(sicc_audio.router)  # Sprint 10 - SICC Audio Processing
 app.include_router(sicc_settings.router, prefix="/api/sicc")  # SICC Settings
+app.include_router(sicc_hook.router, prefix="/api")  # SICC Hook Multi-Agente
 app.include_router(monitoring.router, prefix="/api/monitoring")  # Monitoring & Observability
+app.include_router(orchestrator.router)  # Orchestrator Multi-Agent System
 app.include_router(websocket.router)  # WebSocket endpoint
 
 

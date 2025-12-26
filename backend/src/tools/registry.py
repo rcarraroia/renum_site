@@ -1,5 +1,6 @@
 from typing import List, Any, Dict
-from langchain.tools import BaseTool, Tool
+from langchain.tools import BaseTool
+from langchain_core.tools import tool
 from .email_tool import get_email_tool
 from .whatsapp_tool import get_whatsapp_tools
 from .supabase_tool import create_supabase_tool

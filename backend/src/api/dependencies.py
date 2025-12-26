@@ -7,26 +7,63 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import jwt
-from src.config import settings
+from src.config.settings import settings
+from src.utils.logger import logger
 
 security = HTTPBearer()
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
-    Get current authenticated user from JWT token
+    Get current authenticated user from JWT token.
+    Supports both:
+    - User tokens (with 'sub' field) - from Supabase Auth
+    - API tokens (with 'role' field) - anon/service_role keys
     """
     try:
         token = credentials.credentials
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+        
+        # Decode with SUPABASE_JWT_SECRET
+        payload = jwt.decode(
+            token, 
+            settings.SUPABASE_JWT_SECRET, 
+            algorithms=["HS256"],
+            options={"verify_aud": False}  # Supabase tokens may not have aud
+        )
+        
+        # Check for user token (has 'sub')
         user_id = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return {"id": user_id, "email": payload.get("email")}
-    except jwt.PyJWTError:
+        if user_id:
+            return {
+                "id": user_id, 
+                "email": payload.get("email"),
+                "role": payload.get("role", "authenticated")
+            }
+        
+        # Check for API token (has 'role' like 'anon' or 'service_role')
+        role = payload.get("role")
+        if role in ["anon", "service_role"]:
+            return {
+                "id": f"api_{role}",
+                "email": None,
+                "role": role
+            }
+        
+        # No valid identifier found
+        logger.warning(f"JWT token missing 'sub' or valid 'role': {payload.keys()}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token: missing user identifier",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.PyJWTError as e:
+        logger.error(f"JWT decode error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",

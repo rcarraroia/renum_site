@@ -24,6 +24,7 @@ celery_app = Celery(
     include=[
         'src.workers.message_tasks',
         'src.workers.trigger_tasks',
+        'src.workers.sicc_tasks',  # SICC Multi-Agente
     ]
 )
 
@@ -56,6 +57,23 @@ celery_app.conf.update(
             'task': 'src.workers.trigger_tasks.trigger_scheduler_task',
             'schedule': 60.0,  # Every 60 seconds (1 minute)
         },
+        # SICC Multi-Agente Tasks
+        'sicc-consolidate-learnings': {
+            'task': 'src.workers.sicc_tasks.consolidate_learnings',
+            'schedule': 300.0,  # Every 5 minutes
+        },
+        'sicc-analyze-patterns': {
+            'task': 'src.workers.sicc_tasks.analyze_patterns',
+            'schedule': 900.0,  # Every 15 minutes
+        },
+        'sicc-flush-queue': {
+            'task': 'src.workers.sicc_tasks.flush_sicc_queue',
+            'schedule': 120.0,  # Every 2 minutes
+        },
+        'sicc-cleanup-weekly': {
+            'task': 'src.workers.sicc_tasks.cleanup_old_data',
+            'schedule': crontab(hour=3, minute=0, day_of_week=0),  # Sunday 3am
+        },
     },
 )
 
@@ -63,6 +81,7 @@ celery_app.conf.update(
 celery_app.conf.task_routes = {
     'src.workers.message_tasks.*': {'queue': 'messages'},
     'src.workers.trigger_tasks.*': {'queue': 'triggers'},
+    'src.workers.sicc_tasks.*': {'queue': 'sicc'},  # SICC queue
 }
 
 # Default queue

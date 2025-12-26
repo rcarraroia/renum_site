@@ -19,10 +19,10 @@ from src.api.middleware.auth_middleware import get_current_user
 router = APIRouter(prefix="/sicc/learnings", tags=["sicc-learning"])
 
 
-@router.get("/", response_model=List[LearningLogResponse])
+@router.get("/")
 async def list_learnings(
     agent_id: UUID = Query(..., description="Agent ID"),
-    status_filter: Optional[LearningStatus] = Query(None, description="Filter by status"),
+    status_filter: Optional[str] = Query(None, description="Filter by status (pending, approved, rejected)"),
     learning_type: Optional[str] = Query(None, description="Filter by type"),
     limit: int = Query(50, ge=1, le=100, description="Number of results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
@@ -33,21 +33,53 @@ async def list_learnings(
     
     Returns paginated list of learnings
     """
-    learning_service = LearningService()
+    from src.utils.supabase_client import get_client
     
     try:
-        learnings = await learning_service.get_pending_learnings(
-            agent_id=agent_id,
-            learning_type=learning_type,
-            limit=limit,
-            offset=offset
-        )
+        supabase = get_client()
         
-        # Filter by status if provided
-        if status_filter:
-            learnings = [l for l in learnings if l.status == status_filter]
+        # Bug #5 - Corrigido: Buscar diretamente do banco com filtro de status
+        query = supabase.table("learning_logs").select("*").eq("agent_id", str(agent_id))
+        
+        # Aplicar filtro de status se fornecido
+        if status_filter and status_filter != 'all':
+            query = query.eq("status", status_filter)
+        
+        # Aplicar filtro de tipo se fornecido
+        if learning_type:
+            query = query.eq("learning_type", learning_type)
+        
+        # Ordenar e paginar
+        result = query.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        
+        if not result.data:
+            return []
+        
+        # Mapear para o formato esperado pelo frontend
+        learnings = []
+        for log in result.data:
+            learning = {
+                "id": log.get("id"),
+                "agent_id": log.get("agent_id"),
+                "client_id": log.get("client_id"),
+                "learning_type": log.get("learning_type", "unknown"),
+                "source_data": log.get("source_data", {}),
+                "analysis": log.get("analysis", {}),
+                "action_taken": log.get("action_taken", ""),
+                "confidence": log.get("confidence", 0.5),
+                "status": log.get("status", "pending"),
+                "reviewed_by": log.get("reviewed_by"),
+                "reviewed_at": log.get("reviewed_at"),
+                "created_at": log.get("created_at"),
+                # Campos extras para o frontend
+                "source_type": log.get("learning_type", "unknown"),
+                "description": log.get("action_taken", ""),
+                "content": log.get("action_taken", "")
+            }
+            learnings.append(learning)
         
         return learnings
+        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -45,14 +45,25 @@ class IsaAgent(BaseAgent):
         # Initialize audit service
         self.audit_service = IsaCommandService()
         
-        # Resolve configuration
-        final_model = model or kwargs.get("model") or settings.DEFAULT_ISA_MODEL
-        final_prompt = system_prompt or kwargs.get("system_prompt") or self._get_system_prompt()
+        # Resolve configuration - use pop() to avoid passing twice to super()
+        final_model = model or kwargs.pop("model", None) or settings.DEFAULT_ISA_MODEL
+        final_prompt = system_prompt or kwargs.pop("system_prompt", None) or self._get_system_prompt()
+        
+        # SICC: Buscar agent_id do ISA no banco ou usar default
+        agent_id = kwargs.pop("agent_id", None) or "00000000-0000-0000-0000-000000000002"
+        
+        # Extract known kwargs to avoid passing them twice to super().__init__
+        sicc_enabled = kwargs.pop("sicc_enabled", True)
+        kwargs.pop("agent_type", None)  # Remove if present, we set it explicitly
+        kwargs.pop("tools", None)  # Remove if present, we set it explicitly
         
         super().__init__(
             model=final_model,
             system_prompt=final_prompt,
             tools=[supabase_tool],
+            agent_id=agent_id,
+            agent_type="isa",
+            sicc_enabled=sicc_enabled,
             **kwargs
         )
     
@@ -326,6 +337,20 @@ When you cannot execute a command:
             "metadata": metadata
         })
         
+        response = result.get("response", "")
+        
+        # SICC: Notificar hook após resposta (não bloqueia)
+        await self._notify_sicc(
+            messages=messages,
+            response=response,
+            context=context,
+            metadata={
+                "command_type": result.get("command_type"),
+                "execution_success": result.get("execution_result", {}).get("success", False),
+                **metadata
+            }
+        )
+        
         # Log command to isa_commands table for audit
         admin_id = context.get("admin_id")
         if admin_id:
@@ -333,7 +358,7 @@ When you cannot execute a command:
                 await self.audit_service.log_command(
                     admin_id=admin_id,
                     user_message=user_message,
-                    assistant_response=result.get("response", ""),
+                    assistant_response=response,
                     command_executed=result.get("execution_result", {}).get("success", False),
                     command_type=result.get("command_type"),
                     execution_result=result.get("execution_result")
@@ -344,7 +369,7 @@ When you cannot execute a command:
                 logger.error(f"Failed to log ISA command: {e}")
         
         return {
-            "response": result.get("response", ""),
+            "response": response,
             "command_type": result.get("command_type"),
             "execution_result": result.get("execution_result"),
             "metadata": metadata

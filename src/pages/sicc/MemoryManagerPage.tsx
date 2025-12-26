@@ -1,44 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { siccService } from '@/services/siccService';
 import { agentService } from '@/services/agentService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Brain, Search, Plus, Filter, FileText, Lightbulb, BookOpen } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Brain, Search, Plus, Filter, FileText, Lightbulb, BookOpen, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function MemoryManagerPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [memories, setMemories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [agentId, setAgentId] = useState<string | null>(null);
+  const [agent, setAgent] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Modal states - Bug #1 e #2
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMemory, setSelectedMemory] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    content: '',
+    type: 'general',
+    confidence: 0.8
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const init = async () => {
+      if (!slug) {
+        setError('Slug do agente não fornecido');
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const agent = await agentService.getSystemAgent('system_orchestrator');
-        if (agent) {
-          setAgentId(agent.id);
-          loadMemories(agent.id);
+        // Busca agente pelo slug da URL
+        const agentData = await agentService.getAgentBySlug(slug);
+        if (agentData) {
+          setAgent(agentData);
+          loadMemories(agentData.id);
         } else {
+          setError(`Agente "${slug}" não encontrado`);
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching system agent:', error);
+        console.error('Error fetching agent:', error);
+        setError('Erro ao carregar agente');
         setLoading(false);
       }
     };
     init();
-  }, []);
+  }, [slug]);
 
   const loadMemories = async (id: string) => {
     try {
       setLoading(true);
-      const data = await siccService.listMemories(id);
-      // Backend returns { items: [], total: 0 } or just []? 
-      // Based on usual patterns, let's assume array or check structure.
-      // SICC service usually returns 'data' from axios, which might be the array itself or paginated.
-      // Assuming array for now based on service refactor.
-      setMemories(Array.isArray(data) ? data : (data.items || []));
+      const data: any = await siccService.listMemories(id);
+      setMemories(Array.isArray(data) ? data : (data?.items || []));
     } catch (error) {
       console.error('Erro ao carregar memórias:', error);
       setMemories([]);
@@ -65,6 +90,89 @@ export default function MemoryManagerPage() {
     }
   };
 
+  // Bug #1 - Função para abrir modal de edição
+  const handleEditMemory = (memory: any) => {
+    setSelectedMemory(memory);
+    setFormData({
+      content: memory.content || '',
+      type: memory.type || 'general',
+      confidence: memory.confidence || 0.8
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Bug #2 - Função para abrir modal de criação
+  const handleCreateMemory = () => {
+    setSelectedMemory(null);
+    setFormData({
+      content: '',
+      type: 'general',
+      confidence: 0.8
+    });
+    setIsCreateModalOpen(true);
+  };
+
+  // Salvar memória (criar ou editar)
+  const handleSaveMemory = async () => {
+    // Validação robusta do agent_id
+    if (!agent?.id) {
+      toast.error('Erro: Agente não carregado corretamente');
+      console.error('Agent ID is missing:', agent);
+      return;
+    }
+    
+    if (!formData.content.trim()) {
+      toast.error('Conteúdo da memória é obrigatório');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      if (selectedMemory) {
+        // Editar memória existente - Bug #1 corrigido
+        await siccService.updateMemory(selectedMemory.id, {
+          content: formData.content,
+          chunk_type: formData.type,
+          confidence_score: formData.confidence  // Backend espera confidence_score
+        });
+        toast.success('Memória atualizada com sucesso!');
+      } else {
+        // Criar nova memória - Garantir que agent.id é válido
+        console.log('Creating memory with agent_id:', agent.id);
+        await siccService.createMemory(agent.id, {
+          content: formData.content,
+          chunk_type: formData.type,
+          confidence_score: formData.confidence  // Backend espera confidence_score
+        });
+        toast.success('Memória criada com sucesso!');
+      }
+      
+      // Recarregar lista
+      loadMemories(agent.id);
+      setIsCreateModalOpen(false);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar memória:', error);
+      toast.error('Erro ao salvar memória');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Deletar memória
+  const handleDeleteMemory = async (memoryId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta memória?')) return;
+    
+    try {
+      await siccService.deleteMemory(memoryId);
+      toast.success('Memória excluída com sucesso!');
+      if (agent?.id) loadMemories(agent.id);
+    } catch (error) {
+      console.error('Erro ao excluir memória:', error);
+      toast.error('Erro ao excluir memória');
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -75,12 +183,39 @@ export default function MemoryManagerPage() {
     );
   }
 
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => navigate('/dashboard/admin/agents')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Agentes
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">🧠 Gerenciador de Memórias</h1>
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <div className="flex items-center gap-4">
+            {/* Bug #3 - Corrigido: Voltar para aba Inteligência, não config geral */}
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/admin/agents/${slug}?tab=intelligence`)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">🧠 Gerenciador de Memórias</h1>
+              <p className="text-muted-foreground">{agent?.name || slug}</p>
+            </div>
+          </div>
+          {/* Bug #2 - Corrigido: onClick para Nova Memória */}
+          <Button className="bg-purple-600 hover:bg-purple-700" onClick={handleCreateMemory}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Memória
           </Button>
@@ -152,9 +287,16 @@ export default function MemoryManagerPage() {
                           Usado {memory.usage_count || 0} vezes • Criado em {new Date(memory.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Editar
-                      </Button>
+                      {/* Bug #1 - Corrigido: onClick para Editar */}
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditMemory(memory)}>
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => handleDeleteMemory(memory.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -162,6 +304,106 @@ export default function MemoryManagerPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal de Criação - Bug #2 */}
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>🧠 Nova Memória</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Conteúdo</label>
+                <Textarea
+                  placeholder="Digite o conteúdo da memória..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo</label>
+                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">Geral</SelectItem>
+                    <SelectItem value="faq">FAQ</SelectItem>
+                    <SelectItem value="strategy">Estratégia</SelectItem>
+                    <SelectItem value="business_term">Termo de Negócio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Confiança ({Math.round(formData.confidence * 100)}%)</label>
+                <Input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={formData.confidence * 100}
+                  onChange={(e) => setFormData({ ...formData, confidence: parseInt(e.target.value) / 100 })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSaveMemory} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700">
+                {isSaving ? 'Salvando...' : 'Criar Memória'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Edição - Bug #1 */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>✏️ Editar Memória</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Conteúdo</label>
+                <Textarea
+                  placeholder="Digite o conteúdo da memória..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo</label>
+                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">Geral</SelectItem>
+                    <SelectItem value="faq">FAQ</SelectItem>
+                    <SelectItem value="strategy">Estratégia</SelectItem>
+                    <SelectItem value="business_term">Termo de Negócio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Confiança ({Math.round(formData.confidence * 100)}%)</label>
+                <Input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={formData.confidence * 100}
+                  onChange={(e) => setFormData({ ...formData, confidence: parseInt(e.target.value) / 100 })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSaveMemory} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700">
+                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

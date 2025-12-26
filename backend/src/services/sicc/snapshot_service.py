@@ -9,13 +9,13 @@ from typing import Optional, Dict, Any, List
 from uuid import UUID
 from datetime import datetime, timedelta
 
-from ...config.supabase import supabase_admin
-from ...models.sicc.snapshot import (
+from src.utils.supabase_client import get_client
+from src.models.sicc.snapshot import (
     SnapshotCreate,
     SnapshotResponse,
     SnapshotType
 )
-from ...utils.logger import logger
+from src.utils.logger import logger
 
 
 class SnapshotService:
@@ -23,7 +23,7 @@ class SnapshotService:
     
     def __init__(self):
         """Initialize service with Supabase admin client"""
-        self.supabase = supabase_admin
+        self.supabase = get_client()
     
     async def create_snapshot(
         self,
@@ -51,21 +51,24 @@ class SnapshotService:
             )
             
             # Get current memory count
-            memory_result = self.supabase.table("agent_memory_chunks").select(
+            # CORRIGIDO: Usar memory_chunks ao invés de agent_memory_chunks
+            memory_result = self.supabase.table("memory_chunks").select(
                 "id", count="exact"
             ).eq("agent_id", str(agent_id)).eq("is_active", True).execute()
             
             memory_count = memory_result.count or 0
             
             # Get current pattern count
-            pattern_result = self.supabase.table("agent_behavior_patterns").select(
+            # CORRIGIDO: Usar behavior_patterns ao invés de agent_behavior_patterns
+            pattern_result = self.supabase.table("behavior_patterns").select(
                 "id", count="exact"
             ).eq("agent_id", str(agent_id)).eq("is_active", True).execute()
             
             pattern_count = pattern_result.count or 0
             
             # Get metrics for total interactions and success rate
-            metrics_result = self.supabase.table("agent_performance_metrics").select(
+            # CORRIGIDO: Usar agent_metrics ao invés de agent_performance_metrics
+            metrics_result = self.supabase.table("agent_metrics").select(
                 "total_interactions, successful_interactions"
             ).eq("agent_id", str(agent_id)).execute()
             
@@ -92,7 +95,8 @@ class SnapshotService:
             
             # Get active memory IDs
             if memory_count > 0:
-                memories = self.supabase.table("agent_memory_chunks").select(
+                # CORRIGIDO: Usar memory_chunks ao invés de agent_memory_chunks
+                memories = self.supabase.table("memory_chunks").select(
                     "id, chunk_type, confidence_score, usage_count"
                 ).eq("agent_id", str(agent_id)).eq("is_active", True).execute()
                 
@@ -108,7 +112,8 @@ class SnapshotService:
             
             # Get active pattern IDs
             if pattern_count > 0:
-                patterns = self.supabase.table("agent_behavior_patterns").select(
+                # CORRIGIDO: Usar behavior_patterns ao invés de agent_behavior_patterns
+                patterns = self.supabase.table("behavior_patterns").select(
                     "id, pattern_type, success_rate, total_applications"
                 ).eq("agent_id", str(agent_id)).eq("is_active", True).execute()
                 
@@ -134,7 +139,8 @@ class SnapshotService:
                 "snapshot_data": snapshot_data
             }
             
-            result = self.supabase.table("agent_knowledge_snapshots").insert(
+            # CORRIGIDO: Usar agent_snapshots ao invés de agent_knowledge_snapshots
+            result = self.supabase.table("agent_snapshots").insert(
                 snapshot_record
             ).execute()
             
@@ -164,7 +170,8 @@ class SnapshotService:
             SnapshotResponse or None if not found
         """
         try:
-            result = self.supabase.table("agent_knowledge_snapshots").select("*").eq(
+            # CORRIGIDO: Usar agent_snapshots ao invés de agent_knowledge_snapshots
+            result = self.supabase.table("agent_snapshots").select("*").eq(
                 "id", str(snapshot_id)
             ).execute()
             
@@ -207,7 +214,8 @@ class SnapshotService:
             agent_id = snapshot.agent_id
             
             # Deactivate memories created after snapshot
-            memory_update = self.supabase.table("agent_memory_chunks").update({
+            # CORRIGIDO: Usar memory_chunks ao invés de agent_memory_chunks
+            memory_update = self.supabase.table("memory_chunks").update({
                 "is_active": False
             }).eq("agent_id", str(agent_id)).gt(
                 "created_at", snapshot_time.isoformat()
@@ -216,7 +224,8 @@ class SnapshotService:
             memories_deactivated = len(memory_update.data) if memory_update.data else 0
             
             # Deactivate patterns created after snapshot
-            pattern_update = self.supabase.table("agent_behavior_patterns").update({
+            # CORRIGIDO: Usar behavior_patterns ao invés de agent_behavior_patterns
+            pattern_update = self.supabase.table("behavior_patterns").update({
                 "is_active": False
             }).eq("agent_id", str(agent_id)).gt(
                 "created_at", snapshot_time.isoformat()
@@ -260,7 +269,8 @@ class SnapshotService:
             List of SnapshotResponse ordered by creation date (newest first)
         """
         try:
-            result = self.supabase.table("agent_knowledge_snapshots").select("*").eq(
+            # CORRIGIDO: Usar agent_snapshots ao invés de agent_knowledge_snapshots
+            result = self.supabase.table("agent_snapshots").select("*").eq(
                 "agent_id", str(agent_id)
             ).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
             
@@ -292,7 +302,8 @@ class SnapshotService:
             
             # For now, we just delete old snapshots
             # In production, you might want to move them to cold storage
-            result = self.supabase.table("agent_knowledge_snapshots").delete().lt(
+            # CORRIGIDO: Usar agent_snapshots ao invés de agent_knowledge_snapshots
+            result = self.supabase.table("agent_snapshots").delete().lt(
                 "created_at", cutoff_date.isoformat()
             ).execute()
             

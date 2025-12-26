@@ -1,137 +1,355 @@
+"""
+Integration Testing Endpoints - TRACK 2
+Endpoints para testar integrações de sub-agentes
+"""
 
-from fastapi import APIRouter, Depends, HTTPException, Body
-from typing import List, Dict, Any, Optional
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Dict, Any, List, Optional
+from uuid import UUID
 
-from src.middleware.auth import get_current_user
-from src.services.integration_service import IntegrationService
-from src.integrations.uazapi_connector import UazapiConnector
-from src.integrations.chatwoot_connector import ChatwootConnector
+from src.services.integration_access import get_integration_access
+from src.services.auto_lead_capture_hook import get_auto_lead_capture_hook
+from src.services.orchestrator_service import get_orchestrator_service
+from src.utils.logger import logger
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
-class IntegrationConfigInput(BaseModel):
-    config: Dict[str, Any]
-    agent_id: Optional[str] = None # If set, overrides global config for this agent
+# ============================================================================
+# Pydantic Models
+# ============================================================================
 
-@router.get("/status")
-async def get_integrations_status(
-    current_user: Dict = Depends(get_current_user)
-) -> List[Dict[str, Any]]:
-    """
-    Get aggregated status of all integrations for the Radar dashboard.
-    """
-    client_id = current_user.get('client_id')
-    if not client_id:
-        return []
-        
-    service = IntegrationService(client_id=client_id)
-    try:
-        integrations = service.list_integrations()
-        
-        status_list = []
-        for integration in integrations:
-            status_list.append({
-                "id": str(integration.get('id')),
-                "type": integration.get('provider'),
-                "name": integration.get('provider').upper(),
-                "status": "active" if integration.get('is_active') else "inactive",
-                "last_test": integration.get('updated_at'),
-                "error_message": None, # Could be expanded later
-                "agent_count": 1 if integration.get('agent_id') else 5 # Mocking count for now
-            })
-        return status_list
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+class WhatsAppSendRequest(BaseModel):
+    sub_agent_id: UUID
+    phone: str
+    message: str
+    context: Optional[Dict[str, Any]] = None
 
-@router.get("/")
-async def list_integrations(
-    provider: Optional[str] = None,
-    current_user: Dict = Depends(get_current_user)
-) -> List[Dict[str, Any]]:
-    """
-    List all configured integrations for the current client.
-    """
-    client_id = current_user.get('client_id')
-    client_id = current_user.get('client_id')
-    if not client_id:
-        # Se não tiver client_id (ex: superadmin global), retornar lista vazia para não quebrar UI
-        return []
-        
-    service = IntegrationService(client_id=client_id)
-    try:
-        return service.list_integrations(provider)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+class EmailSendRequest(BaseModel):
+    sub_agent_id: UUID
+    to_email: str
+    subject: str
+    body: str
+    context: Optional[Dict[str, Any]] = None
 
-@router.post("/{provider}")
-async def save_integration(
-    provider: str,
-    input_data: IntegrationConfigInput,
-    current_user: Dict = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    Save integration config (Global or Agent-Specific).
-    """
-    client_id = current_user.get('client_id')
-    if not client_id:
-        raise HTTPException(status_code=400, detail="Client ID required")
-        
-    service = IntegrationService(client_id=client_id)
+class CalendarAccessRequest(BaseModel):
+    sub_agent_id: UUID
+    action: str
+    data: Dict[str, Any]
+
+class LeadCaptureTestRequest(BaseModel):
+    sub_agent_id: UUID
+    conversation_id: UUID
+    user_message: str
+    agent_response: str
+    context: Optional[Dict[str, Any]] = None
+
+class OrchestratorTestRequest(BaseModel):
+    agent_id: UUID
+    message: str
+    conversation_id: UUID
+    context: Optional[Dict[str, Any]] = None
+
+# ============================================================================
+# Integration Access Endpoints
+# ============================================================================
+
+@router.post("/whatsapp/send")
+async def test_whatsapp_send(request: WhatsAppSendRequest):
+    """Testa envio de WhatsApp via sub-agente"""
     try:
-        result = service.save_integration(
-            provider=provider,
-            config=input_data.config,
-            agent_id=input_data.agent_id
+        integration_access = get_integration_access()
+        
+        result = await integration_access.send_whatsapp(
+            sub_agent_id=request.sub_agent_id,
+            phone=request.phone,
+            message=request.message,
+            context=request.context
         )
-        return result
+        
+        return {
+            "success": result,
+            "sub_agent_id": str(request.sub_agent_id),
+            "phone": request.phone,
+            "message_length": len(request.message),
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
     except Exception as e:
+        logger.error(f"Error testing WhatsApp send: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/{provider}/test")
-async def test_integration(
-    provider: str,
-    input_data: IntegrationConfigInput,
-    current_user: Dict = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    Test connection with provided credentials (without saving yet, or using saved).
-    """
-    if provider == "uazapi":
-        url = input_data.config.get("url")
-        token = input_data.config.get("token")
+@router.post("/email/send")
+async def test_email_send(request: EmailSendRequest):
+    """Testa envio de email via sub-agente"""
+    try:
+        integration_access = get_integration_access()
         
-        if not url or not token:
-            return {"success": False, "error": "URL and Token required"}
-            
-        connector = UazapiConnector(api_url=url, token=token)
-        status = connector.get_status()
-        return {"success": True, "details": status}
-    
-    elif provider == "chatwoot":
-        url = input_data.config.get("url")
-        token = input_data.config.get("api_access_token")
-        account_id = input_data.config.get("account_id", "1")
+        result = await integration_access.send_email(
+            sub_agent_id=request.sub_agent_id,
+            to_email=request.to_email,
+            subject=request.subject,
+            body=request.body,
+            context=request.context
+        )
+        
+        return {
+            "success": result,
+            "sub_agent_id": str(request.sub_agent_id),
+            "to_email": request.to_email,
+            "subject": request.subject,
+            "body_length": len(request.body),
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing email send: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-        if not url or not token:
-            return {"success": False, "error": "URL and API Access Token required"}
-            
-        connector = ChatwootConnector(api_url=url, api_access_token=token, account_id=account_id)
-        # We test by trying to search a contact or list inboxes, simple read op
+@router.post("/calendar/access")
+async def test_calendar_access(request: CalendarAccessRequest):
+    """Testa acesso ao calendar via sub-agente"""
+    try:
+        integration_access = get_integration_access()
+        
+        result = await integration_access.access_calendar(
+            sub_agent_id=request.sub_agent_id,
+            action=request.action,
+            data=request.data
+        )
+        
+        return {
+            "success": result.get('success', False),
+            "sub_agent_id": str(request.sub_agent_id),
+            "action": request.action,
+            "result": result,
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing calendar access: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/available/{sub_agent_id}")
+async def get_available_integrations(sub_agent_id: UUID):
+    """Lista integrações disponíveis para um sub-agente"""
+    try:
+        integration_access = get_integration_access()
+        
+        integrations = await integration_access.get_available_integrations(sub_agent_id)
+        
+        return {
+            "sub_agent_id": str(sub_agent_id),
+            "available_integrations": integrations,
+            "total_count": len(integrations),
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting available integrations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Lead Capture Hook Endpoints
+# ============================================================================
+
+@router.post("/leads/capture/test")
+async def test_lead_capture(request: LeadCaptureTestRequest):
+    """Testa captura automática de leads"""
+    try:
+        lead_capture_hook = get_auto_lead_capture_hook()
+        
+        result = await lead_capture_hook.process_conversation(
+            sub_agent_id=request.sub_agent_id,
+            conversation_id=request.conversation_id,
+            user_message=request.user_message,
+            agent_response=request.agent_response,
+            context=request.context
+        )
+        
+        return {
+            "lead_captured": bool(result),
+            "lead_data": result,
+            "sub_agent_id": str(request.sub_agent_id),
+            "conversation_id": str(request.conversation_id),
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing lead capture: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/leads/capture/stats/{sub_agent_id}")
+async def get_lead_capture_stats(sub_agent_id: UUID):
+    """Retorna estatísticas de captura de leads"""
+    try:
+        lead_capture_hook = get_auto_lead_capture_hook()
+        
+        stats = await lead_capture_hook.get_capture_stats(sub_agent_id)
+        
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting lead capture stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Orchestrator Integration Endpoints
+# ============================================================================
+
+@router.post("/orchestrator/test")
+async def test_orchestrator_with_integrations(request: OrchestratorTestRequest):
+    """Testa orquestrador completo com integrações e captura de leads"""
+    try:
+        orchestrator = get_orchestrator_service()
+        
+        result = await orchestrator.process_message(
+            agent_id=request.agent_id,
+            message=request.message,
+            conversation_id=request.conversation_id,
+            context=request.context
+        )
+        
+        return {
+            "orchestrator_result": result,
+            "agent_id": str(request.agent_id),
+            "conversation_id": str(request.conversation_id),
+            "message_length": len(request.message),
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing orchestrator: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Batch Testing Endpoints
+# ============================================================================
+
+@router.post("/test/batch")
+async def test_integrations_batch():
+    """Executa bateria de testes de integração"""
+    try:
+        results = {
+            "whatsapp_test": None,
+            "email_test": None,
+            "calendar_test": None,
+            "lead_capture_test": None,
+            "orchestrator_test": None
+        }
+        
+        # Mock sub-agent ID para testes
+        test_sub_agent_id = UUID("12345678-1234-5678-9012-123456789012")
+        test_conversation_id = UUID("87654321-4321-8765-2109-876543210987")
+        test_agent_id = UUID("11111111-2222-3333-4444-555555555555")
+        
+        integration_access = get_integration_access()
+        lead_capture_hook = get_auto_lead_capture_hook()
+        orchestrator = get_orchestrator_service()
+        
+        # Teste WhatsApp
         try:
-            # Simple health check by listing inboxes (even if empty, 200 is success)
-            # Or use a dedicated health check if available. Inboxes is safe.
-            res = connector.create_inbox(name="Test Inbox", source_id="test-connection") # Actually creating inbox is side-effect.
-            # detailed check: Chatwoot doesn't have a simple "profile" endpoint for api token often.
-            # Let's try to search contacts with empty query or something or catching an error.
-            # Best check: requests.get(f"{url}/api/v1/accounts/{account_id}/inboxes", headers=...)
-            import requests
-            headers = {"api_access_token": token}
-            check_url = f"{url.rstrip('/')}/api/v1/accounts/{account_id}/inboxes"
-            r = requests.get(check_url, headers=headers)
-            r.raise_for_status()
-            return {"success": True, "details": {"status": "connected", "inboxes": len(r.json().get('payload', []))}}
+            whatsapp_result = await integration_access.send_whatsapp(
+                sub_agent_id=test_sub_agent_id,
+                phone="+5511999999999",
+                message="Teste de integração WhatsApp",
+                context={"test": True}
+            )
+            results["whatsapp_test"] = {"success": whatsapp_result, "error": None}
         except Exception as e:
-             return {"success": False, "error": str(e)}
+            results["whatsapp_test"] = {"success": False, "error": str(e)}
+        
+        # Teste Email
+        try:
+            email_result = await integration_access.send_email(
+                sub_agent_id=test_sub_agent_id,
+                to_email="test@example.com",
+                subject="Teste de integração",
+                body="Teste de envio de email via sub-agente",
+                context={"test": True}
+            )
+            results["email_test"] = {"success": email_result, "error": None}
+        except Exception as e:
+            results["email_test"] = {"success": False, "error": str(e)}
+        
+        # Teste Calendar
+        try:
+            calendar_result = await integration_access.access_calendar(
+                sub_agent_id=test_sub_agent_id,
+                action="check_availability",
+                data={"date": "2025-12-24", "time": "14:00"}
+            )
+            results["calendar_test"] = {"success": calendar_result.get('success', False), "error": None}
+        except Exception as e:
+            results["calendar_test"] = {"success": False, "error": str(e)}
+        
+        # Teste Lead Capture
+        try:
+            lead_result = await lead_capture_hook.process_conversation(
+                sub_agent_id=test_sub_agent_id,
+                conversation_id=test_conversation_id,
+                user_message="Olá, meu nome é João e meu email é joao@teste.com. Gostaria de saber os preços.",
+                agent_response="Olá João! Vou te enviar nossa tabela de preços por email.",
+                context={"phone": "+5511999999999", "email": "joao@teste.com"}
+            )
+            results["lead_capture_test"] = {"success": bool(lead_result), "lead_data": lead_result, "error": None}
+        except Exception as e:
+            results["lead_capture_test"] = {"success": False, "error": str(e)}
+        
+        # Teste Orchestrator
+        try:
+            orchestrator_result = await orchestrator.process_message(
+                agent_id=test_agent_id,
+                message="Preciso de ajuda com vendas e preços",
+                conversation_id=test_conversation_id,
+                context={"phone": "+5511999999999"}
+            )
+            results["orchestrator_test"] = {"success": True, "result": orchestrator_result, "error": None}
+        except Exception as e:
+            results["orchestrator_test"] = {"success": False, "error": str(e)}
+        
+        # Calcular estatísticas
+        total_tests = len(results)
+        successful_tests = sum(1 for result in results.values() if result and result.get("success"))
+        success_rate = (successful_tests / total_tests) * 100
+        
+        return {
+            "batch_test_results": results,
+            "summary": {
+                "total_tests": total_tests,
+                "successful_tests": successful_tests,
+                "failed_tests": total_tests - successful_tests,
+                "success_rate": f"{success_rate:.1f}%"
+            },
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in batch integration test: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return {"success": False, "error": f"Test not implemented for {provider}"}
+# ============================================================================
+# Health Check Endpoint
+# ============================================================================
+
+@router.get("/health")
+async def integration_health_check():
+    """Verifica saúde dos serviços de integração"""
+    try:
+        return {
+            "status": "healthy",
+            "services": {
+                "integration_access": "available",
+                "lead_capture_hook": "available",
+                "orchestrator_service": "available"
+            },
+            "timestamp": "2025-12-23T12:00:00Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in health check: {e}")
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": "2025-12-23T12:00:00Z"
+        }

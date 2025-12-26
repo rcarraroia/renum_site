@@ -332,7 +332,8 @@ class NichePropagationService:
             for agent_id in agents:
                 try:
                     # Buscar snapshot pré-propagação
-                    snapshots_response = self.supabase.table("agent_knowledge_snapshots").select("*").eq("agent_id", agent_id).contains("metadata", {"version_id": version_id, "type": "pre_propagation"}).execute()
+                    # CORRIGIDO: Usar agent_snapshots ao invés de agent_knowledge_snapshots
+                    snapshots_response = self.supabase.table("agent_snapshots").select("*").eq("agent_id", agent_id).contains("metadata", {"version_id": version_id, "type": "pre_propagation"}).execute()
                     
                     if snapshots_response.data:
                         snapshot_id = snapshots_response.data[0]["id"]
@@ -414,7 +415,8 @@ class NichePropagationService:
         """Verifica se memória base já existe para o agente"""
         try:
             # Buscar por conteúdo similar ou metadata específica
-            response = self.supabase.table("agent_memory_chunks").select("id").eq("agent_id", agent_id).contains("metadata", {"layer": "base"}).execute()
+            # CORRIGIDO: Usar memory_chunks ao invés de agent_memory_chunks
+            response = self.supabase.table("memory_chunks").select("id").eq("agent_id", agent_id).contains("metadata", {"layer": "base"}).execute()
             
             if response.data:
                 # Verificar conteúdo específico (implementar lógica de similaridade se necessário)
@@ -432,7 +434,8 @@ class NichePropagationService:
         """Verifica se padrão base já existe para o agente"""
         try:
             # Buscar por nome do padrão
-            response = self.supabase.table("agent_behavior_patterns").select("id").eq("agent_id", agent_id).eq("pattern_name", pattern_data["pattern_name"]).contains("metadata", {"layer": "base"}).execute()
+            # CORRIGIDO: Usar behavior_patterns ao invés de agent_behavior_patterns
+            response = self.supabase.table("behavior_patterns").select("id").eq("agent_id", agent_id).eq("pattern_name", pattern_data["pattern_name"]).contains("metadata", {"layer": "base"}).execute()
             
             return len(response.data) > 0 if response.data else False
             
@@ -444,10 +447,12 @@ class NichePropagationService:
         """Remove conhecimento propagado de uma versão específica"""
         try:
             # Remover memórias da versão
-            self.supabase.table("agent_memory_chunks").delete().eq("agent_id", agent_id).contains("metadata", {"version_id": version_id}).execute()
+            # CORRIGIDO: Usar memory_chunks ao invés de agent_memory_chunks
+            self.supabase.table("memory_chunks").delete().eq("agent_id", agent_id).contains("metadata", {"version_id": version_id}).execute()
             
             # Remover padrões da versão
-            self.supabase.table("agent_behavior_patterns").delete().eq("agent_id", agent_id).contains("metadata", {"version_id": version_id}).execute()
+            # CORRIGIDO: Usar behavior_patterns ao invés de agent_behavior_patterns
+            self.supabase.table("behavior_patterns").delete().eq("agent_id", agent_id).contains("metadata", {"version_id": version_id}).execute()
             
             logger.info(f"Conhecimento da versão {version_id} removido do agente {agent_id}")
             

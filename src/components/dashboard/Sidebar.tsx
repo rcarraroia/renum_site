@@ -34,13 +34,8 @@ const adminOperationsItems: NavItem[] = [
   { title: 'Hub de Integrações', href: '/dashboard/integrations/radar', icon: RefreshCw, roles: ['admin'] },
 ];
 
-
-const adminIntelligenceItems: NavItem[] = [
-  { title: 'Brain Dashboard', href: '/dashboard/intelligence', icon: Brain, roles: ['admin'] },
-  { title: 'Evolução do Agente', href: '/intelligence/evolution', icon: TrendingUp, roles: ['admin'] },
-  { title: 'Memórias Recentes', href: '/intelligence/memories', icon: Database, roles: ['admin'] },
-  { title: 'Fila de Aprendizados', href: '/intelligence/queue', icon: Clock, roles: ['admin'] },
-];
+// SICC Intelligence items removidos - agora são contextuais por agente
+// Acesso via: /dashboard/admin/agents/:slug/intelligence/*
 
 const clientNavItems: NavItem[] = [
   { title: 'Overview', href: '/dashboard/client', icon: LayoutDashboard, roles: ['client'] },
@@ -154,8 +149,6 @@ const Sidebar: React.FC = () => {
             {renderAgentGroup()}
 
             {renderNavGroup(adminOperationsItems, 'Operações')}
-
-            {renderNavGroup(adminIntelligenceItems, 'Inteligência')}
           </>
         ) : (
           renderNavGroup(clientNavItems, 'Geral')

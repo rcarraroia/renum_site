@@ -316,19 +316,45 @@ async def list_agent_subagents(
     
     # List sub-agents
     try:
-        # Note: We need to filter by agent_id in the service
-        # For now, we'll get all and filter (TODO: optimize in service)
-        all_subagents = await subagent_service.list_subagents(
-            is_active=is_active,
-            limit=limit,
-            offset=offset
-        )
+        # Get sub-agents directly from database with proper mapping
+        agent_service = get_agent_service()
+        result = agent_service.supabase.table('sub_agents')\
+            .select('*')\
+            .eq('parent_agent_id', str(agent_id))\
+            .execute()
         
-        # Filter by agent_id (this should be done in the service query)
-        # TODO: Add agent_id filter to subagent_service.list_subagents()
-        filtered = [sa for sa in all_subagents if hasattr(sa, 'agent_id') and str(sa.agent_id) == str(agent_id)]
+        # Map database data to SubAgentResponse model
+        sub_agents = []
+        for data in result.data:
+            # Extract fields from config
+            config = data.get('config', {})
+            identity = config.get('identity', {})
+            
+            # Create object compatible with SubAgentResponse
+            sub_agent_data = {
+                'id': data['id'],
+                'agent_id': data.get('parent_agent_id'),
+                'name': data['name'],
+                'description': identity.get('persona', f"Sub-agente especializado em {data.get('specialization', 'geral')}"),
+                'channel': config.get('channel', 'whatsapp'),
+                'system_prompt': identity.get('system_prompt', 'Você é um assistente especializado.'),
+                'topics': config.get('topics', []),
+                'model': config.get('model', 'gpt-4o-mini'),
+                'is_active': data.get('is_active', True),
+                'fine_tuning_config': config.get('fine_tuning_config'),
+                'config_id': None,  # Optional field
+                'slug': None,  # Optional field
+                'public_url': None,  # Optional field
+                'access_count': 0,  # Optional field
+                'is_public': True,  # Optional field
+                'knowledge_base': None,  # Optional field
+                'created_at': data['created_at'],
+                'updated_at': data['updated_at']
+            }
+            
+            sub_agents.append(SubAgentResponse(**sub_agent_data))
         
-        return filtered
+        return sub_agents
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

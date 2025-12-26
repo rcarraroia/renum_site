@@ -57,6 +57,11 @@ docs/*_CREDENTIALS.md
 .vscode/
 docs/
 
+!docs/validacoes/
+!docs/analises/
+!docs/relatorios/
+!docs/auditorias/
+
 # Claude
 .claude/
 .vercel

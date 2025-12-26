@@ -21,3 +21,8 @@ class AuthenticationError(Exception):
 class AuthorizationError(Exception):
     """Raised when user is not authorized"""
     pass
+
+
+class PermissionError(Exception):
+    """Raised when user doesn't have permission for an action"""
+    pass

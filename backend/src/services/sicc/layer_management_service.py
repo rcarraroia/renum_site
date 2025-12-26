@@ -493,7 +493,7 @@ class LayerManagementService:
                 }
             }
             
-            response = self.supabase.table("agent_memory_chunks").update(update_data).eq("id", memory_id).execute()
+            response = self.supabase.table("memory_chunks").update(update_data).eq("id", memory_id).execute()
             
             return len(response.data) > 0 if response.data else False
             
@@ -517,7 +517,8 @@ class LayerManagementService:
                 }
             }
             
-            response = self.supabase.table("agent_behavior_patterns").update(update_data).eq("id", pattern_id).execute()
+            # CORRIGIDO: Usar behavior_patterns ao invés de agent_behavior_patterns
+            response = self.supabase.table("behavior_patterns").update(update_data).eq("id", pattern_id).execute()
             
             return len(response.data) > 0 if response.data else False
             

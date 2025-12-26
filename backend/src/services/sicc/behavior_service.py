@@ -9,15 +9,15 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime, timedelta
 
-from ...config.supabase import supabase_admin
-from ...models.sicc.behavior import (
+from src.utils.supabase_client import get_client
+from src.models.sicc.behavior import (
     BehaviorPatternCreate,
     BehaviorPatternUpdate,
     BehaviorPatternResponse,
     BehaviorPatternStats,
     PatternType
 )
-from ...utils.logger import logger
+from src.utils.logger import logger
 
 
 class BehaviorService:
@@ -25,7 +25,7 @@ class BehaviorService:
     
     def __init__(self):
         """Initialize service with Supabase admin client"""
-        self.supabase = supabase_admin
+        self.supabase = get_client()
     
     async def create_pattern(self, data: BehaviorPatternCreate) -> BehaviorPatternResponse:
         """
@@ -60,7 +60,7 @@ class BehaviorService:
             }
             
             # Insert into database
-            result = self.supabase.table("agent_behavior_patterns").insert(
+            result = self.supabase.table("behavior_patterns").insert(
                 pattern_data
             ).execute()
             
@@ -87,7 +87,7 @@ class BehaviorService:
             BehaviorPatternResponse or None if not found
         """
         try:
-            result = self.supabase.table("agent_behavior_patterns").select("*").eq(
+            result = self.supabase.table("behavior_patterns").select("*").eq(
                 "id", str(pattern_id)
             ).execute()
             
@@ -98,6 +98,55 @@ class BehaviorService:
             
         except Exception as e:
             logger.error(f"Failed to get pattern {pattern_id}: {e}")
+            raise
+    
+    async def list_patterns(
+        self,
+        agent_id: UUID,
+        pattern_type: Optional[PatternType] = None,
+        is_active: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> List[BehaviorPatternResponse]:
+        """
+        List behavior patterns for an agent with optional filtering.
+        
+        Args:
+            agent_id: Agent ID
+            pattern_type: Optional filter by pattern type
+            is_active: Optional filter by active status
+            limit: Maximum results
+            offset: Offset for pagination
+        
+        Returns:
+            List of BehaviorPatternResponse
+        """
+        try:
+            logger.info(f"Listing patterns for agent {agent_id}")
+            
+            # Build query
+            query = self.supabase.table("behavior_patterns").select("*").eq(
+                "agent_id", str(agent_id)
+            )
+            
+            # Apply filters
+            if pattern_type is not None:
+                query = query.eq("pattern_type", pattern_type.value)
+            
+            if is_active is not None:
+                query = query.eq("is_active", is_active)
+            
+            # Apply pagination and ordering
+            query = query.order("created_at", desc=True).range(
+                offset, offset + limit - 1
+            )
+            
+            result = query.execute()
+            
+            return [BehaviorPatternResponse(**pattern) for pattern in result.data]
+            
+        except Exception as e:
+            logger.error(f"Failed to list patterns for agent {agent_id}: {e}")
             raise
     
     async def update_pattern(
@@ -136,7 +185,7 @@ class BehaviorService:
                 raise ValueError(f"Pattern {pattern_id} not found")
             
             # Update in database
-            result = self.supabase.table("agent_behavior_patterns").update(
+            result = self.supabase.table("behavior_patterns").update(
                 update_data
             ).eq("id", str(pattern_id)).execute()
             
@@ -163,7 +212,7 @@ class BehaviorService:
         try:
             logger.info(f"Deleting behavior pattern {pattern_id}")
             
-            result = self.supabase.table("agent_behavior_patterns").delete().eq(
+            result = self.supabase.table("behavior_patterns").delete().eq(
                 "id", str(pattern_id)
             ).execute()
             
@@ -196,7 +245,7 @@ class BehaviorService:
             List of BehaviorPatternResponse
         """
         try:
-            query = self.supabase.table("agent_behavior_patterns").select("*").eq(
+            query = self.supabase.table("behavior_patterns").select("*").eq(
                 "agent_id", str(agent_id)
             )
             
@@ -258,7 +307,7 @@ class BehaviorService:
                 "last_applied_at": datetime.utcnow().isoformat()
             }
             
-            result = self.supabase.table("agent_behavior_patterns").update(
+            result = self.supabase.table("behavior_patterns").update(
                 update_data
             ).eq("id", str(pattern_id)).execute()
             

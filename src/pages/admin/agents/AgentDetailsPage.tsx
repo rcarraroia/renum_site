@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import PreviewChat from '@/components/agents/PreviewChat';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { agentService } from '@/services/agentService';
 import { Agent } from '@/types/agent';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -24,11 +24,32 @@ import AgentLogsTab from '@/components/agents/AgentLogsTab';
 
 const AgentDetailsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [activeMainTab, setActiveMainTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  
+  // Bug #3 - Corrigido: Ler tab inicial do query param ?tab=
+  const initialTab = searchParams.get('tab') || 'overview';
+  // Mapear 'intelligence' para 'config' pois a aba de inteligência está dentro de config
+  // O ConfigRenusPanel tem uma aba interna 'sicc' para inteligência
+  const mappedInitialTab = initialTab === 'intelligence' ? 'config' : initialTab;
+  
+  const [activeMainTab, setActiveMainTab] = useState(mappedInitialTab);
+  const [configInitialTab, setConfigInitialTab] = useState(initialTab === 'intelligence' ? 'sicc' : 'instructions');
   const [agent, setAgent] = useState<Agent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Atualizar tab quando query param mudar
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      const mapped = tabParam === 'intelligence' ? 'config' : tabParam;
+      setActiveMainTab(mapped);
+      if (tabParam === 'intelligence') {
+        setConfigInitialTab('sicc');
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchAgent = async () => {
@@ -215,7 +236,12 @@ const AgentDetailsPage: React.FC = () => {
               <p className="text-sm text-muted-foreground">Ajuste as instruções, ferramentas e políticas de segurança específicas para este agente.</p>
             </CardHeader>
             <CardContent>
-              <ConfigRenusPanel agentId={agent.id} isGlobalConfig={false} />
+              <ConfigRenusPanel 
+                agentId={agent.id} 
+                isGlobalConfig={false} 
+                initialTab={configInitialTab}
+                hasAddons={agent.name === 'RENUS' || agent.name === 'ISA' ? ['subagents'] : []}
+              />
             </CardContent>
           </Card>
         </TabsContent>

@@ -10,24 +10,57 @@ Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
 
 from fastapi import APIRouter, HTTPException, Depends
 from uuid import UUID
-from typing import Dict, Any
+from typing import Dict, Any, List
 from src.services.agent_service import get_agent_service
 from src.services.sub_agent_inheritance_service import get_inheritance_service
+from src.models.sub_agent import SubAgentResponse
 
 router = APIRouter(prefix="/api/agents", tags=["sub-agents"])
 
-@router.get("/{agent_id}/sub-agents")
+@router.get("/{agent_id}/sub-agents", response_model=List[SubAgentResponse])
 async def list_sub_agents(
     agent_id: UUID,
     agent_service = Depends(get_agent_service)
 ):
+    """List all sub-agents of an agent - TEMPORARY: No auth for testing"""
     """List all sub-agents of an agent"""
     result = agent_service.supabase.table('sub_agents')\
         .select('*')\
         .eq('parent_agent_id', str(agent_id))\
         .execute()
     
-    return result.data
+    # Mapear dados do banco para o modelo SubAgentResponse
+    sub_agents = []
+    for data in result.data:
+        # Extrair campos do config
+        config = data.get('config', {})
+        identity = config.get('identity', {})
+        
+        # Criar objeto compatível com SubAgentResponse
+        sub_agent_data = {
+            'id': data['id'],
+            'agent_id': data.get('parent_agent_id'),
+            'name': data['name'],
+            'description': identity.get('persona', f"Sub-agente especializado em {data.get('specialization', 'geral')}"),
+            'channel': config.get('channel', 'whatsapp'),
+            'system_prompt': identity.get('system_prompt', 'Você é um assistente especializado.'),
+            'topics': config.get('topics', []),
+            'model': config.get('model', 'gpt-4o-mini'),
+            'is_active': data.get('is_active', True),
+            'fine_tuning_config': config.get('fine_tuning_config'),
+            'config_id': None,  # Campo opcional
+            'slug': None,  # Campo opcional
+            'public_url': None,  # Campo opcional
+            'access_count': 0,  # Campo opcional
+            'is_public': True,  # Campo opcional
+            'knowledge_base': None,  # Campo opcional
+            'created_at': data['created_at'],
+            'updated_at': data['updated_at']
+        }
+        
+        sub_agents.append(SubAgentResponse(**sub_agent_data))
+    
+    return sub_agents
 
 @router.post("/{agent_id}/sub-agents")
 async def create_sub_agent(

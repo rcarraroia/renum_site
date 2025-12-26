@@ -5,7 +5,8 @@ from . import (
     interviews, renus_config, tools, knowledge, agents, sub_agents,
     public_chat, isa, dashboard, reports, integrations, triggers,
     webhooks, marketplace, payment, sicc_memory, sicc_learning,
-    sicc_stats, sicc_patterns, sicc_audio, sicc_settings, monitoring, websocket
+    sicc_stats, sicc_patterns, sicc_audio, sicc_settings, sicc_hook,
+    monitoring, websocket
 )
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     'interviews', 'renus_config', 'tools', 'knowledge', 'agents', 'sub_agents',
     'public_chat', 'isa', 'dashboard', 'reports', 'integrations', 'triggers',
     'webhooks', 'marketplace', 'payment', 'sicc_memory', 'sicc_learning',
-    'sicc_stats', 'sicc_patterns', 'sicc_audio', 'sicc_settings', 'monitoring', 'websocket'
+    'sicc_stats', 'sicc_patterns', 'sicc_audio', 'sicc_settings', 'sicc_hook',
+    'monitoring', 'websocket'
 ]

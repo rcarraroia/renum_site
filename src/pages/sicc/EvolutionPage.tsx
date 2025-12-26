@@ -1,34 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { siccService } from '@/services/siccService';
 import { agentService } from '@/services/agentService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Brain, Activity, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, Brain, Activity, Zap, ArrowLeft } from 'lucide-react';
 
 export default function EvolutionPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [agentId, setAgentId] = useState<string | null>(null);
+  const [agent, setAgent] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
+      if (!slug) {
+        setError('Slug do agente não fornecido');
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const agent = await agentService.getSystemAgent('system_orchestrator');
-        if (agent) {
-          setAgentId(agent.id);
-          loadStats(agent.id);
+        // Busca agente pelo slug da URL
+        const agentData = await agentService.getAgentBySlug(slug);
+        if (agentData) {
+          setAgent(agentData);
+          loadStats(agentData.id);
         } else {
-          console.error('System agent not found');
+          setError(`Agente "${slug}" não encontrado`);
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching system agent:', error);
+        console.error('Error fetching agent:', error);
+        setError('Erro ao carregar agente');
         setLoading(false);
       }
     };
     init();
-  }, []);
+  }, [slug]);
 
   const loadStats = async (id: string) => {
     try {
@@ -52,13 +65,39 @@ export default function EvolutionPage() {
     );
   }
 
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => navigate('/dashboard/admin/agents')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Agentes
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">📈 Evolução do Agente</h1>
+          <div className="flex items-center gap-4">
+            {/* Bug #3 - Corrigido: Voltar para aba Inteligência */}
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/admin/agents/${slug}?tab=intelligence`)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">📈 Evolução do Agente</h1>
+              <p className="text-muted-foreground">{agent?.name || slug}</p>
+            </div>
+          </div>
           <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-            SICC v1.0 {agentId ? '(Conectado)' : '(Desconectado)'}
+            SICC v1.0 {agent ? '(Conectado)' : '(Desconectado)'}
           </Badge>
         </div>
 

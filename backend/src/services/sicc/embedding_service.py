@@ -10,7 +10,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import tiktoken
 
-from ...utils.logger import logger
+from src.utils.logger import logger
 
 
 class EmbeddingService:

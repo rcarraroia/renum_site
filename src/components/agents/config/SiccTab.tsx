@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -6,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Brain, Activity, TrendingUp, ExternalLink, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { siccService } from '@/services/siccService';
 import agentService from '@/services/agentService';
@@ -17,6 +17,7 @@ interface SiccTabProps {
 }
 
 const SiccTab: React.FC<SiccTabProps> = ({ agentId: propAgentId }) => {
+    const navigate = useNavigate();
     const [agent, setAgent] = useState<any>(null);
     const [stats, setStats] = useState<any>(null);
     const [settings, setSettings] = useState<any>(null);
@@ -205,9 +206,14 @@ const SiccTab: React.FC<SiccTabProps> = ({ agentId: propAgentId }) => {
                                         <label className="text-base font-medium">Auto-Aprovação</label>
                                         <p className="text-sm text-muted-foreground">Permitir que o sistema aprove memórias com alta confiança sem revisão humana.</p>
                                     </div>
+                                    {/* Bug #4 - Corrigido: Usar campo dedicado auto_approval_enabled */}
                                     <Switch
-                                        checked={settings.auto_approval_threshold < 1.0} // Simplification: if threshold < 1, it implies auto approval is possible
-                                        onCheckedChange={(checked) => setSettings({ ...settings, auto_approval_threshold: checked ? 0.8 : 1.0 })}
+                                        checked={settings.auto_approval_enabled ?? (settings.auto_approval_threshold < 1.0)}
+                                        onCheckedChange={(checked) => setSettings({ 
+                                            ...settings, 
+                                            auto_approval_enabled: checked,
+                                            auto_approval_threshold: checked ? (settings.auto_approval_threshold < 1.0 ? settings.auto_approval_threshold : 0.8) : 1.0 
+                                        })}
                                     />
                                 </div>
                                 <div className="space-y-4">
@@ -284,11 +290,24 @@ const SiccTab: React.FC<SiccTabProps> = ({ agentId: propAgentId }) => {
                             Acesse o dashboard completo para gerenciar memórias individuais, visualizar gráficos de evolução e ajustar a arquitetura neural.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <Button className="w-full bg-white text-purple-900 hover:bg-gray-100" asChild>
-                            <Link to="/intelligence/evolution">
-                                Abrir Dashboard SICC <ExternalLink className="ml-2 h-4 w-4" />
-                            </Link>
+                    <CardContent className="space-y-2">
+                        <Button 
+                            className="w-full bg-white text-purple-900 hover:bg-gray-100" 
+                            onClick={() => navigate(`/dashboard/admin/agents/${agent?.slug || 'renus'}/intelligence/evolution`)}
+                        >
+                            📈 Evolução <ExternalLink className="ml-2 h-4 w-4" />
+                        </Button>
+                        <Button 
+                            className="w-full bg-white/90 text-purple-900 hover:bg-gray-100" 
+                            onClick={() => navigate(`/dashboard/admin/agents/${agent?.slug || 'renus'}/intelligence/memories`)}
+                        >
+                            🧠 Memórias <ExternalLink className="ml-2 h-4 w-4" />
+                        </Button>
+                        <Button 
+                            className="w-full bg-white/80 text-purple-900 hover:bg-gray-100" 
+                            onClick={() => navigate(`/dashboard/admin/agents/${agent?.slug || 'renus'}/intelligence/queue`)}
+                        >
+                            ⏳ Fila de Aprendizados <ExternalLink className="ml-2 h-4 w-4" />
                         </Button>
                     </CardContent>
                 </Card>

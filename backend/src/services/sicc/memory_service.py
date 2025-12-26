@@ -9,8 +9,8 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime
 
-from ...config.supabase import supabase_admin
-from ...models.sicc.memory import (
+from src.utils.supabase_client import get_client
+from src.models.sicc.memory import (
     MemoryChunkCreate,
     MemoryChunkUpdate,
     MemoryChunkResponse,
@@ -18,7 +18,7 @@ from ...models.sicc.memory import (
     MemorySearchResult,
     ChunkType
 )
-from ...utils.logger import logger
+from src.utils.logger import logger
 from .embedding_service import get_embedding_service
 
 
@@ -27,7 +27,7 @@ class MemoryService:
     
     def __init__(self):
         """Initialize service with Supabase admin client and embedding service"""
-        self.supabase = supabase_admin
+        self.supabase = get_client()
         self.embedding_service = get_embedding_service()
     
     async def create_memory(self, data: MemoryChunkCreate) -> MemoryChunkResponse:
@@ -64,7 +64,7 @@ class MemoryService:
             }
             
             # Insert into database
-            result = self.supabase.table("agent_memory_chunks").insert(memory_data).execute()
+            result = self.supabase.table("memory_chunks").insert(memory_data).execute()
             
             if not result.data:
                 raise Exception("Failed to create memory chunk")
@@ -138,7 +138,7 @@ class MemoryService:
             MemoryChunkResponse or None if not found
         """
         try:
-            result = self.supabase.table("agent_memory_chunks").select("*").eq(
+            result = self.supabase.table("memory_chunks").select("*").eq(
                 "id", str(memory_id)
             ).execute()
             
@@ -149,6 +149,55 @@ class MemoryService:
             
         except Exception as e:
             logger.error(f"Failed to get memory {memory_id}: {e}")
+            raise
+    
+    async def list_memories(
+        self,
+        agent_id: UUID,
+        chunk_type: Optional[ChunkType] = None,
+        is_active: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> List[MemoryChunkResponse]:
+        """
+        List memory chunks for an agent with optional filtering.
+        
+        Args:
+            agent_id: Agent ID
+            chunk_type: Optional filter by chunk type
+            is_active: Optional filter by active status
+            limit: Maximum results
+            offset: Offset for pagination
+        
+        Returns:
+            List of MemoryChunkResponse
+        """
+        try:
+            logger.info(f"Listing memories for agent {agent_id}")
+            
+            # Build query
+            query = self.supabase.table("memory_chunks").select("*").eq(
+                "agent_id", str(agent_id)
+            )
+            
+            # Apply filters
+            if chunk_type is not None:
+                query = query.eq("chunk_type", chunk_type.value)
+            
+            if is_active is not None:
+                query = query.eq("is_active", is_active)
+            
+            # Apply pagination and ordering
+            query = query.order("created_at", desc=True).range(
+                offset, offset + limit - 1
+            )
+            
+            result = query.execute()
+            
+            return [MemoryChunkResponse(**memory) for memory in result.data]
+            
+        except Exception as e:
+            logger.error(f"Failed to list memories for agent {agent_id}: {e}")
             raise
     
     async def update_memory(
@@ -193,7 +242,7 @@ class MemoryService:
             update_data["version"] = current.version + 1
             
             # Update in database
-            result = self.supabase.table("agent_memory_chunks").update(
+            result = self.supabase.table("memory_chunks").update(
                 update_data
             ).eq("id", str(memory_id)).execute()
             
@@ -220,7 +269,7 @@ class MemoryService:
         try:
             logger.info(f"Deleting memory {memory_id}")
             
-            result = self.supabase.table("agent_memory_chunks").delete().eq(
+            result = self.supabase.table("memory_chunks").delete().eq(
                 "id", str(memory_id)
             ).execute()
             
@@ -255,7 +304,7 @@ class MemoryService:
             
             # Build SQL query for vector similarity search
             # Using pgvector's <=> operator for cosine distance
-            sql_query = self.supabase.table("agent_memory_chunks").select("*")
+            sql_query = self.supabase.table("memory_chunks").select("*")
             
             # Filter by agent
             sql_query = sql_query.eq("agent_id", str(query.agent_id))
@@ -344,9 +393,9 @@ class MemoryService:
                 return
             
             # Increment count and update last used
-            self.supabase.table("agent_memory_chunks").update({
+            self.supabase.table("memory_chunks").update({
                 "usage_count": memory.usage_count + 1,
-                "last_used_at": datetime.utcnow().isoformat()
+                "last_accessed_at": datetime.utcnow().isoformat()
             }).eq("id", str(memory_id)).execute()
             
         except Exception as e:
@@ -372,7 +421,7 @@ class MemoryService:
             List of MemoryChunkResponse
         """
         try:
-            query = self.supabase.table("agent_memory_chunks").select("*").eq(
+            query = self.supabase.table("memory_chunks").select("*").eq(
                 "agent_id", str(agent_id)
             )
             
@@ -401,7 +450,7 @@ class MemoryService:
         """
         try:
             # Get all memories for agent
-            result = self.supabase.table("agent_memory_chunks").select(
+            result = self.supabase.table("memory_chunks").select(
                 "chunk_type, confidence_score, usage_count"
             ).eq("agent_id", str(agent_id)).execute()
             

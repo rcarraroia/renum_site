@@ -95,10 +95,23 @@ class DiscoveryAgent(BaseAgent):
         # Use passed system_prompt or generate from config
         final_system_prompt = system_prompt if system_prompt else self._get_system_prompt(config)
         
+        # SICC: Buscar agent_id do Discovery ou usar default - use pop() to avoid passing twice
+        agent_id = kwargs.pop("agent_id", None) or "00000000-0000-0000-0000-000000000003"
+        
+        # Extract known kwargs to avoid passing them twice to super().__init__
+        sicc_enabled = kwargs.pop("sicc_enabled", True)
+        kwargs.pop("agent_type", None)  # Remove if present, we set it explicitly
+        kwargs.pop("tools", None)  # Remove if present, we set it explicitly
+        kwargs.pop("model", None)  # Remove if present, we set it explicitly
+        kwargs.pop("system_prompt", None)  # Remove if present, we set it explicitly
+        
         super().__init__(
             model=model,
             system_prompt=final_system_prompt,
             tools=final_tools,
+            agent_id=agent_id,
+            agent_type="discovery",
+            sicc_enabled=sicc_enabled,
             **kwargs
         )
         self.channel = kwargs.get("channel", "web")
@@ -452,6 +465,18 @@ Fields Still Needed:
             if isinstance(msg, AIMessage):
                 response_message = msg.content
                 break
+        
+        # SICC: Notificar hook após resposta (não bloqueia)
+        await self._notify_sicc(
+            messages=messages,
+            response=response_message,
+            context=context,
+            metadata={
+                "interview_id": context.get("interview_id"),
+                "is_complete": result["is_complete"],
+                "collected_fields_count": len(result["collected_fields"])
+            }
+        )
         
         return {
             "message": response_message,

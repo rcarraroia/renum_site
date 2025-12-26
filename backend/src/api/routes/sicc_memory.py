@@ -18,6 +18,7 @@ from src.models.sicc.memory import (
 from src.services.sicc.memory_service import MemoryService
 from src.services.sicc.embedding_service import get_embedding_service
 from src.api.middleware.auth_middleware import get_current_user
+from src.utils.logger import logger
 
 router = APIRouter(prefix="/sicc/memories", tags=["sicc-memory"])
 
@@ -85,57 +86,150 @@ async def get_memory(
 
 @router.post("/", response_model=MemoryChunkResponse, status_code=status.HTTP_201_CREATED)
 async def create_memory(
-    memory_data: MemoryChunkCreate,
+    memory_data: dict,
     current_user: dict = Depends(get_current_user)
 ):
     """
     Create new memory
     
-    Automatically generates embedding for content
+    REGRA: agent_id deve existir e ter client_id associado.
+    Memórias só precisam de agent_id (client_id é derivado do agente).
+    
+    Se agente não tem client_id → ERRO 500 (configuração errada no banco)
     """
-    memory_service = MemoryService()
+    from src.utils.supabase_client import get_client
+    import uuid
+    
     embedding_service = get_embedding_service()
     
     try:
-        # Generate embedding if not provided
-        if not memory_data.embedding:
-            memory_data.embedding = embedding_service.generate_embedding(memory_data.content)
+        # 1. Validar agent_id
+        agent_id = memory_data.get('agent_id')
+        if not agent_id or agent_id == 'None' or str(agent_id).lower() == 'none':
+            raise HTTPException(status_code=400, detail="agent_id é obrigatório")
         
-        memory = await memory_service.create_memory(memory_data)
-        return memory
+        content = memory_data.get('content')
+        if not content or not content.strip():
+            raise HTTPException(status_code=400, detail="content é obrigatório")
+        
+        # 2. Validar formato UUID
+        try:
+            agent_uuid = UUID(str(agent_id))
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail=f"Formato de agent_id inválido: {agent_id}")
+        
+        # 3. Buscar agente e validar client_id
+        supabase = get_client()
+        agent_result = supabase.table("agents").select("id, client_id, name").eq("id", str(agent_uuid)).execute()
+        
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail=f"Agente {agent_uuid} não encontrado")
+        
+        agent_data = agent_result.data[0]
+        
+        # 4. CRÍTICO: Validar que agente tem client_id
+        if not agent_data.get("client_id"):
+            raise HTTPException(
+                status_code=500,
+                detail=f"ERRO DE CONFIGURAÇÃO: Agente '{agent_data.get('name', agent_uuid)}' não tem client_id. "
+                       f"Todos os agentes devem ter client_id associado. "
+                       f"Execute o script SQL: scripts/setup_client_architecture.sql"
+            )
+        
+        # 5. Generate embedding
+        try:
+            embedding = embedding_service.generate_embedding(content)
+        except Exception as e:
+            logger.warning(f"Could not generate embedding: {e}")
+            embedding = None
+        
+        # 6. Map chunk_type to valid enum value
+        chunk_type = memory_data.get('chunk_type', 'insight')
+        valid_types = ['business_term', 'process', 'faq', 'product', 'objection', 'pattern', 'insight', 'general']
+        if chunk_type not in valid_types:
+            chunk_type = 'insight'  # Default
+        
+        # 7. Create memory record (SÓ agent_id, NÃO client_id)
+        memory_record = {
+            'id': str(uuid.uuid4()),
+            'agent_id': str(agent_uuid),
+            'content': content.strip(),
+            'chunk_type': chunk_type,
+            'confidence_score': float(memory_data.get('confidence_score', 0.8)),
+            'is_active': True,
+            'usage_count': 0,
+            'metadata': memory_data.get('metadata', {})
+        }
+        
+        # Only add embedding if generated successfully
+        if embedding:
+            memory_record['embedding'] = embedding
+        
+        result = supabase.table("memory_chunks").insert(memory_record).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Falha ao criar memória - nenhum dado retornado")
+        
+        logger.info(f"Memory created for agent {agent_data.get('name')} (client: {agent_data.get('client_id')[:8]}...)")
+        return result.data[0]
+        
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error creating memory: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create memory: {str(e)}"
+            detail=f"Falha ao criar memória: {str(e)}"
         )
 
 
-@router.put("/{memory_id}", response_model=MemoryChunkResponse)
+@router.put("/{memory_id}")
 async def update_memory(
     memory_id: UUID,
-    memory_data: MemoryChunkUpdate,
+    memory_data: dict,
     current_user: dict = Depends(get_current_user)
 ):
     """
     Update memory
     
-    Creates new version maintaining history
+    Accepts simplified input: content, chunk_type, confidence_score (all optional)
     """
-    memory_service = MemoryService()
+    from src.utils.supabase_client import get_client
+    
     embedding_service = get_embedding_service()
     
     try:
-        # Regenerate embedding if content changed
-        if memory_data.content:
-            memory_data.embedding = embedding_service.generate_embedding(memory_data.content)
+        supabase = get_client()
         
-        memory = await memory_service.update_memory(memory_id, memory_data)
-        if not memory:
+        # Build update dict with only provided fields
+        update_dict = {}
+        
+        if 'content' in memory_data and memory_data['content']:
+            update_dict['content'] = memory_data['content']
+            # Regenerate embedding for new content
+            update_dict['embedding'] = embedding_service.generate_embedding(memory_data['content'])
+        
+        if 'chunk_type' in memory_data:
+            valid_types = ['business_term', 'process', 'faq', 'product', 'objection', 'pattern', 'insight']
+            chunk_type = memory_data['chunk_type']
+            if chunk_type in valid_types:
+                update_dict['chunk_type'] = chunk_type
+        
+        if 'confidence_score' in memory_data:
+            update_dict['confidence_score'] = memory_data['confidence_score']
+        
+        if not update_dict:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+        # Update in database
+        result = supabase.table("memory_chunks").update(update_dict).eq("id", str(memory_id)).execute()
+        
+        if not result.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Memory {memory_id} not found"
             )
-        return memory
+        return result.data[0]
     except HTTPException:
         raise
     except Exception as e:

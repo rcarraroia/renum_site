@@ -8,7 +8,7 @@ from datetime import datetime
 
 from src.config.supabase import supabase_admin
 from src.utils.logger import logger
-from src.agents.mmn_agent_simple import MMNDiscoveryAgent
+# from src.agents.mmn_agent_simple import MMNDiscoveryAgent  # Comentado temporariamente para testes
 
 
 class InterviewService:

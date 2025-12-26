@@ -7,6 +7,7 @@ Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
 from typing import Dict, Any, List
 from uuid import UUID
 from src.config.supabase import supabase_admin
+from src.utils.logger import logger
 
 class SubAgentInheritanceService:
     """Service for managing sub-agent inheritance and configuration merging"""
@@ -55,6 +56,130 @@ class SubAgentInheritanceService:
         effective_config['advanced'] = sub_agent_config.get('advanced', {})
         
         return effective_config
+    
+    def get_inherited_integrations(
+        self,
+        parent_agent_id: UUID,
+        sub_agent_config: Dict[str, Any],
+        inheritance_config: Dict[str, bool]
+    ) -> Dict[str, Any]:
+        """
+        Calcula integrações efetivas com herança do agente pai
+        
+        Args:
+            parent_agent_id: ID do agente pai
+            sub_agent_config: Configuração do sub-agente
+            inheritance_config: Regras de herança
+            
+        Returns:
+            Configurações de integração efetivas
+        """
+        try:
+            # Buscar integrações do agente pai
+            parent_integrations = self._get_parent_integrations(parent_agent_id)
+            
+            # Configurações próprias do sub-agente
+            sub_integrations = sub_agent_config.get('integrations', {})
+            
+            # Se herança de integrações está habilitada
+            if inheritance_config.get('integrations', True):
+                # Herdar todas as integrações do pai
+                effective_integrations = self._deep_merge(
+                    parent_integrations,
+                    sub_integrations
+                )
+                
+                # Aplicar rate limits específicos para sub-agentes
+                effective_integrations = self._apply_sub_agent_limits(
+                    effective_integrations,
+                    sub_agent_config
+                )
+            else:
+                # Usar apenas configurações próprias
+                effective_integrations = sub_integrations
+            
+            return effective_integrations
+            
+        except Exception as e:
+            logger.error(f"Error calculating inherited integrations: {e}")
+            return sub_agent_config.get('integrations', {})
+    
+    def _get_parent_integrations(self, parent_agent_id: UUID) -> Dict[str, Any]:
+        """Busca integrações do agente pai"""
+        try:
+            # Mock de integrações do agente pai
+            # Em produção, buscar da tabela de integrações
+            return {
+                'whatsapp': {
+                    'enabled': True,
+                    'api_url': 'https://api.whatsapp.com',
+                    'credentials': {
+                        'token': 'parent_token',
+                        'phone_number': '+5511999999999'
+                    },
+                    'rate_limit': {
+                        'max_requests': 1000,
+                        'period_seconds': 3600
+                    }
+                },
+                'email': {
+                    'enabled': True,
+                    'provider': 'smtp',
+                    'credentials': {
+                        'smtp_host': 'smtp.gmail.com',
+                        'smtp_port': 587,
+                        'username': 'parent@example.com',
+                        'password': 'parent_password'
+                    },
+                    'rate_limit': {
+                        'max_requests': 500,
+                        'period_seconds': 3600
+                    }
+                },
+                'calendar': {
+                    'enabled': True,
+                    'provider': 'google',
+                    'credentials': {
+                        'api_key': 'parent_api_key',
+                        'calendar_id': 'primary'
+                    },
+                    'rate_limit': {
+                        'max_requests': 200,
+                        'period_seconds': 3600
+                    }
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting parent integrations: {e}")
+            return {}
+    
+    def _apply_sub_agent_limits(
+        self,
+        integrations: Dict[str, Any],
+        sub_agent_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Aplica limites específicos para sub-agentes"""
+        try:
+            # Rate limits reduzidos para sub-agentes (50% do pai)
+            sub_agent_multiplier = sub_agent_config.get('rate_limit_multiplier', 0.5)
+            
+            for integration_name, integration_config in integrations.items():
+                if 'rate_limit' in integration_config:
+                    original_limit = integration_config['rate_limit']['max_requests']
+                    new_limit = int(original_limit * sub_agent_multiplier)
+                    
+                    integration_config['rate_limit']['max_requests'] = max(new_limit, 10)  # Mínimo 10
+                    
+                    # Adicionar identificação de sub-agente
+                    integration_config['sub_agent_mode'] = True
+                    integration_config['parent_agent_id'] = sub_agent_config.get('parent_agent_id')
+            
+            return integrations
+            
+        except Exception as e:
+            logger.error(f"Error applying sub-agent limits: {e}")
+            return integrations
     
     def _deep_merge(self, base: Dict, override: Dict) -> Dict:
         """Deep merge two dictionaries, with override taking precedence"""

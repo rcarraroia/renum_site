@@ -12,6 +12,7 @@ from src.models.sicc.metrics import MetricsPeriod, MetricsResponse
 from src.services.sicc.metrics_service import MetricsService
 from src.services.sicc.snapshot_service import SnapshotService
 from src.api.middleware.auth_middleware import get_current_user
+from src.utils.logger import logger
 
 router = APIRouter(prefix="/sicc/stats", tags=["sicc-stats"])
 
@@ -101,43 +102,86 @@ async def get_agent_evolution(
     
     Returns timeline of memories, patterns, and learnings
     """
-    metrics_service = MetricsService()
-    snapshot_service = SnapshotService()
+    from src.utils.supabase_client import get_client
     
     try:
+        supabase = get_client()
+        
         # Get metrics for period
         end_date = date.today()
         start_date = end_date - timedelta(days=days)
         
-        # Get snapshots
-        snapshots = await snapshot_service.get_agent_snapshots(agent_id, limit=days)
+        # Contar memórias reais
+        try:
+            memories_result = supabase.table("memory_chunks").select(
+                "id", count="exact"
+            ).eq("agent_id", str(agent_id)).eq("is_active", True).execute()
+            total_memories = memories_result.count if memories_result.count else 0
+        except Exception as e:
+            logger.warning(f"Could not count memories: {e}")
+            total_memories = 0
         
-        # Get aggregated metrics
-        aggregated = await metrics_service.get_aggregated_metrics(
-            agent_id,
-            MetricsPeriod.LAST_30_DAYS if days <= 30 else MetricsPeriod.LAST_90_DAYS
-        )
+        # Contar padrões reais
+        try:
+            patterns_result = supabase.table("behavior_patterns").select(
+                "id", count="exact"
+            ).eq("agent_id", str(agent_id)).eq("is_active", True).execute()
+            total_patterns = patterns_result.count if patterns_result.count else 0
+        except Exception as e:
+            logger.warning(f"Could not count patterns: {e}")
+            total_patterns = 0
         
-        # Get learning velocity
-        velocity = await metrics_service.calculate_learning_velocity(agent_id, days)
+        # Contar aprendizados pendentes
+        try:
+            learnings_result = supabase.table("learning_logs").select(
+                "id", count="exact"
+            ).eq("agent_id", str(agent_id)).eq("status", "pending").execute()
+            pending_learnings = learnings_result.count if learnings_result.count else 0
+        except Exception as e:
+            logger.warning(f"Could not count learnings: {e}")
+            pending_learnings = 0
+        
+        # Buscar atividade recente
+        recent_activity = []
+        try:
+            activity_result = supabase.table("learning_logs").select(
+                "id, learning_type, created_at, status"
+            ).eq("agent_id", str(agent_id)).order(
+                "created_at", desc=True
+            ).limit(5).execute()
+            
+            for log in activity_result.data or []:
+                recent_activity.append({
+                    "type": "learning",
+                    "description": f"Aprendizado: {log.get('learning_type', 'desconhecido')}",
+                    "timestamp": log.get("created_at"),
+                    "status": log.get("status")
+                })
+        except Exception as e:
+            logger.warning(f"Could not fetch recent activity: {e}")
         
         return {
             "agent_id": str(agent_id),
             "period": {"start": str(start_date), "end": str(end_date), "days": days},
-            "snapshots": [
-                {
-                    "date": str(s.created_at.date()),
-                    "memories_count": s.memories_count,
-                    "patterns_count": s.patterns_count,
-                    "total_interactions": s.total_interactions,
-                    "success_rate": s.success_rate
-                }
-                for s in snapshots
-            ],
-            "aggregated": aggregated,
-            "learning_velocity": velocity
+            "total_memories": total_memories,
+            "total_memories_change": 0,
+            "total_patterns": total_patterns,
+            "new_patterns": total_patterns,
+            "pending_learnings": pending_learnings,
+            "auto_approved_rate": 0,
+            "auto_approved_rate_change": 0,
+            "success_rate": 0,
+            "success_rate_change": 0,
+            "learning_velocity": 0,
+            "learning_velocity_change": 0,
+            "snapshots": [],
+            "aggregated": {},
+            "recent_activity": recent_activity,
+            "memory_growth": [],
+            "success_trend": []
         }
     except Exception as e:
+        logger.error(f"Failed to get agent evolution: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get agent evolution: {str(e)}"

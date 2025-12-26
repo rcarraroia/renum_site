@@ -30,10 +30,10 @@ import AssistenteIsaPage from './pages/dashboard/AssistenteIsaPage';
 import AgentsListPage from './pages/admin/agents/AgentsListPage'; // Import new page
 import AgentCreatePage from './pages/admin/agents/AgentCreatePage'; // Import new page
 import AgentDetailsPage from './pages/admin/agents/AgentDetailsPage'; // Import updated page
-import EvolutionPage from './pages/sicc/EvolutionPage'; // Import new SICC page
-import MemoryManagerPage from './pages/sicc/MemoryManagerPage'; // Import new SICC page
-import LearningQueuePage from './pages/sicc/LearningQueuePage'; // Import new SICC page
-import SettingsPage from './pages/sicc/SettingsPage'; // Import new SICC page
+import EvolutionPage from './pages/sicc/EvolutionPage';
+import MemoryManagerPage from './pages/sicc/MemoryManagerPage';
+import LearningQueuePage from './pages/sicc/LearningQueuePage';
+// SettingsPage SICC removido - configurações ficam na aba do agente
 import ErrorBoundary from './components/ErrorBoundary'; // Import ErrorBoundary
 import TemplatesListPage from './pages/admin/agents/TemplatesListPage'; // Import Templates page
 import MarketplacePage from './pages/client/MarketplacePage'; // Import Marketplace page
@@ -43,7 +43,7 @@ import ClientAgentDetailsPage from './pages/client/ClientAgentDetailsPage';
 import RenusInterface from './pages/agents/contextual/RenusInterface';
 import PesquisasInterface from './pages/agents/contextual/PesquisasInterface';
 import IsaInterface from './pages/agents/contextual/IsaInterface';
-import IntelligenceDashboard from './pages/intelligence/IntelligenceDashboard';
+// IntelligenceDashboard removido - SICC agora é contextual por agente
 import IntegrationsRadar from './pages/integrations/IntegrationsRadar';
 import TemplateMarketplace from './pages/marketplace/TemplateMarketplace';
 
@@ -90,8 +90,13 @@ const App = () => (
                     {/* Agent Routes */}
                     <Route path="/dashboard/admin/agents" element={<AgentsListPage />} />
                     <Route path="/dashboard/admin/agents/create" element={<AgentCreatePage />} />
-                    <Route path="/dashboard/admin/agents/:slug" element={<AgentDetailsPage />} />
                     <Route path="/dashboard/admin/agents/templates" element={<TemplatesListPage />} />
+                    <Route path="/dashboard/admin/agents/:slug" element={<AgentDetailsPage />} />
+                    
+                    {/* SICC Routes - Contextual por Agente */}
+                    <Route path="/dashboard/admin/agents/:slug/intelligence/evolution" element={<EvolutionPage />} />
+                    <Route path="/dashboard/admin/agents/:slug/intelligence/memories" element={<MemoryManagerPage />} />
+                    <Route path="/dashboard/admin/agents/:slug/intelligence/queue" element={<LearningQueuePage />} />
 
                     <Route path="/dashboard/admin/conversations" element={<AdminConversationsPage />} />
                     <Route path="/dashboard/admin/reports" element={<AdminReportsPage />} />
@@ -110,18 +115,11 @@ const App = () => (
                     <Route path="/dashboard/agents/pesquisas" element={<PesquisasInterface />} />
                     <Route path="/dashboard/agents/isa" element={<IsaInterface />} />
 
-                    {/* Intelligence & Integrations */}
-                    <Route path="/dashboard/intelligence" element={<IntelligenceDashboard />} />
-                    <Route path="/dashboard/integrations/radar" element={<IntegrationsRadar />} />
-
                     {/* Marketplace */}
                     <Route path="/dashboard/marketplace" element={<TemplateMarketplace />} />
-
-                    {/* SICC Routes */}
-                    <Route path="/intelligence/evolution" element={<EvolutionPage />} />
-                    <Route path="/intelligence/memories" element={<MemoryManagerPage />} />
-                    <Route path="/intelligence/queue" element={<LearningQueuePage />} />
-                    <Route path="/intelligence/settings" element={<SettingsPage />} />
+                    
+                    {/* Integrations Radar */}
+                    <Route path="/dashboard/integrations/radar" element={<IntegrationsRadar />} />
                   </Route>
 
                   {/* Protected Client Routes */}

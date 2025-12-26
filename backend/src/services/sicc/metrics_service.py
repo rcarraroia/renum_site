@@ -9,14 +9,14 @@ from typing import Optional, Dict, Any, List
 from uuid import UUID
 from datetime import datetime, date, timedelta
 
-from ...config.supabase import supabase_admin
-from ...models.sicc.metrics import (
+from src.utils.supabase_client import get_client
+from src.models.sicc.metrics import (
     MetricsCreate,
     MetricsUpdate,
     MetricsResponse,
     MetricsPeriod
 )
-from ...utils.logger import logger
+from src.utils.logger import logger
 
 
 class MetricsService:
@@ -24,7 +24,7 @@ class MetricsService:
     
     def __init__(self):
         """Initialize service with Supabase admin client"""
-        self.supabase = supabase_admin
+        self.supabase = get_client()
     
     async def record_interaction(
         self,
@@ -58,7 +58,7 @@ class MetricsService:
             )
             
             # Get or create today's metrics
-            result = self.supabase.table("agent_performance_metrics").select("*").eq(
+            result = self.supabase.table("agent_metrics").select("*").eq(
                 "agent_id", str(agent_id)
             ).eq("metric_date", today.isoformat()).execute()
             
@@ -106,7 +106,7 @@ class MetricsService:
                     "metadata": current_metadata
                 }
                 
-                updated = self.supabase.table("agent_performance_metrics").update(
+                updated = self.supabase.table("agent_metrics").update(
                     update_data
                 ).eq("id", current["id"]).execute()
                 
@@ -125,7 +125,7 @@ class MetricsService:
                     "metadata": metadata or {}
                 }
                 
-                created = self.supabase.table("agent_performance_metrics").insert(
+                created = self.supabase.table("agent_metrics").insert(
                     metrics_data
                 ).execute()
                 
@@ -150,7 +150,7 @@ class MetricsService:
         try:
             today = date.today()
             
-            result = self.supabase.table("agent_performance_metrics").select("*").eq(
+            result = self.supabase.table("agent_metrics").select("*").eq(
                 "agent_id", str(agent_id)
             ).eq("metric_date", today.isoformat()).execute()
             
@@ -158,7 +158,7 @@ class MetricsService:
                 current = result.data[0]
                 new_count = current["memory_chunks_used"] + count
                 
-                self.supabase.table("agent_performance_metrics").update({
+                self.supabase.table("agent_metrics").update({
                     "memory_chunks_used": new_count
                 }).eq("id", current["id"]).execute()
             
@@ -180,7 +180,7 @@ class MetricsService:
         try:
             today = date.today()
             
-            result = self.supabase.table("agent_performance_metrics").select("*").eq(
+            result = self.supabase.table("agent_metrics").select("*").eq(
                 "agent_id", str(agent_id)
             ).eq("metric_date", today.isoformat()).execute()
             
@@ -188,7 +188,7 @@ class MetricsService:
                 current = result.data[0]
                 new_count = current["patterns_applied"] + count
                 
-                self.supabase.table("agent_performance_metrics").update({
+                self.supabase.table("agent_metrics").update({
                     "patterns_applied": new_count
                 }).eq("id", current["id"]).execute()
             
@@ -210,7 +210,7 @@ class MetricsService:
         try:
             today = date.today()
             
-            result = self.supabase.table("agent_performance_metrics").select("*").eq(
+            result = self.supabase.table("agent_metrics").select("*").eq(
                 "agent_id", str(agent_id)
             ).eq("metric_date", today.isoformat()).execute()
             
@@ -218,7 +218,7 @@ class MetricsService:
                 current = result.data[0]
                 new_count = current["new_learnings"] + count
                 
-                self.supabase.table("agent_performance_metrics").update({
+                self.supabase.table("agent_metrics").update({
                     "new_learnings": new_count
                 }).eq("id", current["id"]).execute()
             
@@ -253,7 +253,7 @@ class MetricsService:
             else:
                 start_date = today - timedelta(days=7)
             
-            result = self.supabase.table("agent_performance_metrics").select("*").eq(
+            result = self.supabase.table("agent_metrics").select("*").eq(
                 "agent_id", str(agent_id)
             ).gte("metric_date", start_date.isoformat()).order(
                 "metric_date", desc=True
@@ -361,7 +361,7 @@ class MetricsService:
         try:
             start_date = date.today() - timedelta(days=days)
             
-            result = self.supabase.table("agent_performance_metrics").select(
+            result = self.supabase.table("agent_metrics").select(
                 "new_learnings"
             ).eq("agent_id", str(agent_id)).gte(
                 "metric_date", start_date.isoformat()

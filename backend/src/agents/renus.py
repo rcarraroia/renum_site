@@ -38,13 +38,24 @@ class RenusAgent(BaseAgent):
         """Initialize RENUS with configuration (dynamic from DB or default)"""
         
         # Resolve configuration
-        final_model = model or kwargs.get("model") or settings.DEFAULT_RENUS_MODEL
-        self._dynamic_system_prompt = system_prompt or kwargs.get("system_prompt")
+        final_model = model or kwargs.pop("model", None) or settings.DEFAULT_RENUS_MODEL
+        self._dynamic_system_prompt = system_prompt or kwargs.pop("system_prompt", None)
+        
+        # SICC: Buscar agent_id do RENUS no banco ou usar default
+        agent_id = kwargs.pop("agent_id", None) or "00000000-0000-0000-0000-000000000001"
+        
+        # Extract known kwargs to avoid passing them twice to super().__init__
+        tools = kwargs.pop("tools", [])
+        sicc_enabled = kwargs.pop("sicc_enabled", True)
+        kwargs.pop("agent_type", None)  # Remove if present, we set it explicitly
         
         super().__init__(
             model=final_model,
             system_prompt=self._get_system_prompt(), # Will use dynamic if set
-            tools=kwargs.get("tools", []),
+            tools=tools,
+            agent_id=agent_id,
+            agent_type="renus",
+            sicc_enabled=sicc_enabled,
             **kwargs
         )
         
@@ -295,8 +306,22 @@ Always be:
             "metadata": metadata
         })
         
+        response = result.get("response", "")
+        
+        # SICC: Notificar hook após resposta (não bloqueia)
+        await self._notify_sicc(
+            messages=messages,
+            response=response,
+            context=context,
+            metadata={
+                "intent": result.get("intent"),
+                "routed_to": result.get("target_subagent"),
+                **metadata
+            }
+        )
+        
         return {
-            "response": result.get("response", ""),
+            "response": response,
             "intent": result.get("intent"),
             "routed_to": result.get("target_subagent"),
             "metadata": metadata
